@@ -1,0 +1,30 @@
+{
+  "name": "codemirror-record",
+  "version": "0.0.1",
+  "description": "A recording and playing library for codemirror. Compatible with version later than 5.37.0.",
+  "private": true,
+  "scripts": {
+    "build": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.jisuan.ren/haoranyu/codemirror-record"
+  },
+  "keywords": [
+    "record",
+    "play",
+    "codemirror",
+    "code"
+  ],
+  "dependencies": {
+    "codemirror": "^5.46.0"
+  },
+  "devDependencies": {
+    "webpack": "^1.15.0",
+    "webpack-cli": "^3.3.1",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "author": "Haoran Yu",
+  "license": "MIT"
+}
