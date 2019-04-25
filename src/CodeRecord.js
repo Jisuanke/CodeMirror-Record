@@ -102,7 +102,7 @@ class CodeRecord {
     while(changes.length > 0) {
       let change = changes.pop() // 拿出最新的一条
       if (change.o[0].origin === '+input') {
-        while(changes.length > 1) {
+        while(changes.length > 0) {
           let lastChange = changes.pop()
           if (lastChange.o[0].origin === '+input' &&
           this.isContinueInput(lastChange, change)) {
@@ -151,11 +151,9 @@ class CodeRecord {
     let newChanges = []
     while(changes.length > 0) {
       let change = changes.pop() // 拿出最新的一条
-      console.log('change', change.o[0].from, change.o[0].to)
       if (change.o[0].origin === '+delete') {
-        while(changes.length > 1) {
+        while(changes.length > 0) {
           let lastChange = changes.pop()
-          console.log('judge:', lastChange.o[0].from, lastChange.o[0].to, change.o[0].from, change.o[0].to)
           if (lastChange.o[0].origin === '+delete' &&
           this.isContinueDelete(lastChange, change)) {
             change.startTime = lastChange.startTime
@@ -166,6 +164,7 @@ class CodeRecord {
               change.o[i].removed = change.o[i].removed.concat(lastChange.o[i].removed)
             }
           } else {
+            // console.info(lastChange, change, 'cannot merge')
             changes.push(lastChange)
             break;
           }
