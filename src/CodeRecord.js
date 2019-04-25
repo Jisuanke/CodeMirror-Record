@@ -91,7 +91,8 @@ class CodeRecord {
             secondChange.ops[i].from.ch !== secondChange.ops[i].to.ch ||
             firstChange.ops[i].from.ch !== firstChange.ops[i].to.ch) {
           return false;
-        } else if (firstChange.ops[i].from.ch + 1 !== secondChange.ops[i].from.ch) {
+        } else if (firstChange.ops[i].from.ch + 1 !== secondChange.ops[i].from.ch && // 同行的下一个字符
+          !(firstChange.ops[i].from.line + 1 === secondChange.ops[i].from.line && secondChange.ops[i].from.ch === 0)) { // 换行的情况
           return false;
         }
       }
