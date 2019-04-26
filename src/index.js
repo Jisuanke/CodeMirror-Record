@@ -9,7 +9,7 @@ var myCodeMirror =  CodeMirror.fromTextArea(document.getElementById('editor'), {
 let codeRecorder = new CodeRecord(myCodeMirror)
 
 codeRecorder.listen()
-myCodeMirror.setValue('var tes;\n')
+myCodeMirror.setValue('var tes;\\nvar tes;')
 
 document.getElementById('btn').onclick = function() {
   codeRecorder.printOperations()
