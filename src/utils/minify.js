@@ -14,7 +14,7 @@ function getInterval(operation) {
 
 module.exports = function(changes) {
   let minifiedChanges = [];
-  console.log(originMap.encode('x'))
+
   while(changes.length > 0) {
     let change = changes.pop(); // 拿出最新的一条
 
@@ -22,7 +22,7 @@ module.exports = function(changes) {
       change.ops[i].i = getInterval(change.ops[i]);
       change.ops[i].r = change.ops[i].removed;
       change.ops[i].a = change.ops[i].text;
-      change.ops[i].o = change.ops[i].origin;
+      change.ops[i].o = originMap.encode(change.ops[i].origin);
       delete change.ops[i].removed;
       delete change.ops[i].text;
       delete change.ops[i].from;
