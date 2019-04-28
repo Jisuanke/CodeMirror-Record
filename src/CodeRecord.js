@@ -30,11 +30,9 @@ class CodeRecord {
     this.editor.on('cursorActivity', this.cursorActivityListener);
   }
 
-  printOperations() {
-    console.log(this.operations);
+  getRecord() {
     this.compressOperations();
-    //console.log(this.compressedOperations.changes);
-    console.log(JSON.stringify(minify(this.compressedOperations.changes)));
+    return JSON.stringify(minify(this.compressedOperations.changes));
   }
 
   /**

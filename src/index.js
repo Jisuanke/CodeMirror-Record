@@ -12,5 +12,5 @@ codeRecorder.listen()
 myCodeMirror.setValue('var tes;\\nvar tes;')
 
 document.getElementById('btn').onclick = function() {
-  codeRecorder.printOperations()
+  console.log(codeRecorder.getRecord())
 }

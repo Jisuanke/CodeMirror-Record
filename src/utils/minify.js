@@ -20,9 +20,24 @@ module.exports = function(changes) {
 
     for (let i = 0; i < change.ops.length; i++) {
       change.ops[i].i = getInterval(change.ops[i]);
-      change.ops[i].r = change.ops[i].removed;
       change.ops[i].a = change.ops[i].text;
+      change.ops[i].d = change.ops[i].removed;
       change.ops[i].o = originMap.encode(change.ops[i].origin);
+
+      if (change.ops[i].a.length === 1 &&
+          change.ops[i].a[0] === '') {
+        delete change.ops[i].a;
+      }
+
+      if (change.ops[i].d.length === 1 &&
+          change.ops[i].d[0] === '') {
+        delete change.ops[i].d;
+      }
+
+      if (change.combo === 1) {
+        delete change.ops[i].d
+      }
+
       delete change.ops[i].removed;
       delete change.ops[i].text;
       delete change.ops[i].from;
@@ -33,6 +48,10 @@ module.exports = function(changes) {
     change.t = [change.startTime, change.endTime]
     change.l = change.combo
     change.o = change.ops
+
+    if (change.l === 1) {
+      delete change.l;
+    }
 
     delete change.ops;
     delete change.delayDuration;
