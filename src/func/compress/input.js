@@ -33,7 +33,7 @@ function compressOperationsTexts(change) {
         j++;
       }
     }
-    change.ops[i].textw = compressedTexts;
+    change.ops[i].text = compressedTexts;
   }
   return change;
 }
