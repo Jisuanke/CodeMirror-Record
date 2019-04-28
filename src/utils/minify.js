@@ -1,3 +1,5 @@
+const originMap = require('./origin.js');
+
 function getInterval(operation) {
   if (operation.from.line === operation.to.line &&
       operation.from.ch === operation.to.ch) {
@@ -12,6 +14,7 @@ function getInterval(operation) {
 
 module.exports = function(changes) {
   let minifiedChanges = [];
+  console.log(originMap.encode('x'))
   while(changes.length > 0) {
     let change = changes.pop(); // 拿出最新的一条
 
