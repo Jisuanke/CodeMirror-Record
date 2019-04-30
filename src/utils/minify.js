@@ -12,6 +12,14 @@ function getInterval(operation) {
   }
 }
 
+function minifyTime(timeInterval) {
+  if (timeInterval[0] === timeInterval[1]) {
+    return timeInterval[0];
+  } else {
+    return timeInterval;
+  }
+}
+
 module.exports = function(changes) {
   let minifiedChanges = [];
 
@@ -45,7 +53,7 @@ module.exports = function(changes) {
       delete change.ops[i].to;
     }
 
-    change.t = [change.startTime, change.endTime]
+    change.t = this.minifyTime([change.startTime, change.endTime]);
     change.l = change.combo
     change.o = change.ops
 
