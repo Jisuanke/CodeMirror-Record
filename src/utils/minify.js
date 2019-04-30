@@ -53,7 +53,7 @@ module.exports = function(changes) {
       delete change.ops[i].to;
     }
 
-    change.t = this.minifyTime([change.startTime, change.endTime]);
+    change.t = minifyTime([change.startTime, change.endTime]);
     change.l = change.combo
     change.o = change.ops
 
