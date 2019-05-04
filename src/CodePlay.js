@@ -52,7 +52,7 @@ class CodePlay {
      for (let i = 0; i < currentOperation.o.length; i++) {
        let insertContent = '';
        if (typeof(currentOperation.o[i].a) === 'string') {
-         insertContent = currentOperation.o[i].a
+         insertContent = currentOperation.o[i].a;
        } else if (currentOperation.o[i].hasOwnProperty('a')) {
          insertContent = currentOperation.o[i].a.join('\n');
        }
