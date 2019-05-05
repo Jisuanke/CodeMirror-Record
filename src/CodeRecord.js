@@ -9,7 +9,6 @@ compress.compose = require('./func/compress/compose.js');
 class CodeRecord {
   constructor(editor) {
     this.initTime = +new Date;
-    this.acceptableMinDelay = 1200; // 小于这个数字表示绝对是连续行为，大于这个数字需要通过连续行为间隔平均数判断是否是可以视为同类的匀速行为
     this.lastChangeTime = +new Date;
     this.lastCursorActivityTime = +new Date;
     this.operations = {
@@ -61,20 +60,20 @@ class CodeRecord {
 
   changesListener(editor, changes) {
     this.operations.changes.push({
-      startTime: this.getOperationRelativeTime(), // time
-      endTime: this.getOperationRelativeTime(), // time
-      delayDuration: this.getLastChangePause(), // duration
+      startTime: this.getOperationRelativeTime(),
+      endTime: this.getOperationRelativeTime(),
+      delayDuration: this.getLastChangePause(),
       ops: changes,
-      combo: 1 // combo count
+      combo: 1
     });
   }
 
   cursorActivityListener(editor) {
     this.operations.cursorActivities.push({
-      t: this.getOperationRelativeTime(), // time
-      d: this.getLastCursorActivityPause(), // duration
+      t: this.getOperationRelativeTime(),
+      d: this.getLastCursorActivityPause(),
       o: editor.listSelections(),
-      c: 1 // combo count
+      c: 1
     });
   }
 
