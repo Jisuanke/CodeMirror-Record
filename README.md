@@ -7,9 +7,9 @@ A project for recording coding activities in CodeMirror editor.
 Just follow the steps.
 
 1. Solve dependencies by `npm install`.
-2. Run `npm run serve` to start a node server.
+2. Run `npm run build` to build and `npm run serve` to start a node server.
 3. Open `http://localhost:8080/dist/` in your browser.
-4. Coding in the first editor. Every change will be recorded and synced, by playing the records, to the second editor. 
+4. Coding in the first editor. Every change will be recorded and synced, by playing the records, to the second editor.
 
 ## API
 
