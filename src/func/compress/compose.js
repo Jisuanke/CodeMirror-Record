@@ -20,7 +20,7 @@ function isContinueCompose(firstChange, secondChange) {
 function compressContinuousCompose(changes) {
   let newChanges = [];
   while(changes.length > 0) {
-    let change = changes.pop(); // 拿出最新的一条
+    let change = changes.pop(); // Obtain the latest change
     if (change.ops[0].origin === '*compose') {
       while(changes.length > 0) {
         let lastChange = changes.pop();

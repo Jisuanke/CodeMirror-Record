@@ -48,15 +48,10 @@ class CodePlay {
       }
     }
   }
+
   playChange(editor, currentOperation) {
      for (let i = 0; i < currentOperation.o.length; i++) {
-       let insertContent = '';
-       if (typeof(currentOperation.o[i].a) === 'string') {
-         insertContent = currentOperation.o[i].a;
-       } else if (currentOperation.o[i].hasOwnProperty('a')) {
-         insertContent = currentOperation.o[i].a.join('\n');
-       }
-
+       let insertContent = this.insertionText(currentOperation.o[i]);
        let insertPos = currentOperation.o[i].i;
 
        if (typeof(insertPos[0]) === 'number') {
@@ -74,25 +69,28 @@ class CodePlay {
      }
   }
 
+  insertionText(operationCursor) {
+    let insertContent = '';
+    if (typeof(operationCursor.a) === 'string') {
+      insertContent = operationCursor.a;
+    } else if ('a' in operationCursor) {
+      insertContent = operationCursor.a.join('\n');
+    }
+    return insertContent;
+  }
+
   parseOpertaions(operations) {
     operations = JSON.parse(operations);
     let extractedOperations = [];
     for (let operation of operations) {
       if ('l' in operation) {
-        if (operation.o[0].o === 'i') {
-          for (let i = 0; i < operation.l; i++) {
-            let insertion = extract.input(operation, i);
-            extractedOperations.push(insertion);
-          }
-        } else if (operation.o[0].o === 'c') {
-          for (let i = 0; i < operation.l; i++) {
-            let composition = extract.compose(operation, i);
-            extractedOperations.push(composition);
-          }
-        } else if (operation.o[0].o === 'd') {
-          for (let i = 0; i < operation.l; i++) {
-            let deletion = extract.delete(operation, i);
-            extractedOperations.push(deletion);
+        for (let i = 0; i < operation.l; i++) {
+          if (operation.o[0].o === 'i') {
+            extractedOperations.push(extract.input(operation, i));
+          } else if (operation.o[0].o === 'c') {
+            extractedOperations.push(extract.compose(operation, i));
+          } else if (operation.o[0].o === 'd') {
+            extractedOperations.push(extract.delete(operation, i));
           }
         }
       } else {

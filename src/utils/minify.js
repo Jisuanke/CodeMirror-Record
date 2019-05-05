@@ -24,7 +24,7 @@ module.exports = function(changes) {
   let minifiedChanges = [];
 
   while(changes.length > 0) {
-    let change = changes.pop(); // 拿出最新的一条
+    let change = changes.pop(); // Obtain the latest change
 
     for (let i = 0; i < change.ops.length; i++) {
       change.ops[i].i = getInterval(change.ops[i]);

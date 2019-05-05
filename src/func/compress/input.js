@@ -1,6 +1,6 @@
 const CONFIG = require('../../config.js');
 
-function isContinueInput(firstChange, secondChange) { // 判断是否可以被视为连续输入
+function isContinueInput(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
     return false;
   } else if (secondChange.delayDuration >= CONFIG.acceptableMinDelay) {
@@ -12,8 +12,8 @@ function isContinueInput(firstChange, secondChange) { // 判断是否可以被�
           secondChange.ops[i].from.ch !== secondChange.ops[i].to.ch ||
           firstChange.ops[i].from.ch !== firstChange.ops[i].to.ch) {
         return false;
-      } else if (firstChange.ops[i].from.ch + 1 !== secondChange.ops[i].from.ch && // 同行的下一个字符
-        !(firstChange.ops[i].from.line + 1 === secondChange.ops[i].from.line && secondChange.ops[i].from.ch === 0)) { // 换行的情况
+      } else if (firstChange.ops[i].from.ch + 1 !== secondChange.ops[i].from.ch && // For the next character in the same line
+        !(firstChange.ops[i].from.line + 1 === secondChange.ops[i].from.line && secondChange.ops[i].from.ch === 0)) { // For new line
         return false;
       }
     }
@@ -38,10 +38,10 @@ function compressOperationsTexts(change) {
   return change;
 }
 
-function compressContinuousInput(changes) { // 对连续输入进行压缩
+function compressContinuousInput(changes) {
   let newChanges = [];
   while(changes.length > 0) {
-    let change = changes.pop(); // 拿出最新的一条
+    let change = changes.pop(); // Obtain the latest change
     if (change.ops[0].origin === '+input') {
       while(changes.length > 0) {
         let lastChange = changes.pop();
