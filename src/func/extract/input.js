@@ -9,10 +9,12 @@ module.exports = function(operation, i) {
     insertion.t = operation.t[1];
   }
 
+  insertion.cursorOnly = false;
+
   let cursorsPos = [] // for each cursor
   for (let j = 0; j < operation.o.length; j++) {
     cursorsPos.push(operation.o[j].i);
-    insertion.o.push({a: null, i: null});
+    insertion.o.push({ a: null, i: null });
   }
 
   for (let j = 0; j < operation.o.length; j++) { // for each cursor

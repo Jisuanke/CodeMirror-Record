@@ -3,7 +3,7 @@ const CONFIG = require('../../config.js');
 function isContinueDelete(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
     return false;
-  } else if (secondChange.delayDuration >= CONFIG.acceptableMinDelay) {
+  } else if (secondChange.delayDuration >= CONFIG.acceptableMinOperationDelay) {
     return false;
   } else {
     for (let i = 0; i < secondChange.ops.length; i++) {
