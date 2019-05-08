@@ -8,28 +8,28 @@ let recordCodeMirror = CodeMirror.fromTextArea(document.getElementById('editor-r
   mode: "javascript"
 });
 
-let codeRecorder = new CodeRecord(recordCodeMirror)
+let codeRecorder = new CodeRecord(recordCodeMirror);
 
-codeRecorder.listen()
+codeRecorder.listen();
 
 document.getElementById('record').onclick = function() {
-  console.log(codeRecorder.getRecord())
+  console.log(codeRecorder.getRecords());
 }
 
 /**
  * Listen on codemirror playing
  */
 let playCodeMirror = CodeMirror.fromTextArea(document.getElementById('editor-play'), {
+  readOnly: true,
   mode: "javascript"
 });
 
-let codePlayer = new CodePlay(playCodeMirror)
+let codePlayer = new CodePlay(playCodeMirror);
 
-codePlayer.listen()
+codePlayer.listen();
 
-recordCodeMirror.setValue('var tes;\\nvar tes;')
+recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";')
 setInterval(() => {
-  let recordedOperations = codeRecorder.getRecord()
-  console.log(recordedOperations)
+  let recordedOperations = codeRecorder.getRecords()
   codePlayer.addOperation(recordedOperations)
 }, 3000)

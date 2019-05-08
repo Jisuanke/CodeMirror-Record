@@ -3,7 +3,7 @@ const CONFIG = require('../../config.js');
 function isContinueInput(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
     return false;
-  } else if (secondChange.delayDuration >= CONFIG.acceptableMinDelay) {
+  } else if (secondChange.delayDuration >= CONFIG.acceptableMinOperationDelay) {
     return false;
   } else {
     for (let i = 0; i < secondChange.ops.length; i++) {
@@ -28,7 +28,7 @@ function compressOperationsTexts(change) {
       if (change.ops[i].text[j] !== '') {
         compressedTexts += change.ops[i].text[j];
       } else if (j + 1 < change.ops[i].text.length &&
-                change.ops[i].text[j + 1] === ''){
+                change.ops[i].text[j + 1] === '') {
         compressedTexts += '\n';
         j++;
       }

@@ -9,10 +9,12 @@ module.exports = function(operation, i) {
     deletion.t = operation.t[1];
   }
 
+  deletion.cursorOnly = false;
+
   let cursorsPos = [] // for each cursor
   for (let j = 0; j < operation.o.length; j++) {
     cursorsPos.push(operation.o[j].i[1]);
-    deletion.o.push({i: null});
+    deletion.o.push({ i: null });
   }
 
   for (let j = 0; j < operation.o.length; j++) {

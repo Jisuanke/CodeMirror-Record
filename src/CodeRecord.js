@@ -5,20 +5,15 @@ const compress = {};
 compress.input = require('./func/compress/input.js');
 compress.delete = require('./func/compress/delete.js');
 compress.compose = require('./func/compress/compose.js');
+compress.cursor = require('./func/compress/cursor.js');
+compress.select = require('./func/compress/select.js');
 
 class CodeRecord {
   constructor(editor) {
     this.initTime = +new Date;
     this.lastChangeTime = +new Date;
     this.lastCursorActivityTime = +new Date;
-    this.operations = {
-      cursorActivities: [],
-      changes: []
-    };
-    this.compressedOperations = {
-      cursorActivities: [],
-      changes: []
-    };
+    this.operations = [];
     this.editor = editor;
     this.changesListener = bind(this.changesListener, this);
     this.cursorActivityListener = bind(this.cursorActivityListener, this);
@@ -29,9 +24,11 @@ class CodeRecord {
     this.editor.on('cursorActivity', this.cursorActivityListener);
   }
 
-  getRecord() {
-    this.compressOperations();
-    return JSON.stringify(minify(this.compressedOperations.changes));
+  getRecords() {
+    this.removeRedundantCursorOperations();
+    this.compressCursorOperations();
+    this.compressChanges();
+    return JSON.stringify(minify(this.operations));
   }
 
   /**
@@ -59,7 +56,7 @@ class CodeRecord {
   }
 
   changesListener(editor, changes) {
-    this.operations.changes.push({
+    this.operations.push({
       startTime: this.getOperationRelativeTime(),
       endTime: this.getOperationRelativeTime(),
       delayDuration: this.getLastChangePause(),
@@ -69,20 +66,40 @@ class CodeRecord {
   }
 
   cursorActivityListener(editor) {
-    this.operations.cursorActivities.push({
-      t: this.getOperationRelativeTime(),
-      d: this.getLastCursorActivityPause(),
-      o: editor.listSelections(),
-      c: 1
+    this.operations.push({
+      startTime: this.getOperationRelativeTime(),
+      endTime: this.getOperationRelativeTime(),
+      delayDuration: this.getLastCursorActivityPause(),
+      crs: editor.listSelections(),
+      combo: 1
     });
   }
 
-  compressOperations() {
-    let changes = this.operations.changes;
-    changes = compress.input(changes);
-    changes = compress.delete(changes);
-    changes = compress.compose(changes);
-    this.compressedOperations.changes = changes;
+  removeRedundantCursorOperations() {
+    let operations = this.operations;
+    let newOperations = [];
+    for (let i = 0; i < operations.length; i++) {
+      if (!(i < operations.length - 1 && 'ops' in operations[i + 1]) ||
+          'ops' in operations[i]) {
+        newOperations.push(operations[i])
+      }
+    }
+    this.operations = newOperations;
+  }
+
+  compressCursorOperations() {
+    let operations = this.operations;
+    operations = compress.select(operations);
+    operations = compress.cursor(operations);
+    this.operations = operations;
+  }
+
+  compressChanges() {
+    let operations = this.operations;
+    operations = compress.input(operations);
+    operations = compress.delete(operations);
+    operations = compress.compose(operations);
+    this.operations = operations;
   }
 }
 module.exports = CodeRecord;

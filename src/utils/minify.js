@@ -42,8 +42,13 @@ module.exports = function(changes) {
         delete change.ops[i].d;
       }
 
+      if ('select' in change.ops[i]) {
+        change.ops[i].s = change.ops[i].select;
+        delete change.ops[i].select;
+      }
+
       if (change.combo === 1) {
-        delete change.ops[i].d
+        delete change.ops[i].d;
       }
 
       delete change.ops[i].removed;
@@ -54,8 +59,8 @@ module.exports = function(changes) {
     }
 
     change.t = minifyTime([change.startTime, change.endTime]);
-    change.l = change.combo
-    change.o = change.ops
+    change.l = change.combo;
+    change.o = change.ops;
 
     if (change.l === 1) {
       delete change.l;

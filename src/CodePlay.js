@@ -5,20 +5,20 @@ const extract = {};
 extract.input = require('./func/extract/input.js');
 extract.delete = require('./func/extract/delete.js');
 extract.compose = require('./func/extract/compose.js');
+extract.cursor = require('./func/extract/cursor.js');
+extract.select = require('./func/extract/select.js');
 
 class CodePlay {
   constructor(editor) {
     this.timer = 0;
-    this.operations = {
-      changes: []
-    };
-    this.operationsProxy = null;
+    this.operations = [];
+    this.proxy = null;
     this.editor = editor;
   }
 
   addOperation(operations) {
     let parsedOperations = this.parseOpertaions(operations);
-    this.operationsProxy.changes = this.operations.changes.concat(parsedOperations);
+    this.proxy.operations = this.operations.concat(parsedOperations);
     this.playNewChanges();
   }
 
@@ -29,7 +29,7 @@ class CodePlay {
         return true;
       }
     };
-    this.operationsProxy = new Proxy(this.operations, handler);
+    this.proxy = new Proxy(this, handler);
   }
 
   /**
@@ -37,7 +37,8 @@ class CodePlay {
    */
 
   playNewChanges() {
-    let operations = this.operations.changes;
+    this.editor.focus();
+    let operations = this.operations;
     if (operations.length > 0) {
       this.timer = operations[0].t;
       while (operations.length > 0) {
@@ -61,11 +62,14 @@ class CodePlay {
          { line: insertPos[0][0], ch: insertPos[0][1] },
          { line: insertPos[1][0], ch: insertPos[1][1] }
        );
-       editor.replaceRange(
-         insertContent,
-         { line: insertPos[0][0], ch: insertPos[0][1] },
-         { line: insertPos[1][0], ch: insertPos[1][1] }
-       );
+
+       if (!currentOperation.cursorOnly) {
+         editor.replaceRange(
+           insertContent,
+           { line: insertPos[0][0], ch: insertPos[0][1] },
+           { line: insertPos[1][0], ch: insertPos[1][1] }
+         );
+       }
      }
   }
 
@@ -91,6 +95,10 @@ class CodePlay {
             extractedOperations.push(extract.compose(operation, i));
           } else if (operation.o[0].o === 'd') {
             extractedOperations.push(extract.delete(operation, i));
+          } else if (operation.o[0].o === 'o') {
+            extractedOperations.push(extract.cursor(operation, i));
+          } else if (operation.o[0].o === 'l') {
+            extractedOperations.push(extract.select(operation, i));
           }
         }
       } else {
