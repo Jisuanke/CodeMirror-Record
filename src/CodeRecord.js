@@ -1,14 +1,8 @@
-const bind = require('./utils/bind.js');
-const minify = require('./utils/minify.js');
+import bind from './utils/bind';
+import minify from './utils/minify';
+import compress from './func/compress';
 
-const compress = {};
-compress.input = require('./func/compress/input.js');
-compress.delete = require('./func/compress/delete.js');
-compress.compose = require('./func/compress/compose.js');
-compress.cursor = require('./func/compress/cursor.js');
-compress.select = require('./func/compress/select.js');
-
-class CodeRecord {
+export class CodeRecord {
   constructor(editor) {
     this.initTime = +new Date;
     this.lastChangeTime = +new Date;
@@ -97,9 +91,8 @@ class CodeRecord {
   compressChanges() {
     let operations = this.operations;
     operations = compress.input(operations);
-    operations = compress.delete(operations);
+    operations = compress.remove(operations);
     operations = compress.compose(operations);
     this.operations = operations;
   }
 }
-module.exports = CodeRecord;

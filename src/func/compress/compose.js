@@ -47,6 +47,6 @@ function compressContinuousCompose(changes) {
   return newChanges;
 }
 
-module.exports = function(changes) {
+export default function(changes) {
   return compressContinuousCompose(changes);
 }

@@ -53,7 +53,7 @@ Continuous insertions, deletions and compositions are the manipulations most fre
   "t":[14,14],
   "l": 13, // The number of compressed manipulations
   "o": [
-    "i": [[1,7],[1,15]], // If it is for combined cursor move, they do mean selection anymore. Instead, there are the start position and end position. 
+    "i": [[1,7],[1,15]], // If it is for combined cursor move, they do mean selection anymore. Instead, there are the start position and end position.
     "a": "string", // If the value of `o` us `i` denoting insertion, `a` is a string which at each time a character is inserted. Otherwise, it should be not difference from the format from discrete manipulations.
     "r": [ // The length of this array equals to the value of l.
       [[0,8], [1,2]], // Case1: denote deletion across lines
@@ -66,5 +66,4 @@ Continuous insertions, deletions and compositions are the manipulations most fre
 
 #### Final Step
 
-All activities related objects are finally squash into an array and stringified.  
-
+All activities related objects are finally squash into an array and stringified.

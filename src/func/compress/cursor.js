@@ -1,4 +1,4 @@
-const CONFIG = require('../../config.js');
+import CONFIG from '../../config';
 
 function isContinueCursorMove(firstChange, secondChange, direction = 1) {
   if (firstChange.crs.length !== secondChange.crs.length) {
@@ -67,7 +67,7 @@ function convertCursorMoveFormat(operations) {
   return operations;
 }
 
-module.exports = function(operations) {
+export default function(operations) {
   operations = compressContinuousCursorMove(operations, 1);
   operations = compressContinuousCursorMove(operations, -1);
   operations = convertCursorMoveFormat(operations)

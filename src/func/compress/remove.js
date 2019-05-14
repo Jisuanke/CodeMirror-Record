@@ -1,4 +1,4 @@
-const CONFIG = require('../../config.js');
+import CONFIG from '../../config';
 
 function isContinueDelete(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
@@ -97,6 +97,6 @@ function compressContinuousDelete(changes) {
   return newChanges;
 }
 
-module.exports = function(changes) {
+export default function(changes) {
   return compressContinuousDelete(changes);
 }

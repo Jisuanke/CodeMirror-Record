@@ -13,7 +13,7 @@ let origin = {
   'cut': 'x'
 };
 
-module.exports = {
+export default {
   encode: function(fullname) {
     return origin[fullname];
   },
@@ -25,4 +25,4 @@ module.exports = {
     }
     return 'unknown';
   }
-}
+};

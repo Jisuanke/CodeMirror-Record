@@ -1,4 +1,4 @@
-const CONFIG = require('../../config.js');
+import CONFIG from '../../config';
 
 function isContinueSelect(firstChange, secondChange) {
   if (firstChange.crs.length !== secondChange.crs.length) {
@@ -118,7 +118,7 @@ function convertSelectFormat(operations) {
   return operations;
 }
 
-module.exports = function(operations) {
+export default function(operations) {
   operations = compressContinuousSelect(operations);
   operations = convertSelectFormat(operations)
   return operations;

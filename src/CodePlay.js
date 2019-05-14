@@ -1,14 +1,6 @@
-const bind = require('./utils/bind.js');
-const minify = require('./utils/minify.js');
+import extract from './func/extract';
 
-const extract = {};
-extract.input = require('./func/extract/input.js');
-extract.delete = require('./func/extract/delete.js');
-extract.compose = require('./func/extract/compose.js');
-extract.cursor = require('./func/extract/cursor.js');
-extract.select = require('./func/extract/select.js');
-
-class CodePlay {
+export class CodePlay {
   constructor(editor) {
     this.timer = 0;
     this.operations = [];
@@ -94,7 +86,7 @@ class CodePlay {
           } else if (operation.o[0].o === 'c') {
             extractedOperations.push(extract.compose(operation, i));
           } else if (operation.o[0].o === 'd') {
-            extractedOperations.push(extract.delete(operation, i));
+            extractedOperations.push(extract.remove(operation, i));
           } else if (operation.o[0].o === 'o') {
             extractedOperations.push(extract.cursor(operation, i));
           } else if (operation.o[0].o === 'l') {
@@ -108,4 +100,3 @@ class CodePlay {
     return extractedOperations;
   }
 }
-module.exports = CodePlay;
