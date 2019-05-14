@@ -1,4 +1,4 @@
-const originMap = require('./origin.js');
+import originMap from './origin';
 
 function getInterval(operation) {
   if (operation.from.line === operation.to.line &&
@@ -20,7 +20,7 @@ function minifyTime(timeInterval) {
   }
 }
 
-module.exports = function(changes) {
+export default function(changes) {
   let minifiedChanges = [];
 
   while(changes.length > 0) {
@@ -75,4 +75,4 @@ module.exports = function(changes) {
     minifiedChanges.unshift(change);
   }
   return minifiedChanges;
-};
+}

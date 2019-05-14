@@ -18,7 +18,7 @@ function extractToPostions(toPos) {
   return toPositions;
 }
 
-module.exports = function(operation, i) {
+export default function(operation, i) {
   let startTime = operation.t[0];
   let durationPerOperation = (operation.t[1] - operation.t[0]) / (operation.l - 1);
 

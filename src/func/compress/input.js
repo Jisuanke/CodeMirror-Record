@@ -1,4 +1,4 @@
-const CONFIG = require('../../config.js');
+import CONFIG from '../../config';
 
 function isContinueInput(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
@@ -69,6 +69,6 @@ function compressContinuousInput(changes) {
   return newChanges;
 }
 
-module.exports = function(changes) {
+export default function(changes) {
   return compressContinuousInput(changes);
 }
