@@ -9,5 +9,5 @@ export default {
   cursor,
   input,
   select,
-  remove
+  remove,
 };

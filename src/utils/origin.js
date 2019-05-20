@@ -1,4 +1,4 @@
-let origin = {
+const origin = {
   '*compose': 'c',
   '+delete': 'd',
   '+input': 'i',
@@ -10,7 +10,7 @@ let origin = {
   'paste': 'p',
   'drag': 'r',
   'setValue': 's',
-  'cut': 'x'
+  'cut': 'x',
 };
 
 export default {
@@ -18,11 +18,11 @@ export default {
     return origin[fullname];
   },
   decode: function(abbreviation) {
-    for (let key in origin) {
+    for (const key in origin) {
       if (origin[key] === abbreviation) {
         return key;
       }
     }
     return 'unknown';
-  }
+  },
 };

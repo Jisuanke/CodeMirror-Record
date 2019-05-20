@@ -1,11 +1,17 @@
+/**
+ * extractToPostions - Extract compressed selection "to positions"
+ *
+ * @param  {array} toPos The description of compressed selection "to positions"
+ * @return {array}       Extracted selection "to positions" array
+ */
 function extractToPostions(toPos) {
-  let toPositions = [];
+  const toPositions = [];
   for (let i = 0; i < toPos.length; i++) {
     for (let j = 0; j < toPos[i][1].length; j++) {
       if (typeof(toPos[i][1][j]) === 'number') {
         toPositions.push([toPos[i][0], toPos[i][1][j]]);
       } else {
-        let direction = toPos[i][1][j][0] < toPos[i][1][j][1] ? 1 : -1;
+        const direction = toPos[i][1][j][0] < toPos[i][1][j][1] ? 1 : -1;
         let ch = toPos[i][1][j][0];
         toPositions.push([toPos[i][0], ch]);
         while (ch !== toPos[i][1][j][1]) {
@@ -18,35 +24,41 @@ function extractToPostions(toPos) {
   return toPositions;
 }
 
-export default function(operation, i) {
-  let startTime = operation.t[0];
-  let durationPerOperation = (operation.t[1] - operation.t[0]) / (operation.l - 1);
+/**
+ * export default - Extract selection operation
+ *
+ * @param  {object} op  A specified selection operation
+ * @param  {number} i   Operation index
+ * @return {object}     Extracted selection operation
+ */
+export default function(op, i) {
+  const startTime = op.t[0];
+  const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  let selection = {t: null, o: []};
+  const selection = {t: null, o: []};
   // Set operation time
   selection.t = Math.floor(startTime + i * durationPerOperation);
-  if (i === operation.l - 1) {
-    selection.t = operation.t[1];
+  if (i === op.l - 1) {
+    selection.t = op.t[1];
   }
 
   selection.cursorOnly = true;
 
-  let cursorsPos = [] // for each cursor
-  for (let j = 0; j < operation.o.length; j++) {
-    cursorsPos.push(operation.o[j].i);
-    selection.o.push({ i: null });
+  const cursorsPos = []; // for each cursor
+  for (let j = 0; j < op.o.length; j++) {
+    cursorsPos.push(op.o[j].i);
+    selection.o.push({i: null});
   }
 
-  for (let j = 0; j < operation.o.length; j++) { // for each cursor
-
-    let fromPos = [
-      operation.o[j].i[0],
-      operation.o[j].i[1]
+  for (let j = 0; j < op.o.length; j++) { // for each cursor
+    const fromPos = [
+      op.o[j].i[0],
+      op.o[j].i[1],
     ];
-    let toPostions = extractToPostions(operation.o[j].s);
-    let toPos = [
+    const toPostions = extractToPostions(op.o[j].s);
+    const toPos = [
       toPostions[i][0],
-      toPostions[i][1]
+      toPostions[i][1],
     ];
 
     selection.o[j].i = [fromPos, toPos];

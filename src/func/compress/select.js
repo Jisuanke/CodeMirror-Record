@@ -1,15 +1,23 @@
-import CONFIG from '../../config';
-
+/**
+ * isContinueSelect - Whether two select moves are treated continues
+ *
+ * @param  {object} firstChange  The first (previous) operation
+ * @param  {object} secondChange The second (later) operation
+ * @return {boolean}             Judege result whether moves are continues
+ */
 function isContinueSelect(firstChange, secondChange) {
   if (firstChange.crs.length !== secondChange.crs.length) {
     return false;
   } else {
     for (let i = 0; i < secondChange.crs.length; i++) {
-      if (secondChange.crs[i].anchor.line === secondChange.crs[i].head.line &&
-          secondChange.crs[i].anchor.ch === secondChange.crs[i].head.ch) {
+      const firstCh = firstChange.crs[i];
+      const secondCh = secondChange.crs[i];
+      if (secondCh.anchor.line === secondCh.head.line &&
+          secondCh.anchor.ch === secondCh.head.ch) {
         return false;
-      } else if (firstChange.crs[i].anchor.line !== secondChange.crs[i].anchor.line ||
-        firstChange.crs[i].anchor.ch !== secondChange.crs[i].anchor.ch) {
+      } else if (
+        firstCh.anchor.line !== secondCh.anchor.line ||
+        firstCh.anchor.ch !== secondCh.anchor.ch) {
         return false;
       }
     }
@@ -17,11 +25,17 @@ function isContinueSelect(firstChange, secondChange) {
   return true;
 }
 
+/**
+ * compressSelectionHeads - description
+ *
+ * @param  {type} heads description
+ * @return {type}       description
+ */
 function compressSelectionHeads(heads) {
-  let resultArray = [];
+  const resultArray = [];
   let currentLine = -1;
   while (heads.length > 0) {
-    let head = heads.shift();
+    const head = heads.shift();
     if (currentLine !== head.line) {
       resultArray.push([head.line]);
       currentLine = head.line;
@@ -37,18 +51,25 @@ function compressSelectionHeads(heads) {
   return resultArray;
 }
 
+/**
+ * convertChsToInterval - description
+ *
+ * @param  {type} chs           description
+ * @param  {type} direction = 1 description
+ * @return {type}               description
+ */
 function convertChsToInterval(chs, direction = 1) {
-  let resultArray = [];
-  while(chs.length > 0) {
-    let current = chs.shift();
+  const resultArray = [];
+  while (chs.length > 0) {
+    const current = chs.shift();
     if (typeof(current) !== 'number') {
       resultArray.push(current);
     } else if (resultArray.length === 0 ||
                Array.isArray(resultArray[resultArray.length - 1])) {
-      resultArray.push({ from: current, to: current });
+      resultArray.push({from: current, to: current});
     } else if ('to' in resultArray[resultArray.length - 1]) {
       if (resultArray[resultArray.length - 1].to + direction !== current) {
-        resultArray.push({ from: current, to: current });
+        resultArray.push({from: current, to: current});
       } else {
         resultArray[resultArray.length - 1].to = current;
       }
@@ -66,13 +87,20 @@ function convertChsToInterval(chs, direction = 1) {
   return resultArray;
 }
 
+/**
+ * compressContinuousSelect - description
+ *
+ * @param  {type} operations    description
+ * @param  {type} direction = 1 description
+ * @return {type}               description
+ */
 function compressContinuousSelect(operations, direction = 1) {
-  let newOperations = [];
-  while(operations.length > 0) {
-    let operation = operations.pop(); // Obtain the latest operation
+  const newOperations = [];
+  while (operations.length > 0) {
+    const operation = operations.pop(); // Obtain the latest operation
     if ('crs' in operation) {
-      while(operations.length > 0) {
-        let lastOperation = operations.pop();
+      while (operations.length > 0) {
+        const lastOperation = operations.pop();
         if (('crs' in lastOperation) &&
         isContinueSelect(lastOperation, operation)) {
           operation.startTime = lastOperation.startTime;
@@ -80,9 +108,10 @@ function compressContinuousSelect(operations, direction = 1) {
           operation.combo += 1;
           for (let i = 0; i < operation.crs.length; i++) {
             if (!('heads' in operation.crs[i])) {
-              operation.crs[i].heads = [lastOperation.crs[i].head, operation.crs[i].head]
+              operation.crs[i].heads =
+                [lastOperation.crs[i].head, operation.crs[i].head];
             } else {
-              operation.crs[i].heads.unshift(lastOperation.crs[i].head)
+              operation.crs[i].heads.unshift(lastOperation.crs[i].head);
             }
           }
         } else {
@@ -98,10 +127,16 @@ function compressContinuousSelect(operations, direction = 1) {
   return newOperations;
 }
 
+/**
+ * convertSelectFormat - description
+ *
+ * @param  {type} operations description
+ * @return {type}            description
+ */
 function convertSelectFormat(operations) {
   for (let i = 0; i < operations.length; i++) {
     if (('crs' in operations[i]) && operations[i].combo > 1) {
-      operations[i].ops = []
+      operations[i].ops = [];
       for (let j = 0; j < operations[i].crs.length; j++) {
         operations[i].ops.push({
           from: operations[i].crs[j].anchor,
@@ -109,8 +144,8 @@ function convertSelectFormat(operations) {
           origin: 'select',
           text: [''],
           removed: [''],
-          select: compressSelectionHeads(operations[i].crs[j].heads) // 这里需要做进一步的数据压缩
-        })
+          select: compressSelectionHeads(operations[i].crs[j].heads),
+        });
       }
       delete operations[i].crs;
     }
@@ -118,8 +153,14 @@ function convertSelectFormat(operations) {
   return operations;
 }
 
+/**
+ * export default - description
+ *
+ * @param  {type} operations description
+ * @return {type}            description
+ */
 export default function(operations) {
   operations = compressContinuousSelect(operations);
-  operations = convertSelectFormat(operations)
+  operations = convertSelectFormat(operations);
   return operations;
 }
