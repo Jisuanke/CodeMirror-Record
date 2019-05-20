@@ -1,24 +1,31 @@
-export default function(operation, i) {
-  let startTime = operation.t[0];
-  let durationPerOperation = (operation.t[1] - operation.t[0]) / (operation.l - 1);
+/**
+ * export default - Extract compressed input operation
+ *
+ * @param  {object} op  A specified compressed input operation
+ * @param  {number} i   Operation index
+ * @return {object}     Extracted input operation
+ */
+export default function(op, i) {
+  const startTime = op.t[0];
+  const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  let insertion = {t: null, o: []};
+  const insertion = {t: null, o: []};
   // Set operation time
   insertion.t = Math.floor(startTime + i * durationPerOperation);
-  if (i === operation.l - 1) {
-    insertion.t = operation.t[1];
+  if (i === op.l - 1) {
+    insertion.t = op.t[1];
   }
 
   insertion.cursorOnly = false;
 
-  let cursorsPos = [] // for each cursor
-  for (let j = 0; j < operation.o.length; j++) {
-    cursorsPos.push(operation.o[j].i);
-    insertion.o.push({ a: null, i: null });
+  const cursorsPos = []; // for each cursor
+  for (let j = 0; j < op.o.length; j++) {
+    cursorsPos.push(op.o[j].i);
+    insertion.o.push({a: null, i: null});
   }
 
-  for (let j = 0; j < operation.o.length; j++) { // for each cursor
-    insertion.o[j].a = operation.o[j].a[i];
+  for (let j = 0; j < op.o.length; j++) { // for each cursor
+    insertion.o[j].a = op.o[j].a[i];
     insertion.o[j].i = [cursorsPos[j][0], cursorsPos[j][1]];
     if (insertion.o[j].a !== '\n') {
       cursorsPos[j][1]++;

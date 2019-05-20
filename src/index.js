@@ -1,2 +1,2 @@
-export { CodeRecord } from './CodeRecord';
-export { CodePlay } from './CodePlay';
+export {CodeRecord} from './CodeRecord';
+export {CodePlay} from './CodePlay';

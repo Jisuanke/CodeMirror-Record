@@ -1,25 +1,33 @@
-export default function(operation, i) {
-  let startTime = operation.t[0];
-  let durationPerOperation = (operation.t[1] - operation.t[0]) / (operation.l - 1);
+/**
+ * export default - Extract cursor movement
+ *
+ * @param  {object} op  A specified cursor movement record
+ * @param  {number} i   Operation index
+ * @return {object}     Extracted cursor movement operation
+ */
+export default function(op, i) {
+  const startTime = op.t[0];
+  const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  let cursor = {t: null, o: []};
+  const cursor = {t: null, o: []};
   // Set operation time
   cursor.t = Math.floor(startTime + i * durationPerOperation);
-  if (i === operation.l - 1) {
-    cursor.t = operation.t[1];
+  if (i === op.l - 1) {
+    cursor.t = op.t[1];
   }
 
   cursor.cursorOnly = true;
 
-  let cursorsPos = [] // for each cursor
-  for (let j = 0; j < operation.o.length; j++) {
-    cursorsPos.push(operation.o[j].i);
-    cursor.o.push({ i: null });
+  const cursorsPos = []; // for each cursor
+  for (let j = 0; j < op.o.length; j++) {
+    cursorsPos.push(op.o[j].i);
+    cursor.o.push({i: null});
   }
 
-  for (let j = 0; j < operation.o.length; j++) { // for each cursor
-    let posLine = cursorsPos[j][0][0];
-    let posCh = cursorsPos[j][0][1] + (cursorsPos[j][1][1] - cursorsPos[j][0][1]) / (operation.l - 1) * i;
+  for (let j = 0; j < op.o.length; j++) { // for each cursor
+    const posLine = cursorsPos[j][0][0];
+    const posCh = cursorsPos[j][0][1] +
+      (cursorsPos[j][1][1] - cursorsPos[j][0][1]) / (op.l - 1) * i;
     cursor.o[j].i = [posLine, posCh];
   }
   return cursor;

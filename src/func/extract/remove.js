@@ -1,54 +1,60 @@
-export default function(operation, i) {
-  let startTime = operation.t[0];
-  let durationPerOperation = (operation.t[1] - operation.t[0]) / (operation.l - 1);
+/**
+ * export default - Extract compressed remove operation
+ *
+ * @param  {object} op  A specified compressed remove operation
+ * @param  {number} i   Operation index
+ * @return {object}     Extracted remove operation
+ */
+export default function(op, i) {
+  const startTime = op.t[0];
+  const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  let deletion = {t: null, o: []};
+  const deletion = {t: null, o: []};
   // Set operation time
   deletion.t = Math.floor(startTime + i * durationPerOperation);
-  if (i === operation.l - 1) {
-    deletion.t = operation.t[1];
+  if (i === op.l - 1) {
+    deletion.t = op.t[1];
   }
 
   deletion.cursorOnly = false;
 
-  let cursorsPos = [] // for each cursor
-  for (let j = 0; j < operation.o.length; j++) {
-    cursorsPos.push(operation.o[j].i[1]);
-    deletion.o.push({ i: null });
+  const cursorsPos = []; // for each cursor
+  for (let j = 0; j < op.o.length; j++) {
+    cursorsPos.push(op.o[j].i[1]);
+    deletion.o.push({i: null});
   }
 
-  for (let j = 0; j < operation.o.length; j++) {
-    let currentDeletion = operation.o[j].d.pop();
+  for (let j = 0; j < op.o.length; j++) {
+    const currentDeletion = op.o[j].d.pop();
 
     if (typeof(currentDeletion[0]) === 'number') {
       deletion.o[j].i = [
         [
           cursorsPos[j][0],
-          cursorsPos[j][1] - currentDeletion[0]
+          cursorsPos[j][1] - currentDeletion[0],
         ],
         [
           cursorsPos[j][0],
-          cursorsPos[j][1]
-        ]
+          cursorsPos[j][1],
+        ],
       ];
       cursorsPos[j][1] -= currentDeletion[0];
 
       if (currentDeletion[1] - 1 > 0) {
-        operation.o[j].d.push([currentDeletion[0], currentDeletion[1] - 1]);
+        op.o[j].d.push([currentDeletion[0], currentDeletion[1] - 1]);
       }
-
     } else {
       deletion.o[j].i = [
         [
-          currentDeletion[0][0], currentDeletion[0][1]
+          currentDeletion[0][0], currentDeletion[0][1],
         ],
         [
-          currentDeletion[1][0], currentDeletion[1][1]
-        ]
+          currentDeletion[1][0], currentDeletion[1][1],
+        ],
       ];
-      operation.o[j].i[1] = [
+      op.o[j].i[1] = [
         currentDeletion[0][0],
-        currentDeletion[0][1]
+        currentDeletion[0][1],
       ];
     }
   }

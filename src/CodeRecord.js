@@ -1,23 +1,38 @@
-import bind from './utils/bind';
 import minify from './utils/minify';
 import compress from './func/compress';
 
+/**
+ * A class for code recording
+ */
 export class CodeRecord {
+  /**
+   * constructor - Initialize a instance for recording coding operations.
+   *
+   * @param  {object} editor Codemirror instance
+   */
   constructor(editor) {
     this.initTime = +new Date;
     this.lastChangeTime = +new Date;
     this.lastCursorActivityTime = +new Date;
     this.operations = [];
     this.editor = editor;
-    this.changesListener = bind(this.changesListener, this);
-    this.cursorActivityListener = bind(this.cursorActivityListener, this);
+    this.changesListener = this.changesListener.bind(this);
+    this.cursorActivityListener = this.cursorActivityListener.bind(this);
   }
 
+  /**
+   * listen - Listen on both content change and cursor activities.
+   */
   listen() {
     this.editor.on('changes', this.changesListener);
     this.editor.on('cursorActivity', this.cursorActivityListener);
   }
 
+  /**
+   * getRecords - Get unrecorded changes
+   *
+   * @return {string}  Changes to be recorded in JSON format
+   */
   getRecords() {
     this.removeRedundantCursorOperations();
     this.compressCursorOperations();
@@ -25,62 +40,93 @@ export class CodeRecord {
     return JSON.stringify(minify(this.operations));
   }
 
+
   /**
-   * PRIVATE METHODS
+   * getOperationRelativeTime - Compute relative point of time of a change.
+   *
+   * @return {number}  Point of time relative to creation of recorder instance
    */
   getOperationRelativeTime() {
-    let currentTime = +new Date;
+    const currentTime = +new Date;
     return currentTime - this.initTime;
   }
 
+  /**
+   * getLastChangePause - Get delay of time since last content change.
+   *
+   * @return {number}  Delay delay of time since last content change.
+   */
   getLastChangePause() {
-    let currentTime = +new Date;
-    let lastChangePause = currentTime - this.lastChangeTime;
+    const currentTime = +new Date;
+    const lastChangePause = currentTime - this.lastChangeTime;
     this.lastChangeTime = currentTime;
 
     return lastChangePause;
   }
 
+  /**
+   * getLastCursorActivityPause - Get delay of time since last cursor operation.
+   *
+   * @return {number}  Delay of time since last cursor operation
+   */
   getLastCursorActivityPause() {
-    let currentTime = +new Date;
-    let lastCursorActivityPause = currentTime - this.lastCursorActivityTime;
+    const currentTime = +new Date;
+    const lastCursorActivityPause = currentTime - this.lastCursorActivityTime;
     this.lastCursorActivityTime = currentTime;
 
     return lastCursorActivityPause;
   }
 
+  /**
+   * changesListener - Listener to content changes.
+   *
+   * @param  {object} editor  Codemirror instance
+   * @param  {array}  changes Changes of content provided with codemirror format
+   */
   changesListener(editor, changes) {
     this.operations.push({
       startTime: this.getOperationRelativeTime(),
       endTime: this.getOperationRelativeTime(),
       delayDuration: this.getLastChangePause(),
       ops: changes,
-      combo: 1
+      combo: 1,
     });
   }
 
+  /**
+   * cursorActivityListener - Listener to cursor changes.
+   *
+   * @param  {object} editor Codemirror instance
+   */
   cursorActivityListener(editor) {
     this.operations.push({
       startTime: this.getOperationRelativeTime(),
       endTime: this.getOperationRelativeTime(),
       delayDuration: this.getLastCursorActivityPause(),
       crs: editor.listSelections(),
-      combo: 1
+      combo: 1,
     });
   }
 
+  /**
+   * removeRedundantCursorOperations - Remove cursor
+   * operations that can be inferd from content operations.
+   */
   removeRedundantCursorOperations() {
-    let operations = this.operations;
-    let newOperations = [];
+    const operations = this.operations;
+    const newOperations = [];
     for (let i = 0; i < operations.length; i++) {
       if (!(i < operations.length - 1 && 'ops' in operations[i + 1]) ||
           'ops' in operations[i]) {
-        newOperations.push(operations[i])
+        newOperations.push(operations[i]);
       }
     }
     this.operations = newOperations;
   }
 
+  /**
+   * compressCursorOperations - Compress cursor operations to minimize cost.
+   */
   compressCursorOperations() {
     let operations = this.operations;
     operations = compress.select(operations);
@@ -88,6 +134,9 @@ export class CodeRecord {
     this.operations = operations;
   }
 
+  /**
+   * compressChanges - Compress content operations to minimize cost.
+   */
   compressChanges() {
     let operations = this.operations;
     operations = compress.input(operations);
