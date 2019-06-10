@@ -29,8 +29,16 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror);
 
-recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');
-setInterval(() => {
+let flushTimer = null;
+
+const flushToPlayer = function() {
   const recordedOperations = codeRecorder.getRecords();
   codePlayer.addOperation(recordedOperations);
-}, 3000);
+};
+
+recordCodeMirror.on('changes', function() {
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flushToPlayer, 3000);
+});
+
+recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');
