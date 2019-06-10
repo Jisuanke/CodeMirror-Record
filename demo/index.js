@@ -29,8 +29,6 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror);
 
-codePlayer.listen();
-
 recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');
 setInterval(() => {
   const recordedOperations = codeRecorder.getRecords();

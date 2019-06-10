@@ -12,7 +12,6 @@ export class CodePlay {
   constructor(editor) {
     this.timer = 0;
     this.operations = [];
-    this.proxy = null;
     this.editor = editor;
   }
 
@@ -23,21 +22,8 @@ export class CodePlay {
    */
   addOperation(operations) {
     const parsedOperations = this.parseOpertaions(operations);
-    this.proxy.operations = this.operations.concat(parsedOperations);
+    this.operations = this.operations.concat(parsedOperations);
     this.playChanges();
-  }
-
-  /**
-   * listen - Listen on the change of operation queue.
-   */
-  listen() {
-    const handler = {
-      set(target, key, value) {
-        target[key] = value;
-        return true;
-      },
-    };
-    this.proxy = new Proxy(this, handler);
   }
 
   /**
