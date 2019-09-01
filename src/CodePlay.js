@@ -21,7 +21,7 @@ export class CodePlay {
    * @param  {array} operations In coming operations
    */
   addOperation(operations) {
-    const parsedOperations = this.parseOpertaions(operations);
+    const parsedOperations = this.parseOperations(operations);
     this.operations = this.operations.concat(parsedOperations);
     this.playChanges();
   }
@@ -50,6 +50,7 @@ export class CodePlay {
    * @param  {object} currentOperation  Current operation to replay
    */
   playChange(editor, currentOperation) {
+    console.info(currentOperation);
     for (let i = 0; i < currentOperation.o.length; i++) {
       const insertContent = this.insertionText(currentOperation.o[i]);
       let insertPos = currentOperation.o[i].i;
@@ -57,10 +58,18 @@ export class CodePlay {
       if (typeof(insertPos[0]) === 'number') {
         insertPos = [insertPos, insertPos];
       }
-      editor.setSelection(
-          {line: insertPos[0][0], ch: insertPos[0][1]},
-          {line: insertPos[1][0], ch: insertPos[1][1]},
-      );
+
+      if (i === 0) {
+        editor.setSelection(
+            {line: insertPos[0][0], ch: insertPos[0][1]},
+            {line: insertPos[1][0], ch: insertPos[1][1]},
+        );
+      } else {
+        editor.addSelection(
+            {line: insertPos[0][0], ch: insertPos[0][1]},
+            {line: insertPos[1][0], ch: insertPos[1][1]},
+        );
+      }
 
       if (!currentOperation.cursorOnly) {
         editor.replaceRange(
@@ -88,16 +97,32 @@ export class CodePlay {
     return insertContent;
   }
 
+
   /**
-   * parseOpertaions - Parse and extract operations.
+   * classifyOperation - Classify whether the operation is cursor only.
+   *
+   * @param  {array} operation  Operation to be classified
+   * @return {array}            Operation with cursorOnly property classified
+   */
+  classifyOperation(operation) {
+    operation.cursorOnly = false;
+    if (operation.o[0].o === 'o' || operation.o[0].o === 'l') {
+      operation.cursorOnly = true;
+    }
+    return operation;
+  }
+
+  /**
+   * parseOperations - Parse and extract operations.
    *
    * @param  {array} operations Operation to be parsed
    * @return {array}            Extracted operations
    */
-  parseOpertaions(operations) {
+  parseOperations(operations) {
     operations = JSON.parse(operations);
     const extractedOperations = [];
     for (const operation of operations) {
+      operation = this.classifyOperation(operation);
       if ('l' in operation) {
         for (let i = 0; i < operation.l; i++) {
           if (operation.o[0].o === 'i') {
