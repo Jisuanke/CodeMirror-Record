@@ -16,8 +16,6 @@ export default function(op, i) {
     cursor.t = op.t[1];
   }
 
-  cursor.cursorOnly = true;
-
   const cursorsPos = []; // for each cursor
   for (let j = 0; j < op.o.length; j++) {
     cursorsPos.push(op.o[j].i);

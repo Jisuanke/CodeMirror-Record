@@ -16,8 +16,6 @@ export default function(op, i) {
     deletion.t = op.t[1];
   }
 
-  deletion.cursorOnly = false;
-
   const cursorsPos = []; // for each cursor
   for (let j = 0; j < op.o.length; j++) {
     cursorsPos.push(op.o[j].i[1]);
