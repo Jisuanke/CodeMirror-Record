@@ -25,6 +25,7 @@ const config = [
   {
     entry: './src/index.js',
     output: {
+      libraryTarget: 'umd',
       filename: 'main.js',
       path: path.resolve(__dirname, 'dist')
     },
