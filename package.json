@@ -32,5 +32,8 @@
     "webpack-cli": "^3.3.2"
   },
   "author": "Haoran Yu",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.15"
+  }
 }

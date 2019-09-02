@@ -1,3 +1,5 @@
+const cloneDeep = require('lodash/cloneDeep');
+
 /**
  * isContinueSelect - Whether two select moves are treated continues
  *
@@ -97,10 +99,10 @@ function convertChsToInterval(chs, direction = 1) {
 function compressContinuousSelect(operations, direction = 1) {
   const newOperations = [];
   while (operations.length > 0) {
-    const operation = operations.pop(); // Obtain the latest operation
+    const operation = cloneDeep(operations.pop());
     if ('crs' in operation) {
       while (operations.length > 0) {
-        const lastOperation = operations.pop();
+        const lastOperation = cloneDeep(operations.pop());
         if (('crs' in lastOperation) &&
         isContinueSelect(lastOperation, operation)) {
           operation.startTime = lastOperation.startTime;
