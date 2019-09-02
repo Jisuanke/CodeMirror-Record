@@ -11,10 +11,17 @@ const recordCodeMirror = CodeMirror.fromTextArea(
 
 const codeRecorder = new CodeRecord(recordCodeMirror);
 
+let record = '';
+
 codeRecorder.listen();
 
 document.getElementById('record').onclick = function() {
-  console.log(codeRecorder.getRecords());
+  record = codeRecorder.getRecords();
+  console.log(JSON.parse(record));
+};
+
+document.getElementById('play').onclick = function() {
+  codePlayer.addOperation(record);
 };
 
 /**
@@ -29,16 +36,11 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror);
 
-let flushTimer = null;
+// let flushTimer = null;
 
-const flushToPlayer = function() {
-  const recordedOperations = codeRecorder.getRecords();
-  codePlayer.addOperation(recordedOperations);
-};
-
-recordCodeMirror.on('changes', function() {
-  clearTimeout(flushTimer);
-  flushTimer = setTimeout(flushToPlayer, 3000);
-});
+// recordCodeMirror.on('changes', function() {
+//   clearTimeout(flushTimer);
+//   flushTimer = setTimeout(flushToPlayer, 3000);
+// });
 
 recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');

@@ -35,7 +35,8 @@ export default function(op, i) {
   const startTime = op.t[0];
   const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  const selection = {t: null, o: []};
+  const selection = {t: null, o: [], cursorOnly: true};
+
   // Set operation time
   selection.t = Math.floor(startTime + i * durationPerOperation);
   if (i === op.l - 1) {
@@ -53,7 +54,9 @@ export default function(op, i) {
       op.o[j].i[0],
       op.o[j].i[1],
     ];
+
     const toPostions = extractToPostions(op.o[j].s);
+
     const toPos = [
       toPostions[i][0],
       toPostions[i][1],

@@ -50,7 +50,6 @@ export class CodePlay {
    * @param  {object} currentOperation  Current operation to replay
    */
   playChange(editor, currentOperation) {
-    console.info(currentOperation);
     for (let i = 0; i < currentOperation.o.length; i++) {
       const insertContent = this.insertionText(currentOperation.o[i]);
       let insertPos = currentOperation.o[i].i;
@@ -96,7 +95,6 @@ export class CodePlay {
     }
     return insertContent;
   }
-
 
   /**
    * classifyOperation - Classify whether the operation is cursor only.
