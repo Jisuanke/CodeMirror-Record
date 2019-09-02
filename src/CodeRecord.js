@@ -109,6 +109,21 @@ export class CodeRecord {
   }
 
   /**
+   * isPasteOperation - Judge whether an operation involve paste.
+   *
+   * @param  {object} operation Operation to be judged
+   * @return {boolean}          True if the operation is paste
+   */
+  isPasteOperation(operation) {
+    for (let i = 0; i < operation.ops.length; i++) {
+      if (operation.ops[i].origin === 'paste') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * removeRedundantCursorOperations - Remove cursor
    * operations that can be inferd from content operations.
    */
@@ -116,8 +131,15 @@ export class CodeRecord {
     const operations = this.operations;
     const newOperations = [];
     for (let i = 0; i < operations.length; i++) {
-      if (!(i < operations.length - 1 && 'ops' in operations[i + 1]) ||
-          'ops' in operations[i]) {
+      if ('ops' in operations[i]) {
+        newOperations.push(operations[i]);
+        // Following `if` statement is to perserve selection after paste
+        if (i > 0 && this.isPasteOperation(operations[i])) {
+          operations[i - 1].startTime = operations[i].startTime + 1;
+          operations[i - 1].endTime = operations[i].endTime + 1;
+          newOperations.push(operations[i - 1]);
+        }
+      } else if (!(i < operations.length - 1 && 'ops' in operations[i + 1])) {
         newOperations.push(operations[i]);
       }
     }
