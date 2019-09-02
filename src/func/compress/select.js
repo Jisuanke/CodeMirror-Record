@@ -28,10 +28,10 @@ function isContinueSelect(firstChange, secondChange) {
 }
 
 /**
- * compressSelectionHeads - description
+ * compressSelectionHeads - Compress heads position of selection operations
  *
- * @param  {type} heads description
- * @return {type}       description
+ * @param  {type} heads Array of heads
+ * @return {type}       Compressed result of heads
  */
 function compressSelectionHeads(heads) {
   const resultArray = [];
@@ -54,11 +54,11 @@ function compressSelectionHeads(heads) {
 }
 
 /**
- * convertChsToInterval - description
+ * convertChsToInterval - Convert character positions to interval description
  *
- * @param  {type} chs           description
- * @param  {type} direction = 1 description
- * @return {type}               description
+ * @param  {type} chs           Character positions
+ * @param  {type} direction = 1 Positive is left to right. Negative is opposite
+ * @return {type}               Interval description of character positions
  */
 function convertChsToInterval(chs, direction = 1) {
   const resultArray = [];
@@ -90,11 +90,11 @@ function convertChsToInterval(chs, direction = 1) {
 }
 
 /**
- * compressContinuousSelect - description
+ * compressContinuousSelect - Compress continues selection operations
  *
- * @param  {type} operations    description
- * @param  {type} direction = 1 description
- * @return {type}               description
+ * @param  {type} operations    The array of operations
+ * @param  {type} direction = 1 Positive is left to right. Negative is opposite.
+ * @return {type}               Comrpressed selection operations
  */
 function compressContinuousSelect(operations, direction = 1) {
   const newOperations = [];
@@ -130,10 +130,10 @@ function compressContinuousSelect(operations, direction = 1) {
 }
 
 /**
- * convertSelectFormat - description
+ * convertSelectFormat - Convert selection to standard format
  *
- * @param  {type} operations description
- * @return {type}            description
+ * @param  {type} operations The array of operations
+ * @return {type}            Converted array of operations
  */
 function convertSelectFormat(operations) {
   for (let i = 0; i < operations.length; i++) {
@@ -156,10 +156,10 @@ function convertSelectFormat(operations) {
 }
 
 /**
- * export default - description
+ * export default - Function for selection related compression
  *
- * @param  {type} operations description
- * @return {type}            description
+ * @param  {type} operations Uncompressed operations of selections
+ * @return {type}            Compressed operations
  */
 export default function(operations) {
   operations = compressContinuousSelect(operations);
