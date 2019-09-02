@@ -27,6 +27,16 @@ export class CodePlay {
   }
 
   /**
+   * isAutoIndent - Judge whether operation is automatic indentation adjustment
+   *
+   * @param  {object} operationOp Operation at specific cursor
+   * @return {boolean}            True if is automatic indentation adjustment
+   */
+  isAutoIndent(operationOp) {
+    return operationOp.o === 'i' && operationOp.a === '';
+  }
+
+  /**
    * playChanges - Get existing records in operation queue and replay them.
    */
   playChanges() {
@@ -57,17 +67,18 @@ export class CodePlay {
       if (typeof(insertPos[0]) === 'number') {
         insertPos = [insertPos, insertPos];
       }
-
-      if (i === 0) {
-        editor.setSelection(
-            {line: insertPos[0][0], ch: insertPos[0][1]},
-            {line: insertPos[1][0], ch: insertPos[1][1]},
-        );
-      } else {
-        editor.addSelection(
-            {line: insertPos[0][0], ch: insertPos[0][1]},
-            {line: insertPos[1][0], ch: insertPos[1][1]},
-        );
+      if (!this.isAutoIndent(currentOperation.o[i])) {
+        if (i === 0) {
+          editor.setSelection(
+              {line: insertPos[0][0], ch: insertPos[0][1]},
+              {line: insertPos[1][0], ch: insertPos[1][1]},
+          );
+        } else {
+          editor.addSelection(
+              {line: insertPos[0][0], ch: insertPos[0][1]},
+              {line: insertPos[1][0], ch: insertPos[1][1]},
+          );
+        }
       }
 
       if (!currentOperation.cursorOnly) {
@@ -139,6 +150,7 @@ export class CodePlay {
         extractedOperations.push(operation);
       }
     }
+    console.info(extractedOperations);
     return extractedOperations;
   }
 }
