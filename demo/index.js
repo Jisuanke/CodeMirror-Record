@@ -17,7 +17,6 @@ codeRecorder.listen();
 
 document.getElementById('record').onclick = function() {
   record = codeRecorder.getRecords();
-  console.log(record);
   console.log(JSON.parse(record));
 };
 
