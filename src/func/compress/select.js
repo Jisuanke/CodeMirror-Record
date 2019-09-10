@@ -1,4 +1,72 @@
 const cloneDeep = require('lodash/cloneDeep');
+import CONFIG from '../../config';
+
+
+let longDelayCount = 0;
+let longDelayAverage = 0;
+
+/**
+ * combineLongDelaySelect - Test whether long delay combine happends
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege long combine happends
+ */
+function combineLongDelaySelect(firstChange, secondChange) {
+  const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
+  if (firstChange.delayDuration >= minCursorMoveDelay &&
+    isLongDelaySelect(secondChange)) {
+    longDelayAverage = (longDelayAverage * longDelayCount
+      + secondChange.delayDuration) / (longDelayCount + 1);
+    longDelayCount++;
+    return true;
+  }
+  longDelayCount = 0;
+  longDelayAverage = 0;
+  return false;
+}
+
+/**
+ * isLongDelaySelect - Test whether it is a long delay continue
+ *
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege whether are long delay continuity
+ */
+function isLongDelaySelect(secondChange) {
+  const halfCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay / 2;
+  const delayDuration = secondChange.delayDuration;
+  if (longDelayCount !== 0) {
+    if (delayDuration >= longDelayAverage + halfCursorMoveDelay) {
+      return false;
+    } else if (delayDuration <= longDelayAverage - halfCursorMoveDelay) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * areSelectionsHeadsContinue - Test selection heads' positions continuity
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege on all heads' positions continuity
+ */
+function areSelectionsHeadsContinue(firstChange, secondChange) {
+  for (let i = 0; i < secondChange.crs.length; i++) {
+    const firstCh = firstChange.crs[i];
+    const secondCh = secondChange.crs[i];
+    if (secondCh.anchor.line === secondCh.head.line &&
+        secondCh.anchor.ch === secondCh.head.ch) {
+      return false;
+    } else if (
+      firstCh.anchor.line !== secondCh.anchor.line ||
+      firstCh.anchor.ch !== secondCh.anchor.ch) {
+      return false;
+    }
+  }
+  return true;
+}
 
 /**
  * isContinueSelect - Whether two select moves are treated continues
@@ -8,21 +76,20 @@ const cloneDeep = require('lodash/cloneDeep');
  * @return {boolean}             Judege result whether moves are continues
  */
 function isContinueSelect(firstChange, secondChange) {
+  const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
+
   if (firstChange.crs.length !== secondChange.crs.length) {
-    return false;
-  } else {
-    for (let i = 0; i < secondChange.crs.length; i++) {
-      const firstCh = firstChange.crs[i];
-      const secondCh = secondChange.crs[i];
-      if (secondCh.anchor.line === secondCh.head.line &&
-          secondCh.anchor.ch === secondCh.head.ch) {
-        return false;
-      } else if (
-        firstCh.anchor.line !== secondCh.anchor.line ||
-        firstCh.anchor.ch !== secondCh.anchor.ch) {
-        return false;
-      }
+    return false; // Number of cursors differs
+  } else if (secondChange.delayDuration >= minCursorMoveDelay) {
+    if (!combineLongDelaySelect(firstChange, secondChange)) {
+      return false;
     }
+  } else if (firstChange.delayDuration >= minCursorMoveDelay) {
+    return false; // Short and long continue differs
+  }
+
+  if (!areSelectionsHeadsContinue(firstChange, secondChange)) {
+    return false;
   }
   return true;
 }
