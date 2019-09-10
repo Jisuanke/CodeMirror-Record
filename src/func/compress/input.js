@@ -1,5 +1,74 @@
 import CONFIG from '../../config';
 
+let longDelayCount = 0;
+let longDelayAverage = 0;
+
+/**
+ * combineLongDelayInput - Test whether long delay combine happends
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege long combine happends
+ */
+function combineLongDelayInput(firstChange, secondChange) {
+  const minOperationDelay = CONFIG.acceptableMinOperationDelay;
+  if (firstChange.delayDuration >= minOperationDelay &&
+    isLongDelayInput(secondChange)) {
+    longDelayAverage = (longDelayAverage * longDelayCount
+      + secondChange.delayDuration) / (longDelayCount + 1);
+    longDelayCount++;
+    return true;
+  }
+  longDelayCount = 0;
+  longDelayAverage = 0;
+  return false;
+}
+
+/**
+ * isLongDelayInput - Test whether it is a long delay input operation
+ *
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege whether are long delay input
+ */
+function isLongDelayInput(secondChange) {
+  const halfOperationDelay = CONFIG.acceptableMinOperationDelay / 2;
+  const delayDuration = secondChange.delayDuration;
+  if (longDelayCount !== 0) {
+    if (delayDuration >= longDelayAverage + halfOperationDelay) {
+      return false;
+    } else if (delayDuration <= longDelayAverage - halfOperationDelay) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * areInputPositionsContinue - Test whether all input positions are continue
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege on all input positions continuity
+ */
+function areInputPositionsContinue(firstChange, secondChange) {
+  for (let i = 0; i < secondChange.ops.length; i++) {
+    const firstOp = firstChange.ops[i];
+    const secondOp = secondChange.ops[i];
+    if (secondOp.from.line !== secondOp.to.line ||
+        firstOp.from.line !== firstOp.to.line ||
+        secondOp.from.ch !== secondOp.to.ch ||
+        firstOp.from.ch !== firstOp.to.ch) {
+      return false;
+    } else if (
+      firstOp.from.ch + 1 !== secondOp.from.ch &&
+      !(firstOp.from.line + 1 === secondOp.from.line &&
+      secondOp.from.ch === 0)) { // For new line
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * isContinueInput - Whether two input operations are treated continues
  *
@@ -8,26 +77,19 @@ import CONFIG from '../../config';
  * @return {boolean}             Judege result whether operations are continues
  */
 function isContinueInput(firstChange, secondChange) {
+  const minOperationDelay = CONFIG.acceptableMinOperationDelay;
+
   if (firstChange.ops.length !== secondChange.ops.length) {
-    return false;
-  } else if (secondChange.delayDuration >= CONFIG.acceptableMinOperationDelay) {
-    return false;
-  } else {
-    for (let i = 0; i < secondChange.ops.length; i++) {
-      const firstOp = firstChange.ops[i];
-      const secondOp = secondChange.ops[i];
-      if (secondOp.from.line !== secondOp.to.line ||
-          firstOp.from.line !== firstOp.to.line ||
-          secondOp.from.ch !== secondOp.to.ch ||
-          firstOp.from.ch !== firstOp.to.ch) {
-        return false;
-      } else if (
-        firstOp.from.ch + 1 !== secondOp.from.ch &&
-        !(firstOp.from.line + 1 === secondOp.from.line &&
-        secondOp.from.ch === 0)) { // For new line
-        return false;
-      }
+    return false; // Number of cursors differs
+  } else if (secondChange.delayDuration >= minOperationDelay) {
+    if (!combineLongDelayInput(firstChange, secondChange)) {
+      return false;
     }
+  } else if (firstChange.delayDuration >= minOperationDelay) {
+    return false; // Short and long continue differs
+  }
+  if (!areInputPositionsContinue(firstChange, secondChange)) {
+    return false;
   }
   return true;
 }

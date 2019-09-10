@@ -1,5 +1,67 @@
 import CONFIG from '../../config';
 
+let longDelayCount = 0;
+let longDelayAverage = 0;
+
+/**
+ * combineLongDelayDelete - Test whether long delay combine happends
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege long combine happends
+ */
+function combineLongDelayDelete(firstChange, secondChange) {
+  const minOperationDelay = CONFIG.acceptableMinOperationDelay;
+  if (firstChange.delayDuration >= minOperationDelay &&
+    isLongDelayDelete(secondChange)) {
+    longDelayAverage = (longDelayAverage * longDelayCount
+      + secondChange.delayDuration) / (longDelayCount + 1);
+    longDelayCount++;
+    return true;
+  }
+  longDelayCount = 0;
+  longDelayAverage = 0;
+  return false;
+}
+
+/**
+ * isLongDelayInput - Test whether it is a long delay delete operation
+ *
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege whether are long delay delete
+ */
+function isLongDelayDelete(secondChange) {
+  const halfOperationDelay = CONFIG.acceptableMinOperationDelay / 2;
+  const delayDuration = secondChange.delayDuration;
+  if (longDelayCount !== 0) {
+    if (delayDuration >= longDelayAverage + halfOperationDelay) {
+      return false;
+    } else if (delayDuration <= longDelayAverage - halfOperationDelay) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * areDeletePositionsContinue - Test whether all delete's positions are continue
+ *
+ * @param  {object} firstChange   The first (previous) operation
+ * @param  {object} secondChange  The second (later) operation
+ * @return {boolean}              Judege on all delete's positions continuity
+ */
+function areDeletePositionsContinue(firstChange, secondChange) {
+  for (let i = 0; i < secondChange.ops.length; i++) {
+    const firstOp = firstChange.ops[i];
+    const secondOp = secondChange.ops[i];
+    if (firstOp.from.ch !== secondOp.to.ch ||
+      firstOp.from.line !== secondOp.to.line) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * isContinueDelete - Whether two delete operations are treated continues
  *
@@ -8,19 +70,20 @@ import CONFIG from '../../config';
  * @return {boolean}             Judege result whether operations are continues
  */
 function isContinueDelete(firstChange, secondChange) {
+  const minOperationDelay = CONFIG.acceptableMinOperationDelay;
+
   if (firstChange.ops.length !== secondChange.ops.length) {
-    return false;
-  } else if (secondChange.delayDuration >= CONFIG.acceptableMinOperationDelay) {
-    return false;
-  } else {
-    for (let i = 0; i < secondChange.ops.length; i++) {
-      const firstOp = firstChange.ops[i];
-      const secondOp = secondChange.ops[i];
-      if (firstOp.from.ch !== secondOp.to.ch ||
-        firstOp.from.line !== secondOp.to.line) {
-        return false;
-      }
+    return false; // Number of cursors differs
+  } else if (secondChange.delayDuration >= minOperationDelay) {
+    if (!combineLongDelayDelete(firstChange, secondChange)) {
+      return false;
     }
+  } else if (firstChange.delayDuration >= minOperationDelay) {
+    return false; // Short and long continue differs
+  }
+
+  if (!areDeletePositionsContinue(firstChange, secondChange)) {
+    return false;
   }
   return true;
 }
