@@ -1,6 +1,6 @@
 {
   "name": "codemirror-record",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A recording and playing library for codemirror. Compatible with version later than 5.37.0.",
   "scripts": {
     "build": "webpack --mode=production",
