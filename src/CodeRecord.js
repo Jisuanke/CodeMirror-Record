@@ -18,6 +18,7 @@ export class CodeRecord {
     this.editor = editor;
     this.changesListener = this.changesListener.bind(this);
     this.cursorActivityListener = this.cursorActivityListener.bind(this);
+    this.swapDocListener = this.swapDocListener.bind(this);
   }
 
   /**
@@ -25,6 +26,7 @@ export class CodeRecord {
    */
   listen() {
     this.editor.on('changes', this.changesListener);
+    this.editor.on('swapDoc', this.swapDocListener);
     this.editor.on('cursorActivity', this.cursorActivityListener);
   }
 
@@ -84,6 +86,34 @@ export class CodeRecord {
    * @param  {array}  changes Changes of content provided with codemirror format
    */
   changesListener(editor, changes) {
+    this.operations.push({
+      startTime: this.getOperationRelativeTime(),
+      endTime: this.getOperationRelativeTime(),
+      delayDuration: this.getLastChangePause(),
+      ops: changes,
+      combo: 1,
+    });
+  }
+
+  /**
+   * swapDocListener - Listener to a special set of value by swapDoc event.
+   *
+   * @todo
+   * @param  {object} editor  Codemirror instance after swapDoc call
+   * @param  {array}  oldDoc  Original codemirror Doc instance to be replaced
+   */
+  swapDocListener(editor, oldDoc) {
+    const changes = [{
+      from: {line: 0, ch: 0},
+      to: {
+        line: oldDoc.lastLine(),
+        ch: oldDoc.getLine(oldDoc.lastLine()).length,
+      },
+      origin: 'setValue',
+      removed: [oldDoc.getValue().split('\n')],
+      text: [editor.getValue().split('\n')],
+    }];
+
     this.operations.push({
       startTime: this.getOperationRelativeTime(),
       endTime: this.getOperationRelativeTime(),
