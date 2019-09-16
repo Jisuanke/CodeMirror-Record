@@ -150,7 +150,6 @@ export class CodePlay {
         extractedOperations.push(operation);
       }
     }
-    console.info(extractedOperations);
     return extractedOperations;
   }
 }
