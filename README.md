@@ -33,37 +33,44 @@ Each manipulation of coding activities is saved as an object.
 
 #### General Format
 
-For discrete manipulations, the formats are as follows.
+The record of data is a list of objects corresponding to operations. Each of the object has the following format:
 
-```js
-{
-  "t":[14,14], // Relative start and end time of the manipulation
-  "o": [ // Each item correspond to one cursor
-    "i": [[1,7],[1,15]], // Start and end position of selection denoted by line number and position in the line. The end position (with the outer brackets) is omitted if the start and end position is the same.
-    "a": ["string1", "string2"], // Inserted Contents, one each insertion.
-    "o": "s" // Type
-  ]
-}
-```
+- "t": The relative time description of operations. Possible types: `Intger | Integer List`.
+  - `Intger`: The relative time of this operation.
+  - `Integer List`: The length of list is 2. The first item is the relative starting time and the second is the relative finish time.
+- "l": The number of continuous operations combined in record. For example, multiple insertion, deletion or cursor movements.
+- "o": The description of operations at positions. Each operation is described in detail as follows:
+  - "i": Cursor position or part of selection. Possible types: `Intger List | List of Integer List`.
+    - `Intger List`: The length of list is 2. The first item is the line number and the second is the position of character within the line.
+    - `List of Integer List`: It is composed of two list with length two. The first and second lists illustrate the head and tail positions of a selection. Both of them are list of a line number followed by a position of character within the line.
+  - "a": The content for insertion. Possible types: `String | String List | List of String List`.
+    - `String`: The content to be inserted or replaced on given position of cursor or part of selected string.
+    - `String List` / `List of String List`: The content to be inserted or replaced on circumstance of multiple lines insertion or replacement.
+  - "r": The description of continuous deletion. Possible types: `List of Integer List`.
+    - `List of Integer List`: It is composed of one or more lists with length two. For each list, the first item is the number of characters deleted at once, and the second is the number of such deletions. For example, `[[1,11], [2,3]]` correspond to 11 times of deletion of 1 character each time followed by 3 times of deletion of 2 characters each time.
+  - "s": It describes the tail position of selection. The value of it is a list consisting of items with format `[line, [ch]]` or `[line, [ch1, ch2]]`. `line` is the line number which the tail position of selection holds. `ch` indicates the positions within the line for tail position of selection. `ch1, ch2` illustrates the movement of tail position from `ch1` position to `ch2` position within the line. For instance, `[[4, [5,6]], [5,[6]]]` shows that the tail position is firstly at line 4, char 5 and then moves to line 4, char 6 and then to line 5, char 6. (You may find the head position of selection with the data described in `"i"`)
+  - "o": The type of operation. The type is `String` and you can find the mapping between the value and its meaning according to the following table.
 
-Continuous insertions, deletions and compositions are the manipulations most frequently happens. Hence they are compressed. The formats are almost the same but also with miner difference.
+#### How to judge the operations are continuous?
+- Time lag between operations, of the types which affect the text (insertion, deletion, input with IME, etc), is less than 1200ms.
+- Time lag between cursor activities, including cursor movements and selections of
+text, is less than 800ms.
+- Operations, of the types which affect the text (insertion, deletion, input with IME, etc) with uniform speed (±600ms / operation lag).
+- Cursor activities with uniform speed (±400ms / activity lag).
 
-```js
-{
-  "t":[14,14],
-  "l": 13, // The number of compressed manipulations
-  "o": [
-    "i": [[1,7],[1,15]], // If it is for combined cursor move, they do mean selection anymore. Instead, there are the start position and end position.
-    "a": "string", // If the value of `o` us `i` denoting insertion, `a` is a string which at each time a character is inserted. Otherwise, it should be not difference from the format from discrete manipulations.
-    "r": [ // The length of this array equals to the value of l.
-      [[0,8], [1,2]], // Case1: denote deletion across lines
-      [1, 9], // Case2: deletion in a line. the example means a deletion of 1 character for 9 times.
-    ],
-    "o": "s"
-  ]
-}
-```
+#### What are the meanings of abbreviations for operations?
 
-#### Final Step
-
-All activities related objects are finally squash into an array and stringified.
+| Abbreviation | Full Name | Meaning |
+| --- | --- | --- |
+| c | *compose | Input with IME |
+| d | +delete | Deletion |
+| i | +input | Insertion |
+| k | markText | Mark on Text |
+| l | select | Selection of Text |
+| m | *mouse | Mouse Activities |
+| n | *rename | Rename |
+| o | +move | Cursor Movement |
+| p | paste | Paste Text |
+| r | drag | Drag Text |
+| s | setValue | Initialize Text |
+| x | cut | Cut Text |
