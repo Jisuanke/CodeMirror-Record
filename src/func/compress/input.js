@@ -109,12 +109,29 @@ function compressOperationsTexts(change) {
       } else if (j + 1 < change.ops[i].text.length &&
                 change.ops[i].text[j + 1] === '') {
         compressedTexts += '\n';
-        j++;
       }
     }
     change.ops[i].text = compressedTexts;
   }
   return change;
+}
+
+/**
+ * hasAutoClosePair - Whether input operation has auto close pair
+ *
+ * @param  {object} change A specified input operation
+ * @return {boolean} Judege result whether operations has auto close pair
+ */
+function hasAutoClosePair(change) {
+  const closePairs = ['()', '[]', '{}', '\'\'', '""'];
+  for (let i = 0; i < change.ops.length; i++) {
+    for (let j = 0; j < change.ops[i].text.length; j++) {
+      if (closePairs.indexOf(change.ops[i].text[j]) >= 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**
@@ -127,10 +144,11 @@ function compressContinuousInput(changes) {
   const newChanges = [];
   while (changes.length > 0) {
     let change = changes.pop(); // Obtain the latest change
-    if (change.ops[0].origin === '+input') {
+    if (!hasAutoClosePair(change) && change.ops[0].origin === '+input') {
       while (changes.length > 0) {
         const lastChange = changes.pop();
-        if (lastChange.ops[0].origin === '+input' &&
+        if (!hasAutoClosePair(lastChange) &&
+        lastChange.ops[0].origin === '+input' &&
         isContinueInput(lastChange, change)) {
           change.startTime = lastChange.startTime;
           change.delayDuration = lastChange.delayDuration;

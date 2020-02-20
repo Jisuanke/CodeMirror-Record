@@ -68,16 +68,18 @@ export class CodePlay {
         insertPos = [insertPos, insertPos];
       }
       if (!this.isAutoIndent(currentOperation.o[i])) {
-        if (i === 0) {
-          editor.setSelection(
-              {line: insertPos[0][0], ch: insertPos[0][1]},
-              {line: insertPos[1][0], ch: insertPos[1][1]},
-          );
-        } else {
-          editor.addSelection(
-              {line: insertPos[0][0], ch: insertPos[0][1]},
-              {line: insertPos[1][0], ch: insertPos[1][1]},
-          );
+        if (currentOperation.o[0].a !== '\n\n') {
+          if (i === 0) {
+            editor.setSelection(
+                {line: insertPos[0][0], ch: insertPos[0][1]},
+                {line: insertPos[1][0], ch: insertPos[1][1]},
+            );
+          } else {
+            editor.addSelection(
+                {line: insertPos[0][0], ch: insertPos[0][1]},
+                {line: insertPos[1][0], ch: insertPos[1][1]},
+            );
+          }
         }
       }
 

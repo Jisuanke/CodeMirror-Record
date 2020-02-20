@@ -6,6 +6,7 @@ import {CodeRecord, CodePlay} from '../src';
 const recordCodeMirror = CodeMirror.fromTextArea(
     document.getElementById('editor-record'), {
       mode: 'javascript',
+      autoCloseBrackets: true,
     }
 );
 
@@ -31,6 +32,7 @@ const playCodeMirror = CodeMirror.fromTextArea(
     document.getElementById('editor-play'), {
       readOnly: true,
       mode: 'javascript',
+      autoCloseBrackets: true,
     }
 );
 
