@@ -54,6 +54,9 @@ function areInputPositionsContinue(firstChange, secondChange) {
   for (let i = 0; i < secondChange.ops.length; i++) {
     const firstOp = firstChange.ops[i];
     const secondOp = secondChange.ops[i];
+    if (firstOp.text.length !== 1) {
+      return false;
+    }
     if (secondOp.from.line !== secondOp.to.line ||
         firstOp.from.line !== firstOp.to.line ||
         secondOp.from.ch !== secondOp.to.ch ||
