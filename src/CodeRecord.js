@@ -110,8 +110,8 @@ export class CodeRecord {
         ch: oldDoc.getLine(oldDoc.lastLine()).length,
       },
       origin: 'setValue',
-      removed: [oldDoc.getValue().split('\n')],
-      text: [editor.getValue().split('\n')],
+      removed: oldDoc.getValue().split('\n'),
+      text: editor.getValue().split('\n'),
     }];
 
     this.operations.push({
