@@ -1,4 +1,5 @@
 import extract from './func/extract';
+import CONFIG from './config';
 
 /**
  * A class for playing recorded code
@@ -8,11 +9,15 @@ export class CodePlay {
    * constructor - Initialize a instance for playing recorded code.
    *
    * @param  {object} editor Codemirror instance
+   * @param  {object} params Settings for player
    */
-  constructor(editor) {
-    this.timer = 0;
+  constructor(editor, params) {
+    this.realTime = 0;
     this.operations = [];
     this.editor = editor;
+    if (params) {
+      this.maxPause = params.maxPause || CONFIG.maxPauseBetweenOperations;
+    }
   }
 
   /**
@@ -41,16 +46,37 @@ export class CodePlay {
    */
   playChanges() {
     this.editor.focus();
+    this.playChangesHelper();
+  }
+
+  /**
+   * playChangesHelper - Helper function to recursivelying play changes
+   */
+  playChangesHelper() {
     const operations = this.operations;
     if (operations.length > 0) {
-      this.timer = operations[0].t;
-      while (operations.length > 0) {
-        const currentOperation = operations.shift();
-        setTimeout(() => {
-          this.playChange(this.editor, currentOperation);
-        }, currentOperation.t - this.timer);
-      }
+      const currentOperation = operations.shift();
+      const currentOperationPause = this.getOperationPause(currentOperation);
+      setTimeout(() => {
+        this.playChange(this.editor, currentOperation);
+        this.realTime = currentOperation.t;
+        this.playChangesHelper();
+      }, currentOperationPause);
     }
+  }
+
+  /**
+   * getOperationPause
+   *
+   * @param  {object} currentOperation  Current operation to be played
+   * @return {number}                   Length of delay before the operation
+   */
+  getOperationPause(currentOperation) {
+    const realOperationPause = currentOperation.t - this.realTime;
+    if (realOperationPause > this.maxPause && this.maxPause > 0) {
+      return this.maxPause;
+    }
+    return realOperationPause;
   }
 
   /**
