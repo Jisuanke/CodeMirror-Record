@@ -13,18 +13,85 @@ Just follow the steps.
 
 ## API
 
+### Recorder
+
 #### Initialize a recorder
 
-```js
+```javascript
 // cm is a CodeMirror instance.
-let codeRecorder = new CodeRecord(cm);
-codeRecorder.listen()
+const codeRecorder = new CodeRecord(cm);
+codeRecorder.listen();
 ```
 
 #### Get record result string
 
 ```js
-codeRecorder.getRecords()
+let records = '';
+records = codeRecorder.getRecords();
+```
+
+### Player
+
+#### Initialize a player
+
+```javascript
+// cm is a CodeMirror instance.
+const codePlayer = new CodePlay(playCodeMirror);
+```
+
+You may add extra setting parameters as the second argument of CodePlay constructor. Supporting setting parameters are as follows.
+
+| Parameters | Meaning | Default |
+| --- | --- | --- |
+| maxDelay | The maximum pause that is supported in player (in millisecond). The pause with length longer than this setting will be replaced with this one. Only non-negative values will be adopted. | `-1` |
+| autoplay | When it is set to true the recorded operations will be automatically played immediately after added. | `false` |
+
+##### Example
+
+The following settings make player automatically play added records without calling `play` function. And the maximum delay before each operation will be no longer than 3000ms.
+
+```javascript
+// cm is a CodeMirror instance.
+const codePlayer = new CodePlay(playCodeMirror, {
+  maxDelay: 3000,
+  autoplay: true
+});
+```
+
+#### Set options dynamically
+
+You can change the value of maxDelay and autoplay by calling the following functions.
+
+```javascript
+codePlayer.setMaxDelay(3000);
+codePlayer.setAutoplay(true);
+```
+
+#### Add recorded operations
+
+Add `records` object provided by codeRecorder.
+
+```javascript
+codePlayer.addOperations(records);
+```
+
+
+#### Play added operations
+
+Focus on editor and play changes.
+
+```javascript
+codePlayer.play();
+```
+
+You can also call `play` to resume playing after `pause` is called.
+
+#### Pause
+
+Pause playing operations.
+
+```javascript
+codePlayer.play();
 ```
 
 ## Data Explanation
@@ -52,6 +119,7 @@ The record of data is a list of objects corresponding to operations. Each of the
   - "o": The type of operation. The type is `String` and you can find the mapping between the value and its meaning according to the following table.
 
 #### How to judge the operations are continuous?
+
 - Time lag between operations, of the types which affect the text (insertion, deletion, input with IME, etc), is less than 1200ms.
 - Time lag between cursor activities, including cursor movements and selections of
 text, is less than 800ms.

@@ -3,12 +3,27 @@
   <head>
     <title>Getting Started</title>
     <link rel="stylesheet" href="../../node_modules/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
-    <textarea id="editor-record"></textarea>
-    <textarea id="editor-play"></textarea>
-    <button id="record">get record</button>
-    <button id="play">play record</button>
+    <main class="editors">
+      <div>
+        <h3>Recording Editor</h3>
+        <textarea id="editor-record"></textarea>
+      </div>
+      <div>
+        <h3>Playing Editor</h3>
+        <textarea id="editor-play"></textarea>
+      </div>
+    </main>
+    <div class="control-buttons">
+      <button id="get-records">Recorder: Get records (visible in console)</button>
+    </div>
+    <div class="control-buttons">
+      <button id="add-operations">Player: Add operations</button>
+      <button id="play">Player: play</button>
+      <button id="pause">Player: pause</button>
+    </div>
     <script src="../../node_modules/codemirror/lib/codemirror.js"></script>
     <script src="../../node_modules/codemirror/mode/javascript/javascript.js"></script>
     <script src="../../node_modules/codemirror/addon/edit/closebrackets.js"></script>

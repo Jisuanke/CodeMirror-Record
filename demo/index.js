@@ -12,17 +12,28 @@ const recordCodeMirror = CodeMirror.fromTextArea(
 
 const codeRecorder = new CodeRecord(recordCodeMirror);
 
-let record = '';
+let records = '';
 
 codeRecorder.listen();
 
-document.getElementById('record').onclick = function() {
-  record = codeRecorder.getRecords();
-  console.log(JSON.parse(record));
+document.getElementById('get-records').onclick = function() {
+  records = codeRecorder.getRecords();
+  console.log(JSON.parse(records));
+};
+
+document.getElementById('add-operations').onclick = function() {
+  console.log('operations added');
+  codePlayer.addOperations(records);
 };
 
 document.getElementById('play').onclick = function() {
-  codePlayer.addOperation(record);
+  console.log('start playing');
+  codePlayer.play();
+};
+
+document.getElementById('pause').onclick = function() {
+  console.log('pause playing');
+  codePlayer.pause();
 };
 
 /**
@@ -36,7 +47,9 @@ const playCodeMirror = CodeMirror.fromTextArea(
     }
 );
 
-const codePlayer = new CodePlay(playCodeMirror);
+const codePlayer = new CodePlay(playCodeMirror, {
+  maxPause: 3000,
+});
 
 // let flushTimer = null;
 

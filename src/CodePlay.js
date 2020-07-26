@@ -8,27 +8,66 @@ export class CodePlay {
   /**
    * constructor - Initialize a instance for playing recorded code.
    *
-   * @param  {object} editor Codemirror instance
-   * @param  {object} params Settings for player
+   * @param  {object} editor  Codemirror instance
+   * @param  {object} options Options for player
    */
-  constructor(editor, params) {
+  constructor(editor, options) {
     this.realTime = 0;
     this.operations = [];
     this.editor = editor;
-    if (params) {
-      this.maxPause = params.maxPause || CONFIG.maxPauseBetweenOperations;
+    this.timer = null;
+    this.currentOperation = null;
+    if (options) {
+      this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
+      this.autoplay = options.autoplay || false;
     }
   }
 
   /**
-   * addOperation - Parse and add in coming operations into operation queue.
+   * setMaxDelay - set the maximum delay between operations.
    *
-   * @param  {array} operations In coming operations
+   * @param  {number} maxDelay In coming operations
+   */
+  setMaxDelay(maxDelay) {
+    if (maxDelay) {
+      this.maxDelay = maxDelay;
+    }
+  }
+
+  /**
+   * setAutoplay - set autoplay option.
+   *
+   * @param  {number} autoplay Value to be set in autoplay option
+   */
+  setAutoplay(autoplay) {
+    if (autoplay) {
+      this.maxDelay = maxDelay;
+    }
+  }
+
+  /**
+   * addOperation - Original `addOperations` function with a wrong name.
+   *
+   * @param  {array} operations Incoming operations
+   * @deprecated Will be removed after > 1.0.0
    */
   addOperation(operations) {
+    console.warn('Deprecated: addOperation() => addOperations() + play()');
+    this.addOperations(operations);
+    this.play();
+  }
+
+  /**
+   * addOperations - Parse and add incoming operations into operation queue.
+   *
+   * @param  {array} operations Incoming operations
+   */
+  addOperations(operations) {
     const parsedOperations = this.parseOperations(operations);
     this.operations = this.operations.concat(parsedOperations);
-    this.playChanges();
+    if (this.autoplay) {
+      this.play();
+    }
   }
 
   /**
@@ -42,41 +81,55 @@ export class CodePlay {
   }
 
   /**
-   * playChanges - Get existing records in operation queue and replay them.
+   * play - Focus on editor and play changes.
    */
-  playChanges() {
+  play() {
     this.editor.focus();
-    this.playChangesHelper();
+    this.playChanges();
   }
 
   /**
-   * playChangesHelper - Helper function to recursivelying play changes
+   * pause - Pause code replay.
    */
-  playChangesHelper() {
-    const operations = this.operations;
-    if (operations.length > 0) {
-      const currentOperation = operations.shift();
-      const currentOperationPause = this.getOperationPause(currentOperation);
-      setTimeout(() => {
-        this.playChange(this.editor, currentOperation);
-        this.realTime = currentOperation.t;
-        this.playChangesHelper();
-      }, currentOperationPause);
+  pause() {
+    if (this.currentOperation !== null) {
+      this.operations.unshift(this.currentOperation);
+      clearTimeout(this.timer);
     }
   }
 
   /**
-   * getOperationPause
+   * playChanges - Helper function to recursivelying play changes
+   */
+  playChanges() {
+    const operations = this.operations;
+    if (operations.length > 0) {
+      this.currentOperation = operations.shift();
+      const currentOperation = this.currentOperation;
+      const currentOperationDelay = this.getOperationDelay(currentOperation);
+      this.timer = setTimeout(() => {
+        this.playChange(this.editor, currentOperation);
+        this.realTime = currentOperation.t;
+        this.playChanges();
+        if (this.operations.length === 0) {
+          this.currentOperation = null;
+        }
+      }, currentOperationDelay);
+    }
+  }
+
+  /**
+   * getOperationDelay - Get how much delay the operation should have
    *
    * @param  {object} currentOperation  Current operation to be played
    * @return {number}                   Length of delay before the operation
    */
-  getOperationPause(currentOperation) {
-    const realOperationPause = currentOperation.t - this.realTime;
-    if (realOperationPause > this.maxPause && this.maxPause > 0) {
-      return this.maxPause;
+  getOperationDelay(currentOperation) {
+    const realOperationDelay = currentOperation.t - this.realTime;
+    if (realOperationDelay > this.maxDelay && this.maxDelay > 0) {
+      return this.maxDelay;
     }
-    return realOperationPause;
+    return realOperationDelay;
   }
 
   /**

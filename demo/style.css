@@ -1,0 +1,34 @@
+.control-buttons {
+  margin-top: 10px;
+}
+.control-buttons button {
+  padding: 5px 10px;
+  background: #3498db;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+}
+.control-buttons button:hover {
+  background: #2980b9;
+  cursor: pointer;
+}
+.editors {
+  display: flex;
+  width: 100%;
+  margin: 0 -10px;
+}
+.editors > div {
+  border: 1px solid #bdc3c7;
+  flex-basis: 300px;
+  flex-grow: 1;
+  margin: 0 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.editors > div h3 {
+  background: #bdc3c7;
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+  line-height: 24px;
+}
