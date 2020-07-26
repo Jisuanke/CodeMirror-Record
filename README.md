@@ -45,6 +45,7 @@ You may add extra setting parameters as the second argument of CodePlay construc
 | --- | --- | --- |
 | maxDelay | The maximum pause that is supported in player (in millisecond). The pause with length longer than this setting will be replaced with this one. Only non-negative values will be adopted. | `-1` |
 | autoplay | When it is set to true the recorded operations will be automatically played immediately after added. | `false` |
+| speed | Playing speed in player which decides how fast operations are played back. | `1` |
 
 ##### Example
 
