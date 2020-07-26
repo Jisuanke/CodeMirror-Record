@@ -20,6 +20,7 @@ export class CodePlay {
     if (options) {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
       this.autoplay = options.autoplay || false;
+      this.speed = options.speed || 1;
     }
   }
 
@@ -42,6 +43,17 @@ export class CodePlay {
   setAutoplay(autoplay) {
     if (autoplay) {
       this.maxDelay = maxDelay;
+    }
+  }
+
+  /**
+   * setSpeed - set playing speed of player.
+   *
+   * @param  {number} speed playing speed.
+   */
+  setSpeed(speed) {
+    if (speed) {
+      this.speed = speed;
     }
   }
 
@@ -114,7 +126,7 @@ export class CodePlay {
         if (this.operations.length === 0) {
           this.currentOperation = null;
         }
-      }, currentOperationDelay);
+      }, currentOperationDelay / this.speed);
     }
   }
 

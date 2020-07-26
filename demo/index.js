@@ -36,6 +36,12 @@ document.getElementById('pause').onclick = function() {
   codePlayer.pause();
 };
 
+document.getElementById('speed').onchange = function() {
+  const speed = document.getElementById('speed').value;
+  console.log('change speed to', speed);
+  codePlayer.setSpeed(speed);
+};
+
 /**
  * Listen on codemirror playing
  */

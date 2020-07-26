@@ -48,13 +48,14 @@ You may add extra setting parameters as the second argument of CodePlay construc
 
 ##### Example
 
-The following settings make player automatically play added records without calling `play` function. And the maximum delay before each operation will be no longer than 3000ms.
+The following settings make player automatically play added records without calling `play` function. And the maximum delay before each operation will be no longer than 3000ms. The operations will be played back at 0.8 times speed.
 
 ```javascript
 // cm is a CodeMirror instance.
 const codePlayer = new CodePlay(playCodeMirror, {
   maxDelay: 3000,
-  autoplay: true
+  autoplay: true,
+  speed: 0.8
 });
 ```
 
@@ -65,6 +66,7 @@ You can change the value of maxDelay and autoplay by calling the following funct
 ```javascript
 codePlayer.setMaxDelay(3000);
 codePlayer.setAutoplay(true);
+codePlayer.setSpeed(2.5);
 ```
 
 #### Add recorded operations

@@ -8,9 +8,18 @@
   border: none;
   border-radius: 5px;
 }
+.control-buttons select {
+  padding: 5px 10px;
+  color: #333333;
+  border: 1px solid #bdc3c7;
+  border-radius: 5px;
+}
 .control-buttons button:hover {
   background: #2980b9;
   cursor: pointer;
+}
+.control-buttons .speed-set {
+  margin-left: 15px;
 }
 .editors {
   display: flex;
