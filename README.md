@@ -94,7 +94,7 @@ You can also call `play` to resume playing after `pause` is called.
 Pause playing operations.
 
 ```javascript
-codePlayer.play();
+codePlayer.pause();
 ```
 
 ## Data Explanation
