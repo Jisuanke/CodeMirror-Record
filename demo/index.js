@@ -57,11 +57,4 @@ const codePlayer = new CodePlay(playCodeMirror, {
   maxPause: 3000,
 });
 
-// let flushTimer = null;
-
-// recordCodeMirror.on('changes', function() {
-//   clearTimeout(flushTimer);
-//   flushTimer = setTimeout(flushToPlayer, 3000);
-// });
-
 recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');
