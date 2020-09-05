@@ -17,7 +17,7 @@
     "*.js",
     "*.md"
   ],
-  "homepage": "https://codemirror-record.haoranyu.com/",
+  "homepage": "http://codemirror-record.haoranyu.com/",
   "repository": {
     "type": "git",
     "url": "https://github.com/haoranyu/codemirror-record"
@@ -29,10 +29,10 @@
     "code"
   ],
   "devDependencies": {
-    "@babel/core": "^7.11.1",
-    "@babel/preset-env": "^7.11.0",
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
     "babel-loader": "^8.1.0",
-    "codemirror": "^5.56.0",
+    "codemirror": "^5.57.0",
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "eslint-loader": "^2.2.1",
@@ -43,6 +43,6 @@
   "author": "Haoran Yu",
   "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.19"
+    "lodash": "^4.17.20"
   }
 }
