@@ -223,7 +223,7 @@ export class CodePlay {
   parseOperations(operations) {
     operations = JSON.parse(operations);
     const extractedOperations = [];
-    for (const operation of operations) {
+    for (let operation of operations) {
       operation = this.classifyOperation(operation);
       if ('l' in operation) {
         for (let i = 0; i < operation.l; i++) {
