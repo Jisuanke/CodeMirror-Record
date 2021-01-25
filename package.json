@@ -1,6 +1,6 @@
 {
   "name": "codemirror-record",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "A recording and playing library for codemirror. Compatible with version later than 5.37.0.",
   "scripts": {
     "build": "webpack --mode=production",
@@ -32,7 +32,7 @@
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "babel-loader": "^8.2.2",
-    "codemirror": "^5.59.1",
+    "codemirror": "^5.59.2",
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "eslint-loader": "^2.2.1",
