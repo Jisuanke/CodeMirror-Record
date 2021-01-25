@@ -43,6 +43,6 @@
   "author": "Haoran Yu",
   "license": "MIT",
   "dependencies": {
-    "lodash": "^4.17.20"
+    "lodash.clonedeep": "^4.5.0"
   }
 }

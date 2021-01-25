@@ -1,7 +1,7 @@
 import {CodeRecord, CodePlay} from '../src';
 
 /**
- * Listen on codemirror recording
+ * Listen on CodeMirror recording
  */
 const recordCodeMirror = CodeMirror.fromTextArea(
     document.getElementById('editor-record'), {
@@ -11,6 +11,11 @@ const recordCodeMirror = CodeMirror.fromTextArea(
 );
 
 const codeRecorder = new CodeRecord(recordCodeMirror);
+
+setInterval(() => {
+  const moreActivities = new Date();
+  codeRecorder.recordExtraActivity(moreActivities);
+}, 10000);
 
 let records = '';
 
@@ -55,6 +60,10 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror, {
   maxPause: 3000,
+  autoplay: true,
+  extraActivityHandler: (extraOperation) => {
+    console.log(extraOperation);
+  },
 });
 
-recordCodeMirror.setValue('var tes;\nlet a = "\\n\\nLOL";');
+recordCodeMirror.setValue('// This is a demo.\n// Write you code here:');

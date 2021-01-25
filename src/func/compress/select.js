@@ -1,4 +1,4 @@
-const cloneDeep = require('lodash/cloneDeep');
+import _cloneDeep from 'lodash.clonedeep';
 import CONFIG from '../../config';
 
 
@@ -6,11 +6,11 @@ let longDelayCount = 0;
 let longDelayAverage = 0;
 
 /**
- * combineLongDelaySelect - Test whether long delay combine happends
+ * combineLongDelaySelect - Test whether long delay combine happens
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege long combine happends
+ * @return {boolean}              Judge long combine happens
  */
 function combineLongDelaySelect(firstChange, secondChange) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
@@ -30,7 +30,7 @@ function combineLongDelaySelect(firstChange, secondChange) {
  * isLongDelaySelect - Test whether it is a long delay continue
  *
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege whether are long delay continuity
+ * @return {boolean}              Judge whether are long delay continuity
  */
 function isLongDelaySelect(secondChange) {
   const halfCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay / 2;
@@ -50,7 +50,7 @@ function isLongDelaySelect(secondChange) {
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege on all heads' positions continuity
+ * @return {boolean}              Judge on all heads' positions continuity
  */
 function areSelectionsHeadsContinue(firstChange, secondChange) {
   for (let i = 0; i < secondChange.crs.length; i++) {
@@ -73,7 +73,7 @@ function areSelectionsHeadsContinue(firstChange, secondChange) {
  *
  * @param  {object} firstChange  The first (previous) operation
  * @param  {object} secondChange The second (later) operation
- * @return {boolean}             Judege result whether moves are continues
+ * @return {boolean}             Judge result whether moves are continues
  */
 function isContinueSelect(firstChange, secondChange) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
@@ -161,15 +161,15 @@ function convertChsToInterval(chs, direction = 1) {
  *
  * @param  {type} operations    The array of operations
  * @param  {type} direction = 1 Positive is left to right. Negative is opposite.
- * @return {type}               Comrpressed selection operations
+ * @return {type}               Compressed selection operations
  */
 function compressContinuousSelect(operations, direction = 1) {
   const newOperations = [];
   while (operations.length > 0) {
-    const operation = cloneDeep(operations.pop());
+    const operation = _cloneDeep(operations.pop());
     if ('crs' in operation) {
       while (operations.length > 0) {
-        const lastOperation = cloneDeep(operations.pop());
+        const lastOperation = _cloneDeep(operations.pop());
         if (('crs' in lastOperation) &&
         isContinueSelect(lastOperation, operation)) {
           operation.startTime = lastOperation.startTime;

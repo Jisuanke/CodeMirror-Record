@@ -1,10 +1,10 @@
 /**
- * extractToPostions - Extract compressed selection "to positions"
+ * extractToPositions - Extract compressed selection "to positions"
  *
  * @param  {array} toPos The description of compressed selection "to positions"
  * @return {array}       Extracted selection "to positions" array
  */
-function extractToPostions(toPos) {
+function extractToPositions(toPos) {
   const toPositions = [];
   for (let i = 0; i < toPos.length; i++) {
     for (let j = 0; j < toPos[i][1].length; j++) {
@@ -35,7 +35,7 @@ export default function(op, i) {
   const startTime = op.t[0];
   const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  const selection = {t: null, o: [], cursorOnly: true};
+  const selection = {t: null, o: [], type: 'cursor'};
 
   // Set operation time
   selection.t = Math.floor(startTime + i * durationPerOperation);
@@ -55,11 +55,11 @@ export default function(op, i) {
       op.o[j].i[1],
     ];
 
-    const toPostions = extractToPostions(op.o[j].s);
+    const toPositions = extractToPositions(op.o[j].s);
 
     const toPos = [
-      toPostions[i][0],
-      toPostions[i][1],
+      toPositions[i][0],
+      toPositions[i][1],
     ];
 
     selection.o[j].i = [fromPos, toPos];

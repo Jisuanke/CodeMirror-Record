@@ -8,7 +8,7 @@ export class CodePlay {
   /**
    * constructor - Initialize a instance for playing recorded code.
    *
-   * @param  {object} editor  Codemirror instance
+   * @param  {object} editor  CodeMirror instance
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
@@ -21,6 +21,7 @@ export class CodePlay {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
       this.autoplay = options.autoplay || false;
       this.speed = options.speed || 1;
+      this.extraActivityHandler = options.extraActivityHandler || null;
     }
   }
 
@@ -54,6 +55,17 @@ export class CodePlay {
   setSpeed(speed) {
     if (speed) {
       this.speed = speed;
+    }
+  }
+
+  /**
+   * setExtraActivityHandler - Set handler for playing extra activity.
+   *
+   * @param  {function} extraActivityHandler the function for extra activity.
+   */
+  setExtraActivityHandler(extraActivityHandler) {
+    if (extraActivityHandler) {
+      this.extraActivityHandler = extraActivityHandler;
     }
   }
 
@@ -111,7 +123,7 @@ export class CodePlay {
   }
 
   /**
-   * playChanges - Helper function to recursivelying play changes
+   * playChanges - Helper function to recursively play changes
    */
   playChanges() {
     const operations = this.operations;
@@ -151,7 +163,10 @@ export class CodePlay {
    * @param  {object} currentOperation  Current operation to replay
    */
   playChange(editor, currentOperation) {
-    for (let i = 0; i < currentOperation.o.length; i++) {
+    for (let i = 0; i < currentOperation.o.length; i++) { // 对每一个光标
+      if (this.playExtraActivity(currentOperation)) {
+        break;
+      }
       const insertContent = this.insertionText(currentOperation.o[i]);
       let insertPos = currentOperation.o[i].i;
 
@@ -174,7 +189,7 @@ export class CodePlay {
         }
       }
 
-      if (!currentOperation.cursorOnly) {
+      if (currentOperation.type === 'content') {
         editor.replaceRange(
             insertContent,
             {line: insertPos[0][0], ch: insertPos[0][1]},
@@ -182,6 +197,24 @@ export class CodePlay {
         );
       }
     }
+  }
+
+  /**
+   * playExtraActivity - Replay current recorded operation given.
+   *
+   * @param  {object} currentOperation  Current operation to replay
+   * @return {boolean}                  True if extra activity played
+   */
+  playExtraActivity(currentOperation) {
+    if (currentOperation.type === 'extra') {
+      if (this.extraActivityHandler) {
+        this.extraActivityHandler(currentOperation.o[0].activity);
+      } else {
+        console.warn('extraActivityHandler is required in player');
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -204,12 +237,14 @@ export class CodePlay {
    * classifyOperation - Classify whether the operation is cursor only.
    *
    * @param  {array} operation  Operation to be classified
-   * @return {array}            Operation with cursorOnly property classified
+   * @return {array}            Operation with type property classified
    */
   classifyOperation(operation) {
-    operation.cursorOnly = false;
+    operation.type = 'content';
     if (operation.o[0].o === 'o' || operation.o[0].o === 'l') {
-      operation.cursorOnly = true;
+      operation.type = 'cursor';
+    } else if (operation.o[0].o === 'e') {
+      operation.type = 'extra';
     }
     return operation;
   }

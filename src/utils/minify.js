@@ -45,26 +45,27 @@ export default function(operations) {
     const operation = operations.pop(); // Obtain the latest operation
 
     for (let i = 0; i < operation.ops.length; i++) {
-      operation.ops[i].i = getInterval(operation.ops[i]);
-      operation.ops[i].a = operation.ops[i].text;
-      operation.ops[i].d = operation.ops[i].removed;
       operation.ops[i].o = originMap.encode(operation.ops[i].origin);
+      if (operation.ops[i].origin !== 'extra') {
+        operation.ops[i].i = getInterval(operation.ops[i]);
+        operation.ops[i].a = operation.ops[i].text;
+        operation.ops[i].d = operation.ops[i].removed;
 
-      if (operation.ops[i].a.length === 1 &&
-          operation.ops[i].a[0] === '') {
-        delete operation.ops[i].a;
+        if (operation.ops[i].a.length === 1 &&
+            operation.ops[i].a[0] === '') {
+          delete operation.ops[i].a;
+        }
+
+        if (operation.ops[i].d.length === 1 &&
+            operation.ops[i].d[0] === '') {
+          delete operation.ops[i].d;
+        }
+
+        if ('select' in operation.ops[i]) {
+          operation.ops[i].s = operation.ops[i].select;
+          delete operation.ops[i].select;
+        }
       }
-
-      if (operation.ops[i].d.length === 1 &&
-          operation.ops[i].d[0] === '') {
-        delete operation.ops[i].d;
-      }
-
-      if ('select' in operation.ops[i]) {
-        operation.ops[i].s = operation.ops[i].select;
-        delete operation.ops[i].select;
-      }
-
       if (operation.combo === 1) {
         delete operation.ops[i].d;
       }
