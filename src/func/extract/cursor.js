@@ -9,7 +9,7 @@ export default function(op, i) {
   const startTime = op.t[0];
   const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  const cursor = {t: null, o: [], cursorOnly: true};
+  const cursor = {t: null, o: [], type: 'cursor'};
   // Set operation time
   cursor.t = Math.floor(startTime + i * durationPerOperation);
   if (i === op.l - 1) {

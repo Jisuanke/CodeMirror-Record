@@ -11,6 +11,7 @@ const origin = {
   'drag': 'r',
   'setValue': 's',
   'cut': 'x',
+  'extra': 'e',
 };
 
 export default {

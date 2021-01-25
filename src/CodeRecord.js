@@ -8,7 +8,7 @@ export class CodeRecord {
   /**
    * constructor - Initialize a instance for recording coding operations.
    *
-   * @param  {object} editor Codemirror instance
+   * @param  {object} editor CodeMirror instance
    */
   constructor(editor) {
     this.initTime = +new Date;
@@ -19,6 +19,23 @@ export class CodeRecord {
     this.changesListener = this.changesListener.bind(this);
     this.cursorActivityListener = this.cursorActivityListener.bind(this);
     this.swapDocListener = this.swapDocListener.bind(this);
+  }
+
+  /**
+   * recordExtraActivity
+   * @param {object} activity
+   **/
+  recordExtraActivity(activity) {
+    const changes = [{
+      origin: 'extra',
+      activity: activity,
+    }];
+
+    this.operations.push({
+      startTime: this.getOperationRelativeTime(),
+      endTime: this.getOperationRelativeTime(),
+      ops: changes,
+    });
   }
 
   /**
@@ -82,8 +99,8 @@ export class CodeRecord {
   /**
    * changesListener - Listener to content changes.
    *
-   * @param  {object} editor  Codemirror instance
-   * @param  {array}  changes Changes of content provided with codemirror format
+   * @param  {object} editor  CodeMirror instance
+   * @param  {array}  changes Changes of content provided with CodeMirror format
    */
   changesListener(editor, changes) {
     this.operations.push({
@@ -99,8 +116,8 @@ export class CodeRecord {
    * swapDocListener - Listener to a special set of value by swapDoc event.
    *
    * @todo
-   * @param  {object} editor  Codemirror instance after swapDoc call
-   * @param  {array}  oldDoc  Original codemirror Doc instance to be replaced
+   * @param  {object} editor  CodeMirror instance after swapDoc call
+   * @param  {array}  oldDoc  Original CodeMirror Doc instance to be replaced
    */
   swapDocListener(editor, oldDoc) {
     const changes = [{
@@ -126,7 +143,7 @@ export class CodeRecord {
   /**
    * cursorActivityListener - Listener to cursor changes.
    *
-   * @param  {object} editor Codemirror instance
+   * @param  {object} editor CodeMirror instance
    */
   cursorActivityListener(editor) {
     this.operations.push({
@@ -155,7 +172,7 @@ export class CodeRecord {
 
   /**
    * removeRedundantCursorOperations - Remove cursor
-   * operations that can be inferd from content operations.
+   * operations that can be inferred from content operations.
    */
   removeRedundantCursorOperations() {
     const operations = this.operations;
@@ -163,7 +180,7 @@ export class CodeRecord {
     for (let i = 0; i < operations.length; i++) {
       if ('ops' in operations[i]) {
         newOperations.push(operations[i]);
-        // Following `if` statement is to perserve selection after paste
+        // Following `if` statement is to preserve selection after paste
         if (i > 0 && this.isPasteOperation(operations[i])) {
           operations[i - 1].startTime = operations[i].startTime + 1;
           operations[i - 1].endTime = operations[i].endTime + 1;

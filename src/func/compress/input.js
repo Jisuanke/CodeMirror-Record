@@ -4,11 +4,11 @@ let longDelayCount = 0;
 let longDelayAverage = 0;
 
 /**
- * combineLongDelayInput - Test whether long delay combine happends
+ * combineLongDelayInput - Test whether long delay combine happens
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege long combine happends
+ * @return {boolean}              Judge long combine happens
  */
 function combineLongDelayInput(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
@@ -28,7 +28,7 @@ function combineLongDelayInput(firstChange, secondChange) {
  * isLongDelayInput - Test whether it is a long delay input operation
  *
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege whether are long delay input
+ * @return {boolean}              Judge whether are long delay input
  */
 function isLongDelayInput(secondChange) {
   const halfOperationDelay = CONFIG.acceptableMinOperationDelay / 2;
@@ -48,7 +48,7 @@ function isLongDelayInput(secondChange) {
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege on all input positions continuity
+ * @return {boolean}              Judge on all input positions continuity
  */
 function areInputPositionsContinue(firstChange, secondChange) {
   for (let i = 0; i < secondChange.ops.length; i++) {
@@ -77,7 +77,7 @@ function areInputPositionsContinue(firstChange, secondChange) {
  *
  * @param  {object} firstChange  The first (previous) operation
  * @param  {object} secondChange The second (later) operation
- * @return {boolean}             Judege result whether operations are continues
+ * @return {boolean}             Judge result whether operations are continues
  */
 function isContinueInput(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
@@ -123,7 +123,7 @@ function compressOperationsTexts(change) {
  * hasAutoClosePair - Whether input operation has auto close pair
  *
  * @param  {object} change A specified input operation
- * @return {boolean} Judege result whether operations has auto close pair
+ * @return {boolean} Judge result whether operations has auto close pair
  */
 function hasAutoClosePair(change) {
   const closePairs = ['()', '[]', '{}', '\'\'', '""'];
@@ -147,11 +147,11 @@ function compressContinuousInput(changes) {
   const newChanges = [];
   while (changes.length > 0) {
     let change = changes.pop(); // Obtain the latest change
-    if (!hasAutoClosePair(change) && change.ops[0].origin === '+input') {
+    if (change.ops[0].origin === '+input' && !hasAutoClosePair(change)) {
       while (changes.length > 0) {
         const lastChange = changes.pop();
-        if (!hasAutoClosePair(lastChange) &&
-        lastChange.ops[0].origin === '+input' &&
+        if (lastChange.ops[0].origin === '+input' &&
+        !hasAutoClosePair(lastChange) &&
         isContinueInput(lastChange, change)) {
           change.startTime = lastChange.startTime;
           change.delayDuration = lastChange.delayDuration;

@@ -9,7 +9,7 @@ export default function(op, i) {
   const startTime = op.t[0];
   const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  const deletion = {t: null, o: [], cursorOnly: false};
+  const deletion = {t: null, o: [], type: 'content'};
   // Set operation time
   deletion.t = Math.floor(startTime + i * durationPerOperation);
   if (i === op.l - 1) {

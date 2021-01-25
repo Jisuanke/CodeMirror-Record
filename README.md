@@ -23,6 +23,13 @@ const codeRecorder = new CodeRecord(cm);
 codeRecorder.listen();
 ```
 
+#### Record extra activities
+
+```javascript
+// moreActivities is some external value we would like to record
+codeRecorder.recordExtraActivity(moreActivities);
+```
+
 #### Get record result string
 
 ```js
@@ -46,6 +53,7 @@ You may add extra setting parameters as the second argument of CodePlay construc
 | maxDelay | The maximum pause that is supported in player (in millisecond). The pause with length longer than this setting will be replaced with this one. Only non-negative values will be adopted. | `-1` |
 | autoplay | When it is set to true the recorded operations will be automatically played immediately after added. | `false` |
 | speed | Playing speed in player which decides how fast operations are played back. | `1` |
+| extraActivityHandler | The callback function for dealing with extra activities recorded. When it is `null`, the recorded extra activities will be skipped. | `null` |
 
 ##### Example
 
@@ -56,7 +64,10 @@ The following settings make player automatically play added records without call
 const codePlayer = new CodePlay(playCodeMirror, {
   maxDelay: 3000,
   autoplay: true,
-  speed: 0.8
+  speed: 0.8,
+  extraActivityHandler: (activityRecorded) => {
+    console.log(activityRecorded);
+  }
 });
 ```
 
@@ -68,6 +79,9 @@ You can change the value of maxDelay and autoplay by calling the following funct
 codePlayer.setMaxDelay(3000);
 codePlayer.setAutoplay(true);
 codePlayer.setSpeed(2.5);
+codePlayer.setExtraActivityHandler((activityRecorded) => {
+  console.log(activityRecorded);
+});
 ```
 
 #### Add recorded operations
@@ -105,12 +119,12 @@ Each manipulation of coding activities is saved as an object.
 
 The record of data is a list of objects corresponding to operations. Each of the object has the following format:
 
-- "t": The relative time description of operations. Possible types: `Intger | Integer List`.
-  - `Intger`: The relative time of this operation.
+- "t": The relative time description of operations. Possible types: `Integer | Integer List`.
+  - `Integer`: The relative time of this operation.
   - `Integer List`: The length of list is 2. The first item is the relative starting time and the second is the relative finish time.
 - "l": The number of continuous operations combined in record. For example, multiple insertion, deletion or cursor movements.
 - "o": The description of operations at positions. Each operation is described in detail as follows:
-  - "i": Cursor position or part of selection. Possible types: `Intger List | List of Integer List`.
+  - "i": Cursor position or part of selection. Possible types: `Integer List | List of Integer List`.
     - `Intger List`: The length of list is 2. The first item is the line number and the second is the position of character within the line.
     - `List of Integer List`: It is composed of two list with length two. The first and second lists illustrate the head and tail positions of a selection. Both of them are list of a line number followed by a position of character within the line.
   - "a": The content for insertion. Possible types: `String | String List | List of String List`.
@@ -145,3 +159,4 @@ text, is less than 800ms.
 | r | drag | Drag Text |
 | s | setValue | Initialize Text |
 | x | cut | Cut Text |
+| e | extra | Extra External Activity |

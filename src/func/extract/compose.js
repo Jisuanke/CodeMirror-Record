@@ -9,7 +9,7 @@ export default function(op, i) {
   const startTime = op.t[0];
   const durationPerOperation = (op.t[1] - op.t[0]) / (op.l - 1);
 
-  const composition = {t: null, o: [], cursorOnly: false};
+  const composition = {t: null, o: [], type: 'content'};
   // Set operation time
   composition.t = Math.floor(startTime + i * durationPerOperation);
   if (i === op.l - 1) {
