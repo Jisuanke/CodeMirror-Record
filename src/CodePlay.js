@@ -43,7 +43,7 @@ export class CodePlay {
    */
   setAutoplay(autoplay) {
     if (autoplay) {
-      this.maxDelay = maxDelay;
+      this.autoplay = autoplay;
     }
   }
 
