@@ -47,8 +47,13 @@ document.getElementById('speed').onchange = function() {
   codePlayer.setSpeed(speed);
 };
 
+document.getElementById('time-set').onclick = function() {
+  const seekTo = document.getElementById('time-to-seek').value;
+  codePlayer.seek(seekTo);
+};
+
 /**
- * Listen on codemirror playing
+ * Listen on CodeMirror playing
  */
 const playCodeMirror = CodeMirror.fromTextArea(
     document.getElementById('editor-play'), {
@@ -60,7 +65,7 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror, {
   maxPause: 3000,
-  autoplay: true,
+  // autoplay: true,
   extraActivityHandler: (extraOperation) => {
     console.log(extraOperation);
   },

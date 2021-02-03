@@ -26,6 +26,7 @@
       <span class="speed-set">
         Player speed:
         <select id="speed">
+          <option>0</option>
           <option>0.1</option>
           <option>0.5</option>
           <option selected>1.0</option>
@@ -34,7 +35,16 @@
           <option>3.0</option>
         </select>
       </span>
+      <br>
+      <input id="time-to-seek" type="text"/>
+      <button id="time-set">Change Progress</button>
     </div>
+    <!-- <div
+      class="progress-bar"
+      id="progress-bar"
+    >
+      <div class="progress-bar-slider"></div>
+    </div> -->
     <script src="//codemirror.net/lib/codemirror.js"></script>
     <script src="//codemirror.net/mode/javascript/javascript.js"></script>
     <script src="//codemirror.net/addon/edit/closebrackets.js"></script>

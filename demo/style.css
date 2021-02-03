@@ -21,6 +21,21 @@
 .control-buttons .speed-set {
   margin-left: 15px;
 }
+.progress-bar {
+  height: 15px;
+  width: 500px;
+  background: #eee;
+  margin-top: 10px;
+  position: relative;
+}
+.progress-bar-slider {
+  width: 1px;
+  height: 15px;
+  background: #f00;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 .editors {
   display: flex;
   width: 100%;
