@@ -95,7 +95,6 @@ export class CodePlay {
   addOperations(operations) {
     const parsedOperations = this.parseOperations(operations);
     this.operations = this.operations.concat(parsedOperations);
-
     this.duration = parsedOperations[parsedOperations.length - 1].t;
     if (this.autoplay) {
       this.play();
