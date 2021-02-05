@@ -88,18 +88,6 @@ export class CodePlay {
   }
 
   /**
-   * addOperation - Original `addOperations` function with a wrong name.
-   *
-   * @param  {array} operations Incoming operations
-   * @deprecated Will be removed when version >= 1.0.0
-   */
-  addOperation(operations) {
-    console.warn('Deprecated: addOperation() => addOperations() + play()');
-    this.addOperations(operations);
-    this.play();
-  }
-
-  /**
    * addOperations - Parse and add incoming operations into operation queue.
    *
    * @param  {array} operations Incoming operations

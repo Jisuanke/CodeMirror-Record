@@ -11,12 +11,6 @@ const recordCodeMirror = CodeMirror.fromTextArea(
 );
 
 const codeRecorder = new CodeRecord(recordCodeMirror);
-
-setInterval(() => {
-  const moreActivities = new Date();
-  codeRecorder.recordExtraActivity(moreActivities);
-}, 10000);
-
 let records = '';
 
 codeRecorder.listen();
@@ -27,8 +21,13 @@ document.getElementById('get-records').onclick = function() {
 };
 
 document.getElementById('add-operations').onclick = function() {
-  console.log('operations added');
-  codePlayer.addOperations(records);
+  if (records !== '') {
+    console.log('operations added');
+    codePlayer.addOperations(records);
+    records = '';
+  } else {
+    console.log('no operation to be added');
+  }
 };
 
 document.getElementById('play').onclick = function() {
@@ -47,9 +46,27 @@ document.getElementById('speed').onchange = function() {
   codePlayer.setSpeed(speed);
 };
 
-document.getElementById('time-set').onclick = function() {
-  const seekTo = document.getElementById('time-to-seek').value;
-  codePlayer.seek(seekTo);
+const progressBar = document.getElementById('progress-bar');
+const progressBarSlider = document.getElementById('progress-bar-slider');
+const progressBarWidth = progressBar.offsetWidth;
+
+setInterval(() => {
+  const currentTime = codePlayer.getCurrentTime();
+  const duration = codePlayer.getDuration();
+  const playedProgress = progressBarWidth * (currentTime / duration);
+  if (currentTime >= 0) {
+    progressBarSlider.style.left = playedProgress + 'px';
+  }
+}, 200);
+
+progressBar.onclick = function({
+  offsetX: playedProgress,
+}) {
+  const percentage = playedProgress / progressBarWidth;
+  const seekToTime = percentage * codePlayer.getDuration();
+  progressBarSlider.style.left = playedProgress + 'px';
+  console.log('seek to: ', seekToTime);
+  codePlayer.seek(seekToTime);
 };
 
 /**
@@ -65,7 +82,6 @@ const playCodeMirror = CodeMirror.fromTextArea(
 
 const codePlayer = new CodePlay(playCodeMirror, {
   maxPause: 3000,
-  // autoplay: true,
   extraActivityHandler: (extraOperation) => {
     console.log(extraOperation);
   },
