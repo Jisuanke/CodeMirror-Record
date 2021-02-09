@@ -1,6 +1,6 @@
 ![CodeMirror-Record](https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8)
 
-It is a project for recording and playing back activities in the CodeMirror editor and the surrounding environment. You can experience this project on the [online demo page](http://codemirror-record.haoranyu.com/demo/).
+It is a project for recording and playing back activities in the CodeMirror editor and the surrounding environment. You can try this project on the [online demo page](http://codemirror-record.haoranyu.com/demo/).
 
 ## Local Demo
 
@@ -104,7 +104,7 @@ codePlayer.setExtraActivityReverter((activityRecorded) => {
 
 #### Add recorded operations
 
-Add `records` array of operation objects provided by codeRecorder.
+Add `records` array of operation objects provided by `codeRecorder`.
 
 ```javascript
 codePlayer.addOperations(records);
@@ -186,7 +186,7 @@ The record of data is a list of objects corresponding to operations. Each of the
   - "s": It describes the tail position of selection. The value of it is a list consisting of items with format `[line, [ch]]` or `[line, [ch1, ch2]]`. `line` is the line number which the tail position of selection holds. `ch` indicates the positions within the line for tail position of selection. `ch1, ch2` illustrates the movement of tail position from `ch1` position to `ch2` position within the line. For instance, `[[4, [5,6]], [5,[6]]]` shows that the tail position is firstly at line 4, char 5 and then moves to line 4, char 6 and then to line 5, char 6. (You may find the head position of selection with the data described in `"i"`)
   - "o": The type of operation. The type is `String` and you can find the mapping between the value and its meaning according to the following table.
 
-#### How to judge the operations are continuous?
+#### How to judge whether the operations are continuous?
 
 - Time lag between operations, of the types which affect the text (insertion, deletion, input with IME, etc), is less than 1200ms.
 - Time lag between cursor activities, including cursor movements and selections of
@@ -194,7 +194,7 @@ text, is less than 800ms.
 - Operations, of the types which affect the text (insertion, deletion, input with IME, etc) with uniform speed (±600ms / operation lag).
 - Cursor activities with uniform speed (±400ms / activity lag).
 
-#### What are the meanings of abbreviations for operations?
+#### What are the meanings of abbreviations of operations?
 
 | Abbreviation | Full Name | Meaning |
 | --- | --- | --- |

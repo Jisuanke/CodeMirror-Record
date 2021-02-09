@@ -36,8 +36,8 @@ export class CodePlay {
   }
 
   /**
-   * setOption
-   * @param  {function} setOptionCallback
+   * setOption - Function for setting the option
+   * @param  {function} setOptionCallback Callback function for setting a option
    */
   setOption(setOptionCallback) {
     const statusBeforeSetOption = this.status;
@@ -51,7 +51,7 @@ export class CodePlay {
   }
 
   /**
-   * setMaxDelay - set the maximum delay between operations.
+   * setMaxDelay - Set the maximum delay between operations.
    *
    * @param  {number} maxDelay In coming operations
    */
@@ -64,7 +64,7 @@ export class CodePlay {
   }
 
   /**
-   * setAutoplay - set autoplay option.
+   * setAutoplay - Set autoplay option.
    *
    * @param  {number} autoplay Value to be set in autoplay option
    */
@@ -77,7 +77,7 @@ export class CodePlay {
   }
 
   /**
-   * setSpeed - set playing speed of player.
+   * setSpeed - Set playing speed of player.
    *
    * @param  {number} speed playing speed.
    */

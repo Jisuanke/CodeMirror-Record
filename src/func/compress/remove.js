@@ -44,7 +44,7 @@ function isLongDelayDelete(secondChange) {
 }
 
 /**
- * areDeletePositionsContinue - Test whether all positions of delete are continue
+ * areDeletePositionsContinue - Whether all positions of delete are continue
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
