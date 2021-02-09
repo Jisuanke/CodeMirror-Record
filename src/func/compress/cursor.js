@@ -4,11 +4,11 @@ let longDelayCount = 0;
 let longDelayAverage = 0;
 
 /**
- * combineLongDelayCursorMove - Test whether long delay combine happends
+ * combineLongDelayCursorMove - Test whether long delay combine happens
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege long combine happends
+ * @return {boolean}              Judge long combine happens
  */
 function combineLongDelayCursorMove(firstChange, secondChange) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
@@ -28,7 +28,7 @@ function combineLongDelayCursorMove(firstChange, secondChange) {
  * isLongDelayContinue - Test whether it is a long delay continue
  *
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege whether are long delay continuity
+ * @return {boolean}              Judge whether are long delay continuity
  */
 function isLongDelayCursorMove(secondChange) {
   const halfCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay / 2;
@@ -49,7 +49,7 @@ function isLongDelayCursorMove(secondChange) {
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
  * @param  {number} direction = 1 The direction of current cursor movement
- * @return {boolean}              Judege on all cursors' positions continuity
+ * @return {boolean}              Judge on all cursors' positions continuity
  */
 function areCursorsPositionsContinue(firstChange, secondChange, direction) {
   for (let i = 0; i < secondChange.crs.length; i++) {
@@ -74,7 +74,7 @@ function areCursorsPositionsContinue(firstChange, secondChange, direction) {
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
  * @param  {number} direction = 1 The direction of current cursor movement
- * @return {boolean}              Judege result whether moves are continues
+ * @return {boolean}              Judge result whether moves are continues
  */
 function isContinueCursorMove(firstChange, secondChange, direction = 1) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;

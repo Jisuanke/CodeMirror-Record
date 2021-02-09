@@ -4,11 +4,11 @@ let longDelayCount = 0;
 let longDelayAverage = 0;
 
 /**
- * combineLongDelayDelete - Test whether long delay combine happends
+ * combineLongDelayDelete - Test whether long delay combine happens
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege long combine happends
+ * @return {boolean}              Judge long combine happens
  */
 function combineLongDelayDelete(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
@@ -28,7 +28,7 @@ function combineLongDelayDelete(firstChange, secondChange) {
  * isLongDelayInput - Test whether it is a long delay delete operation
  *
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege whether are long delay delete
+ * @return {boolean}              Judge whether are long delay delete
  */
 function isLongDelayDelete(secondChange) {
   const halfOperationDelay = CONFIG.acceptableMinOperationDelay / 2;
@@ -44,11 +44,11 @@ function isLongDelayDelete(secondChange) {
 }
 
 /**
- * areDeletePositionsContinue - Test whether all delete's positions are continue
+ * areDeletePositionsContinue - Test whether all positions of delete are continue
  *
  * @param  {object} firstChange   The first (previous) operation
  * @param  {object} secondChange  The second (later) operation
- * @return {boolean}              Judege on all delete's positions continuity
+ * @return {boolean}              Judge on continuity of all positions of delete
  */
 function areDeletePositionsContinue(firstChange, secondChange) {
   for (let i = 0; i < secondChange.ops.length; i++) {
@@ -67,7 +67,7 @@ function areDeletePositionsContinue(firstChange, secondChange) {
  *
  * @param  {object} firstChange  The first (previous) operation
  * @param  {object} secondChange The second (later) operation
- * @return {boolean}             Judege result whether operations are continues
+ * @return {boolean}             Judge result whether operations are continues
  */
 function isContinueDelete(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
@@ -98,7 +98,7 @@ function compressOperationsRemovals(change) {
   // 这里对已经压缩合并过的删除行为进行一下进一步和压缩表示，
   // 将部分操作变为计数，而不再存它的内容（因为不需要存，我们可以算出来）
   // https://git.jisuan.ren/haoranyu/codemirror-record/issues/2
-  if (change.combo === 1) return change; // Non-compressed removel
+  if (change.combo === 1) return change; // Non-compressed removal
   for (let i = 0; i < change.ops.length; i++) {
     const resultArray = [];
     let countStack = [];

@@ -3,7 +3,7 @@
  *
  * @param  {object} firstChange  The first (previous) operation
  * @param  {object} secondChange The second (later) operation
- * @return {boolean}             Judege result whether operations are continues
+ * @return {boolean}             Judge result whether operations are continues
  */
 function isContinueCompose(firstChange, secondChange) {
   if (firstChange.ops.length !== secondChange.ops.length) {
