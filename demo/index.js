@@ -57,7 +57,7 @@ setInterval(() => {
   if (currentTime >= 0) {
     progressBarSlider.style.left = playedProgress + 'px';
   }
-}, 200);
+}, 100);
 
 progressBar.onclick = function({
   offsetX: playedProgress,

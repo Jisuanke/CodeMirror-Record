@@ -33,6 +33,7 @@
   height: 15px;
   background: #f00;
   position: absolute;
+  pointer-events: none;
   top: 0;
   left: 0;
 }

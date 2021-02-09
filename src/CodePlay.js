@@ -20,8 +20,11 @@ export class CodePlay {
     this.timer = null;
     this.currentOperation = null;
     this.duration = 0;
-    this.currentTime = 0;
+    this.lastOperationTime = 0;
+    this.lastPlayTime = 0;
     this.seekTime = null;
+    this.playedTimeBeforeOperation = 0;
+    this.playedTimeBeforePause = 0;
     this.speedBeforeSeeking = null;
     if (options) {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
@@ -33,14 +36,31 @@ export class CodePlay {
   }
 
   /**
+   * setOption
+   * @param  {function} setOptionCallback
+   */
+  setOption(setOptionCallback) {
+    const statusBeforeSetOption = this.status;
+    if (statusBeforeSetOption === 'PLAY') {
+      this.pause();
+    }
+    setOptionCallback();
+    if (statusBeforeSetOption === 'PLAY') {
+      this.play();
+    }
+  }
+
+  /**
    * setMaxDelay - set the maximum delay between operations.
    *
    * @param  {number} maxDelay In coming operations
    */
   setMaxDelay(maxDelay) {
-    if (maxDelay) {
-      this.maxDelay = maxDelay;
-    }
+    this.setOption(() => {
+      if (maxDelay) {
+        this.maxDelay = maxDelay;
+      }
+    });
   }
 
   /**
@@ -49,9 +69,11 @@ export class CodePlay {
    * @param  {number} autoplay Value to be set in autoplay option
    */
   setAutoplay(autoplay) {
-    if (autoplay) {
-      this.autoplay = autoplay;
-    }
+    this.setOption(() => {
+      if (autoplay) {
+        this.autoplay = autoplay;
+      }
+    });
   }
 
   /**
@@ -60,9 +82,11 @@ export class CodePlay {
    * @param  {number} speed playing speed.
    */
   setSpeed(speed) {
-    if (speed) {
-      this.speed = speed;
-    }
+    this.setOption(() => {
+      if (speed) {
+        this.speed = speed;
+      }
+    });
   }
 
   /**
@@ -71,9 +95,11 @@ export class CodePlay {
    * @param  {function} extraActivityHandler the function for extra activity.
    */
   setExtraActivityHandler(extraActivityHandler) {
-    if (extraActivityHandler) {
-      this.extraActivityHandler = extraActivityHandler;
-    }
+    this.setOption(() => {
+      if (extraActivityHandler) {
+        this.extraActivityHandler = extraActivityHandler;
+      }
+    });
   }
 
   /**
@@ -82,9 +108,11 @@ export class CodePlay {
    * @param  {function} extraActivityReverter the function reverting.
    */
   setExtraActivityReverter(extraActivityReverter) {
-    if (extraActivityReverter) {
-      this.extraActivityReverter = extraActivityReverter;
-    }
+    this.setOption(() => {
+      if (extraActivityReverter) {
+        this.extraActivityReverter = extraActivityReverter;
+      }
+    });
   }
 
   /**
@@ -127,10 +155,22 @@ export class CodePlay {
   pause() {
     if (this.status !== 'PAUSE') {
       this.status = 'PAUSE';
+      this.playedTimeBeforePause =
+        (new Date().getTime() - this.lastPlayTime) * this.speed;
+      this.playedTimeBeforeOperation += this.playedTimeBeforePause;
       if (this.currentOperation !== null) {
         clearTimeout(this.timer);
+        this.currentOperation = null;
       }
     }
+  }
+
+  /**
+   * getStatus - Get play or pause status in the player
+   * @return {string} The status of player (PLAY | PAUSE)
+   */
+  getStatus() {
+    return this.status;
   }
 
   /**
@@ -138,7 +178,13 @@ export class CodePlay {
    * @return {number} The current time of progress in player
    */
   getCurrentTime() {
-    return this.currentTime;
+    const currentTime = this.lastOperationTime + this.playedTimeBeforeOperation;
+    if (this.status === 'PLAY') {
+      const timeAfterLastPlay =
+        (new Date().getTime() - this.lastPlayTime) * this.speed;
+      return currentTime + timeAfterLastPlay;
+    }
+    return currentTime;
   }
 
   /**
@@ -155,13 +201,14 @@ export class CodePlay {
    */
   seek(seekTime) {
     this.speedBeforeSeeking = this.speed;
+    this.statusBeforeSeeking = this.status;
     this.speed = 0;
     this.seekTime = seekTime;
-    this.pause();
     this.editor.focus();
-    if (this.currentTime < this.seekTime) {
+    this.pause();
+    if (this.lastOperationTime < this.seekTime) {
       this.playChanges();
-    } else if (this.currentTime > this.seekTime) {
+    } else if (this.lastOperationTime > this.seekTime) {
       this.revertChanges();
     }
   }
@@ -171,16 +218,23 @@ export class CodePlay {
    */
   stopSeek() {
     this.pause();
-    if (this.speedBeforeSeeking !== null) {
-      this.speed = this.speedBeforeSeeking;
+    if (this.seekTime) {
+      this.playedTimeBeforeOperation = this.seekTime - this.lastOperationTime;
+      if (this.speedBeforeSeeking !== null) {
+        this.setSpeed(this.speedBeforeSeeking);
+      }
+      this.seekTime = null;
+      if (this.statusBeforeSeeking === 'PLAY') {
+        this.play();
+      }
     }
-    this.seekTime = null;
   }
 
   /**
    * playChanges - Helper function to recursively play changes
    */
   playChanges() {
+    this.lastPlayTime = new Date().getTime();
     const operations = this.operations;
     if (operations.length > 0) {
       this.status = 'PLAY';
@@ -192,7 +246,7 @@ export class CodePlay {
         return;
       }
       this.timer = setTimeout(() => {
-        this.currentTime = currentOperation.t;
+        this.lastOperationTime = currentOperation.t;
         this.operations.shift();
         this.playChange(this.editor, currentOperation);
         if (this.operations.length === 0) {
@@ -210,7 +264,8 @@ export class CodePlay {
    * @return {number}                   Length of delay before the operation
    */
   getOperationDelay(currentOperation) {
-    const realOperationDelay = currentOperation.t - this.currentTime;
+    const operationDelay = currentOperation.t - this.lastOperationTime;
+    const realOperationDelay = operationDelay - this.playedTimeBeforeOperation;
     if (realOperationDelay > this.maxDelay && this.maxDelay > 0) {
       return this.maxDelay;
     }
@@ -224,6 +279,7 @@ export class CodePlay {
    * @param  {object} currentOperation  Current operation to replay
    */
   playChange(editor, currentOperation) {
+    this.playedTimeBeforeOperation = 0;
     const valueBeforeChange = editor.getValue();
     if (this.cachedValue === null || this.cachedValue !== valueBeforeChange) {
       this.cachedValue = valueBeforeChange;
@@ -311,7 +367,7 @@ export class CodePlay {
       this.currentOperation = playedOperations[0];
       this.revertChange(this.editor, this.currentOperation);
     } else {
-      this.currentTime = 0;
+      this.lastOperationTime = 0;
       this.stopSeek();
       return;
     }
@@ -324,8 +380,8 @@ export class CodePlay {
    * @param  {object} currentOperation  Current operation to replay
    */
   revertChange(editor, currentOperation) {
-    this.currentTime = currentOperation.t;
-    if (this.seekTime && this.currentTime <= this.seekTime) {
+    this.lastOperationTime = currentOperation.t;
+    if (this.seekTime && this.lastOperationTime <= this.seekTime) {
       this.stopSeek();
       return;
     }
