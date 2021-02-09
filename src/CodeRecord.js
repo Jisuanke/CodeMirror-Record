@@ -117,7 +117,7 @@ export class CodeRecord {
    *
    * @todo
    * @param  {object} editor  CodeMirror instance after swapDoc call
-   * @param  {array}  oldDoc  Original CodeMirror Doc instance to be replaced
+   * @param  {object} oldDoc  Original CodeMirror Doc instance to be replaced
    */
   swapDocListener(editor, oldDoc) {
     const changes = [{

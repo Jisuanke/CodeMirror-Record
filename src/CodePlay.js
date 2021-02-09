@@ -12,50 +12,81 @@ export class CodePlay {
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
-    this.realTime = 0;
     this.operations = [];
+    this.playedOperations = [];
     this.editor = editor;
+    this.cachedValue = null;
+    this.status = 'PAUSE';
     this.timer = null;
     this.currentOperation = null;
+    this.duration = 0;
+    this.lastOperationTime = 0;
+    this.lastPlayTime = 0;
+    this.seekTime = null;
+    this.playedTimeBeforeOperation = 0;
+    this.playedTimeBeforePause = 0;
+    this.speedBeforeSeeking = null;
     if (options) {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
       this.autoplay = options.autoplay || false;
       this.speed = options.speed || 1;
       this.extraActivityHandler = options.extraActivityHandler || null;
+      this.extraActivityReverter = options.extraActivityReverter || null;
     }
   }
 
   /**
-   * setMaxDelay - set the maximum delay between operations.
+   * setOption - Function for setting the option
+   * @param  {function} setOptionCallback Callback function for setting a option
+   */
+  setOption(setOptionCallback) {
+    const statusBeforeSetOption = this.status;
+    if (statusBeforeSetOption === 'PLAY') {
+      this.pause();
+    }
+    setOptionCallback();
+    if (statusBeforeSetOption === 'PLAY') {
+      this.play();
+    }
+  }
+
+  /**
+   * setMaxDelay - Set the maximum delay between operations.
    *
    * @param  {number} maxDelay In coming operations
    */
   setMaxDelay(maxDelay) {
-    if (maxDelay) {
-      this.maxDelay = maxDelay;
-    }
+    this.setOption(() => {
+      if (maxDelay) {
+        this.maxDelay = maxDelay;
+      }
+    });
   }
 
   /**
-   * setAutoplay - set autoplay option.
+   * setAutoplay - Set autoplay option.
    *
    * @param  {number} autoplay Value to be set in autoplay option
    */
   setAutoplay(autoplay) {
-    if (autoplay) {
-      this.autoplay = autoplay;
-    }
+    this.setOption(() => {
+      if (autoplay) {
+        this.autoplay = autoplay;
+      }
+    });
   }
 
   /**
-   * setSpeed - set playing speed of player.
+   * setSpeed - Set playing speed of player.
    *
    * @param  {number} speed playing speed.
    */
   setSpeed(speed) {
-    if (speed) {
-      this.speed = speed;
-    }
+    this.setOption(() => {
+      if (speed) {
+        this.speed = speed;
+      }
+    });
   }
 
   /**
@@ -64,21 +95,24 @@ export class CodePlay {
    * @param  {function} extraActivityHandler the function for extra activity.
    */
   setExtraActivityHandler(extraActivityHandler) {
-    if (extraActivityHandler) {
-      this.extraActivityHandler = extraActivityHandler;
-    }
+    this.setOption(() => {
+      if (extraActivityHandler) {
+        this.extraActivityHandler = extraActivityHandler;
+      }
+    });
   }
 
   /**
-   * addOperation - Original `addOperations` function with a wrong name.
+   * setExtraActivityReverter - Set reverter for reverting extra activity.
    *
-   * @param  {array} operations Incoming operations
-   * @deprecated Will be removed after > 1.0.0
+   * @param  {function} extraActivityReverter the function reverting.
    */
-  addOperation(operations) {
-    console.warn('Deprecated: addOperation() => addOperations() + play()');
-    this.addOperations(operations);
-    this.play();
+  setExtraActivityReverter(extraActivityReverter) {
+    this.setOption(() => {
+      if (extraActivityReverter) {
+        this.extraActivityReverter = extraActivityReverter;
+      }
+    });
   }
 
   /**
@@ -89,6 +123,7 @@ export class CodePlay {
   addOperations(operations) {
     const parsedOperations = this.parseOperations(operations);
     this.operations = this.operations.concat(parsedOperations);
+    this.duration = parsedOperations[parsedOperations.length - 1].t;
     if (this.autoplay) {
       this.play();
     }
@@ -108,17 +143,90 @@ export class CodePlay {
    * play - Focus on editor and play changes.
    */
   play() {
-    this.editor.focus();
-    this.playChanges();
+    if (this.status !== 'PLAY') {
+      this.editor.focus();
+      this.playChanges();
+    }
   }
 
   /**
    * pause - Pause code replay.
    */
   pause() {
-    if (this.currentOperation !== null) {
-      this.operations.unshift(this.currentOperation);
-      clearTimeout(this.timer);
+    if (this.status !== 'PAUSE') {
+      this.status = 'PAUSE';
+      this.playedTimeBeforePause =
+        (new Date().getTime() - this.lastPlayTime) * this.speed;
+      this.playedTimeBeforeOperation += this.playedTimeBeforePause;
+      if (this.currentOperation !== null) {
+        clearTimeout(this.timer);
+        this.currentOperation = null;
+      }
+    }
+  }
+
+  /**
+   * getStatus - Get play or pause status in the player
+   * @return {string} The status of player (PLAY | PAUSE)
+   */
+  getStatus() {
+    return this.status;
+  }
+
+  /**
+   * getCurrentTime - Get current time in player in milliseconds
+   * @return {number} The current time of progress in player
+   */
+  getCurrentTime() {
+    const currentTime = this.lastOperationTime + this.playedTimeBeforeOperation;
+    if (this.status === 'PLAY') {
+      const timeAfterLastPlay =
+        (new Date().getTime() - this.lastPlayTime) * this.speed;
+      return currentTime + timeAfterLastPlay;
+    }
+    return currentTime;
+  }
+
+  /**
+   * getDuration - Get duration of loaded records in player
+   * @return {number} The duration of loaded records of progress in player
+   */
+  getDuration() {
+    return this.duration;
+  }
+
+  /**
+   * seek - Seek to a position on player.
+   * @param {number} seekTime The time to be seeked on player
+   */
+  seek(seekTime) {
+    this.speedBeforeSeeking = this.speed;
+    this.statusBeforeSeeking = this.status;
+    this.speed = 0;
+    this.seekTime = seekTime;
+    this.editor.focus();
+    this.pause();
+    if (this.lastOperationTime < this.seekTime) {
+      this.playChanges();
+    } else if (this.lastOperationTime > this.seekTime) {
+      this.revertChanges();
+    }
+  }
+
+  /**
+   * stopSeek - Stop seeking.
+   */
+  stopSeek() {
+    this.pause();
+    if (this.seekTime) {
+      this.playedTimeBeforeOperation = this.seekTime - this.lastOperationTime;
+      if (this.speedBeforeSeeking !== null) {
+        this.setSpeed(this.speedBeforeSeeking);
+      }
+      this.seekTime = null;
+      if (this.statusBeforeSeeking === 'PLAY') {
+        this.play();
+      }
     }
   }
 
@@ -126,19 +234,26 @@ export class CodePlay {
    * playChanges - Helper function to recursively play changes
    */
   playChanges() {
+    this.lastPlayTime = new Date().getTime();
     const operations = this.operations;
     if (operations.length > 0) {
-      this.currentOperation = operations.shift();
+      this.status = 'PLAY';
+      this.currentOperation = operations[0];
       const currentOperation = this.currentOperation;
       const currentOperationDelay = this.getOperationDelay(currentOperation);
+      if (this.seekTime && currentOperation.t > this.seekTime) {
+        this.stopSeek();
+        return;
+      }
       this.timer = setTimeout(() => {
+        this.lastOperationTime = currentOperation.t;
+        this.operations.shift();
         this.playChange(this.editor, currentOperation);
-        this.realTime = currentOperation.t;
-        this.playChanges();
         if (this.operations.length === 0) {
           this.currentOperation = null;
+          this.stopSeek();
         }
-      }, currentOperationDelay / this.speed);
+      }, (this.speed === 0) ? 0 : currentOperationDelay / this.speed);
     }
   }
 
@@ -149,7 +264,8 @@ export class CodePlay {
    * @return {number}                   Length of delay before the operation
    */
   getOperationDelay(currentOperation) {
-    const realOperationDelay = currentOperation.t - this.realTime;
+    const operationDelay = currentOperation.t - this.lastOperationTime;
+    const realOperationDelay = operationDelay - this.playedTimeBeforeOperation;
     if (realOperationDelay > this.maxDelay && this.maxDelay > 0) {
       return this.maxDelay;
     }
@@ -159,11 +275,18 @@ export class CodePlay {
   /**
    * playChange - Replay current recorded operation given.
    *
-   * @param  {object} editor            Codemirror instance
+   * @param  {object} editor            CodeMirror instance
    * @param  {object} currentOperation  Current operation to replay
    */
   playChange(editor, currentOperation) {
-    for (let i = 0; i < currentOperation.o.length; i++) { // 对每一个光标
+    this.playedTimeBeforeOperation = 0;
+    const valueBeforeChange = editor.getValue();
+    if (this.cachedValue === null || this.cachedValue !== valueBeforeChange) {
+      this.cachedValue = valueBeforeChange;
+      currentOperation.revertValue = valueBeforeChange;
+    }
+
+    for (let i = 0; i < currentOperation.o.length; i++) {
       if (this.playExtraActivity(currentOperation)) {
         break;
       }
@@ -197,6 +320,8 @@ export class CodePlay {
         );
       }
     }
+    this.playedOperations.unshift(currentOperation);
+    this.playChanges();
   }
 
   /**
@@ -231,6 +356,60 @@ export class CodePlay {
       insertContent = cursorOperation.a.join('\n');
     }
     return insertContent;
+  }
+
+  /**
+   * revertChanges - Helper function to recursively play changes
+   */
+  revertChanges() {
+    const playedOperations = this.playedOperations;
+    if (playedOperations.length > 0) {
+      this.currentOperation = playedOperations[0];
+      this.revertChange(this.editor, this.currentOperation);
+    } else {
+      this.lastOperationTime = 0;
+      this.stopSeek();
+      return;
+    }
+  }
+
+  /**
+   * revertChange - Revert current operation given
+   *
+   * @param  {object} editor            CodeMirror instance
+   * @param  {object} currentOperation  Current operation to replay
+   */
+  revertChange(editor, currentOperation) {
+    this.lastOperationTime = currentOperation.t;
+    if (this.seekTime && this.lastOperationTime <= this.seekTime) {
+      this.stopSeek();
+      return;
+    }
+    if (currentOperation.revertValue !== undefined) {
+      editor.setValue(currentOperation.revertValue);
+    }
+    this.revertExtraActivity(currentOperation);
+    this.playedOperations.shift();
+    this.operations.unshift(currentOperation);
+    this.revertChanges();
+  }
+
+  /**
+   * revertExtraActivity - Revert current recorded operation given.
+   *
+   * @param  {object} currentOperation  Current operation to revert
+   * @return {boolean}                  True if extra activity reverted
+   */
+  revertExtraActivity(currentOperation) {
+    if (currentOperation.type === 'extra') {
+      if (this.extraActivityReverter) {
+        this.extraActivityReverter(currentOperation.o[0].activity);
+      } else {
+        console.warn('extraActivityReverter is required in player');
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
