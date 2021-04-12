@@ -66,6 +66,7 @@ You may add an object of extra setting options as the second parameter of `CodeP
 | speed | The multiples of playing speed in the player that decides how fast the player playback the operations. | `1` |
 | extraActivityHandler | The callback function for dealing with extra activities recorded. When it is `null`, the recorded extra activities will be skipped. | `null` |
 | extraActivityReverter | The callback function for reverting extra activities recorded. When it is `null`, the recorded extra activities will be skipped reverting. | `null` |
+| onEndedHandler | The callback function triggered at the end of the playback | `null` |
 
 ##### Example
 
@@ -82,13 +83,16 @@ const codePlayer = new CodePlay(playCodeMirror, {
   },
   extraActivityReverter: (activityRecorded) => {
     console.log(activityRecorded);
+  },
+  onEndedHandler: () => {
+    console.log("finished!");
   }
 });
 ```
 
 #### Set options after initialization
 
-You can change the value of player options after initialization. The value of options, including `maxDelay`, `autoplay`, `speed`, `extraActivityHandler` and `extraActivityReverter`, can be changed by calling the following functions.
+You can change the value of player options after initialization. The value of options, including `maxDelay`, `autoplay`, `speed`, `extraActivityHandler`, `extraActivityReverter` and `onEndedHandler`, can be changed by calling the following functions.
 
 ```javascript
 codePlayer.setMaxDelay(3000);
@@ -99,6 +103,9 @@ codePlayer.setExtraActivityHandler((activityRecorded) => {
 });
 codePlayer.setExtraActivityReverter((activityRecorded) => {
   console.log(activityRecorded);
+});
+codePlayer.setOnEndedHandler(() => {
+  console.log("finished!");
 });
 ```
 
