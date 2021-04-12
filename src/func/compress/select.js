@@ -16,8 +16,8 @@ function combineLongDelaySelect(firstChange, secondChange) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
   if (firstChange.delayDuration >= minCursorMoveDelay &&
     isLongDelaySelect(secondChange)) {
-    longDelayAverage = (longDelayAverage * longDelayCount
-      + secondChange.delayDuration) / (longDelayCount + 1);
+    longDelayAverage = (longDelayAverage * longDelayCount +
+      secondChange.delayDuration) / (longDelayCount + 1);
     longDelayCount++;
     return true;
   }

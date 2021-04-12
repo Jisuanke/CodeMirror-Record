@@ -7,7 +7,7 @@ const recordCodeMirror = CodeMirror.fromTextArea(
     document.getElementById('editor-record'), {
       mode: 'javascript',
       autoCloseBrackets: true,
-    }
+    },
 );
 
 const codeRecorder = new CodeRecord(recordCodeMirror);
@@ -77,7 +77,7 @@ const playCodeMirror = CodeMirror.fromTextArea(
       readOnly: true,
       mode: 'javascript',
       autoCloseBrackets: true,
-    }
+    },
 );
 
 const codePlayer = new CodePlay(playCodeMirror, {

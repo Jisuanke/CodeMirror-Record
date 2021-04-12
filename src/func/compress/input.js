@@ -14,8 +14,8 @@ function combineLongDelayInput(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
   if (firstChange.delayDuration >= minOperationDelay &&
     isLongDelayInput(secondChange)) {
-    longDelayAverage = (longDelayAverage * longDelayCount
-      + secondChange.delayDuration) / (longDelayCount + 1);
+    longDelayAverage = (longDelayAverage * longDelayCount +
+      secondChange.delayDuration) / (longDelayCount + 1);
     longDelayCount++;
     return true;
   }
