@@ -32,6 +32,7 @@ export class CodePlay {
       this.speed = options.speed || 1;
       this.extraActivityHandler = options.extraActivityHandler || null;
       this.extraActivityReverter = options.extraActivityReverter || null;
+      this.onEndedHandler = options.onEndedHandler || null;
     }
   }
 
@@ -111,6 +112,19 @@ export class CodePlay {
     this.setOption(() => {
       if (extraActivityReverter) {
         this.extraActivityReverter = extraActivityReverter;
+      }
+    });
+  }
+
+  /**
+   * setOnEndedHandler - Set event handler triggered on end of playback.
+   *
+   * @param  {function} onEndedHandler function triggered on end of playback.
+   */
+  setOnEndedHandler(onEndedHandler) {
+    this.setOption(() => {
+      if (onEndedHandler) {
+        this.onEndedHandler = onEndedHandler;
       }
     });
   }
@@ -252,6 +266,9 @@ export class CodePlay {
         if (this.operations.length === 0) {
           this.currentOperation = null;
           this.stopSeek();
+          if (this.onEndedHandler) {
+            this.onEndedHandler();
+          }
         }
       }, (this.speed === 0) ? 0 : currentOperationDelay / this.speed);
     }
