@@ -1,4 +1,4 @@
-{
+module.exports = {
     "env": {
         "browser": true,
         "es6": true
@@ -13,5 +13,6 @@
         "sourceType": "module"
     },
     "rules": {
+        "linebreak-style": ["error", (process.platform === "win32" ? "windows" : "unix")],
     }
 }
