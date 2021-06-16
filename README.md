@@ -102,6 +102,16 @@ codePlayer.setExtraActivityReverter((activityRecorded) => {
 });
 ```
 
+#### Clear and re-initialize the player instance
+
+Clear all operations and status on the player instance.
+
+```javascript
+codePlayer.clear();
+```
+
+All options set will not be changed.
+
 #### Add recorded operations
 
 Add `records` array of operation objects provided by `codeRecorder`.
