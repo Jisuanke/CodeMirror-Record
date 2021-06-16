@@ -12,6 +12,7 @@ export class CodePlay {
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
+    this.editor = editor;
     this.initialize();
     if (options) {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
@@ -28,7 +29,6 @@ export class CodePlay {
   initialize() {
     this.operations = [];
     this.playedOperations = [];
-    this.editor = editor;
     this.cachedValue = null;
     this.status = 'PAUSE';
     this.timer = null;
