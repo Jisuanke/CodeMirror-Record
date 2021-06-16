@@ -12,6 +12,20 @@ export class CodePlay {
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
+    this.initialize();
+    if (options) {
+      this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
+      this.autoplay = options.autoplay || false;
+      this.speed = options.speed || 1;
+      this.extraActivityHandler = options.extraActivityHandler || null;
+      this.extraActivityReverter = options.extraActivityReverter || null;
+    }
+  }
+
+  /**
+   * initialize - Initialize the instance to default values
+   */
+  initialize() {
     this.operations = [];
     this.playedOperations = [];
     this.editor = editor;
@@ -26,13 +40,6 @@ export class CodePlay {
     this.playedTimeBeforeOperation = 0;
     this.playedTimeBeforePause = 0;
     this.speedBeforeSeeking = null;
-    if (options) {
-      this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
-      this.autoplay = options.autoplay || false;
-      this.speed = options.speed || 1;
-      this.extraActivityHandler = options.extraActivityHandler || null;
-      this.extraActivityReverter = options.extraActivityReverter || null;
-    }
   }
 
   /**
@@ -127,6 +134,13 @@ export class CodePlay {
     if (this.autoplay) {
       this.play();
     }
+  }
+
+  /**
+   * clear - Clear all operations and status on the player instance.
+   */
+  clear() {
+    this.initialize();
   }
 
   /**
