@@ -1,7 +1,7 @@
 {
   "name": "codemirror-record",
-  "version": "1.0.2",
-  "description": "A recording and playing library for codemirror. Compatible with version later than 5.37.0.",
+  "version": "1.1.0",
+  "description": "A recording and playing library for CodeMirror. Compatible with version later than 5.37.0.",
   "scripts": {
     "build": "webpack --mode=production",
     "serve": "./node_modules/http-server/bin/http-server -o /demo",
@@ -28,16 +28,16 @@
     "code"
   ],
   "devDependencies": {
-    "@babel/core": "^7.14.6",
-    "@babel/preset-env": "^7.14.5",
+    "@babel/core": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
     "babel-loader": "^8.2.2",
-    "codemirror": "^5.61.1",
-    "eslint": "^7.28.0",
+    "codemirror": "^5.62.3",
+    "eslint": "^7.32.0",
     "eslint-config-google": "^0.14.0",
     "eslint-loader": "^2.2.1",
     "http-server": "^0.12.3",
-    "webpack": "^5.39.0",
-    "webpack-cli": "^4.7.2"
+    "webpack": "^5.51.1",
+    "webpack-cli": "^4.8.0"
   },
   "author": "Haoran Yu",
   "license": "MIT",

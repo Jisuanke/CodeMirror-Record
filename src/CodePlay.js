@@ -1,10 +1,11 @@
 import extract from './func/extract';
 import CONFIG from './config';
+import Events from 'events';
 
 /**
  * A class for playing recorded code
  */
-export class CodePlay {
+export class CodePlay extends Events {
   /**
    * constructor - Initialize a instance for playing recorded code.
    *
@@ -12,6 +13,7 @@ export class CodePlay {
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
+    super();
     this.editor = editor;
     this.initialize();
     if (options) {
@@ -140,6 +142,7 @@ export class CodePlay {
    * clear - Clear all operations and status on the player instance.
    */
   clear() {
+    this.emit('clear');
     this.initialize();
   }
 
@@ -159,6 +162,7 @@ export class CodePlay {
   play() {
     if (this.status !== 'PLAY') {
       this.editor.focus();
+      this.emit('play');
       this.playChanges();
     }
   }
@@ -169,6 +173,7 @@ export class CodePlay {
   pause() {
     if (this.status !== 'PAUSE') {
       this.status = 'PAUSE';
+      this.emit('pause');
       this.playedTimeBeforePause =
         (new Date().getTime() - this.lastPlayTime) * this.speed;
       this.playedTimeBeforeOperation += this.playedTimeBeforePause;
@@ -214,6 +219,7 @@ export class CodePlay {
    * @param {number} seekTime The time to be seeked on player
    */
   seek(seekTime) {
+    this.emit('seek');
     this.speedBeforeSeeking = this.speed;
     this.statusBeforeSeeking = this.status;
     this.speed = 0;
@@ -268,6 +274,8 @@ export class CodePlay {
           this.stopSeek();
         }
       }, (this.speed === 0) ? 0 : currentOperationDelay / this.speed);
+    } else {
+      this.emit('end');
     }
   }
 

@@ -87,4 +87,20 @@ const codePlayer = new CodePlay(playCodeMirror, {
   },
 });
 
+codePlayer.on('play', () => {
+  console.log('play event triggered');
+});
+
+codePlayer.on('pause', () => {
+  console.log('pause event triggered');
+});
+
+codePlayer.on('seek', () => {
+  console.log('seek event triggered');
+});
+
+codePlayer.on('stop', () => {
+  console.log('stop event triggered');
+});
+
 recordCodeMirror.setValue('// This is a demo.\n// Write you code here:');
