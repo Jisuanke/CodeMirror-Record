@@ -179,7 +179,7 @@ codePlayer.getDuration();
 You may listen to player events or remove listeners as you wish using `on` and `off`. The following events are supported:
 
 | Event | Explanation |
-| --- | --- | --- |
+| --- | --- |
 | play | The player starts to play operations |
 | pause | The player pauses/stops playing |
 | seek | `seek` method is called |
@@ -187,6 +187,7 @@ You may listen to player events or remove listeners as you wish using `on` and `
 | clear | `clear` method is called |
 
 > _We currently don't emit any parameters in the events. If you have any related needs, please submit an issue and let us know_
+
 ##### Example
 
 ```javascript
