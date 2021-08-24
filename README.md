@@ -86,7 +86,9 @@ const codePlayer = new CodePlay(playCodeMirror, {
 });
 ```
 
-#### Set options after initialization
+#### Player methods
+
+##### Set options after initialization
 
 You can change the value of player options after initialization. The value of options, including `maxDelay`, `autoplay`, `speed`, `extraActivityHandler` and `extraActivityReverter`, can be changed by calling the following functions.
 
@@ -102,7 +104,7 @@ codePlayer.setExtraActivityReverter((activityRecorded) => {
 });
 ```
 
-#### Clear and re-initialize the player instance
+##### Clear and re-initialize the player instance
 
 Clear all operations and status on the player instance.
 
@@ -112,7 +114,7 @@ codePlayer.clear();
 
 All options set will not be changed.
 
-#### Add recorded operations
+##### Add recorded operations
 
 Add `records` array of operation objects provided by `codeRecorder`.
 
@@ -120,7 +122,7 @@ Add `records` array of operation objects provided by `codeRecorder`.
 codePlayer.addOperations(records);
 ```
 
-#### Play added operations
+##### Play added operations
 
 Focus on the player editor and play the added operations.
 
@@ -130,7 +132,7 @@ codePlayer.play();
 
 You can also call `play` to resume playing after `pause` is called.
 
-#### Pause
+##### Pause
 
 Pause the operations being played in the player editor.
 
@@ -138,7 +140,7 @@ Pause the operations being played in the player editor.
 codePlayer.pause();
 ```
 
-#### Seek
+##### Seek
 
 Seek to a given time position on the timeline of the player (in millisecond).
 
@@ -147,7 +149,7 @@ let seekTime = 10102;
 codePlayer.seek(seekTime);
 ```
 
-#### Get player status
+##### Get player status
 
 Get the status of the player. If there is any recorded operation being played, the value is `PLAY`. Otherwise, the value is `PAUSE`.
 
@@ -156,7 +158,7 @@ let seekTime = 10102;
 codePlayer.seek(seekTime);
 ```
 
-#### Get current time position
+##### Get current time position
 
 Get the current time position on the timeline of the player (in millisecond).
 
@@ -164,12 +166,49 @@ Get the current time position on the timeline of the player (in millisecond).
 codePlayer.getCurrentTime();
 ```
 
-#### Get duration
+##### Get duration
 
 Get the total time duration of recorded operations, in milliseconds.
 
 ```javascript
 codePlayer.getDuration();
+```
+
+#### Player events
+
+You may listen to player events or remove listeners as you wish using `on` and `off`. The following events are supported:
+
+| Event | Explanation |
+| --- | --- | --- |
+| play | The player starts to play operations |
+| pause | The player pauses/stops playing |
+| seek | `seek` method is called |
+| end | All the operations played |
+| clear | `clear` method is called |
+
+> _We currently don't emit any parameters in the events. If you have any related needs, please submit an issue and let us know_
+##### Example
+
+```javascript
+codePlayer.on('play', () => {
+  console.log('play event triggered');
+});
+
+codePlayer.on('pause', () => {
+  console.log('pause event triggered');
+});
+
+codePlayer.on('seek', () => {
+  console.log('seek event triggered');
+});
+
+codePlayer.on('end', () => {
+  console.log('end event triggered');
+});
+
+codePlayer.on('clear', () => {
+  console.log('clear event triggered');
+});
 ```
 
 ## Data Explanation
