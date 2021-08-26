@@ -33,6 +33,7 @@ export class CodePlay extends Events {
     this.playedOperations = [];
     this.cachedValue = null;
     this.status = 'PAUSE';
+    clearTimeout(this.timer);
     this.timer = null;
     this.currentOperation = null;
     this.duration = 0;
