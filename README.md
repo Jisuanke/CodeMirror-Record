@@ -63,6 +63,7 @@ You may add an object of extra setting options as the second parameter of `CodeP
 | --- | --- | --- |
 | maxDelay | The maximum pause supported by the player (in millisecond). The pause with time length longer than the value of this option will be replaced with this value. Only non-negative values will be adopted. | `-1` |
 | autoplay | The player will play recorded operations immediately after being added to the recorder if the value of this option is `true`. | `false` |
+| autofocus | The editor will be focused whenever recorded operations play if the value of this option is `true`. | `false` |
 | speed | The multiples of playing speed in the player that decides how fast the player playback the operations. | `1` |
 | extraActivityHandler | The callback function for dealing with extra activities recorded. When it is `null`, the recorded extra activities will be skipped. | `null` |
 | extraActivityReverter | The callback function for reverting extra activities recorded. When it is `null`, the recorded extra activities will be skipped reverting. | `null` |
@@ -76,6 +77,7 @@ The following options make the player automatically play added records without c
 const codePlayer = new CodePlay(playCodeMirror, {
   maxDelay: 3000,
   autoplay: true,
+  autofocus: true,
   speed: 0.8,
   extraActivityHandler: (activityRecorded) => {
     console.log(activityRecorded);
@@ -90,11 +92,12 @@ const codePlayer = new CodePlay(playCodeMirror, {
 
 ##### Set options after initialization
 
-You can change the value of player options after initialization. The value of options, including `maxDelay`, `autoplay`, `speed`, `extraActivityHandler` and `extraActivityReverter`, can be changed by calling the following functions.
+You can change the value of player options after initialization. The value of options, including `maxDelay`, `autoplay`, `autofocus`, `speed`, `extraActivityHandler` and `extraActivityReverter`, can be changed by calling the following functions.
 
 ```javascript
 codePlayer.setMaxDelay(3000);
 codePlayer.setAutoplay(true);
+codePlayer.setAutofocus(true);
 codePlayer.setSpeed(2.5);
 codePlayer.setExtraActivityHandler((activityRecorded) => {
   console.log(activityRecorded);

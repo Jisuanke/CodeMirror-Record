@@ -19,6 +19,7 @@ export class CodePlay extends Events {
     if (options) {
       this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
       this.autoplay = options.autoplay || false;
+      this.autofocus = options.autofocus || false;
       this.speed = options.speed || 1;
       this.extraActivityHandler = options.extraActivityHandler || null;
       this.extraActivityReverter = options.extraActivityReverter || null;
@@ -82,6 +83,19 @@ export class CodePlay extends Events {
     this.setOption(() => {
       if (autoplay) {
         this.autoplay = autoplay;
+      }
+    });
+  }
+
+  /**
+   * setAutofocus - Set autofocus option.
+   *
+   * @param  {number} autofocus Value to be set in autofocus option
+   */
+  setAutofocus(autofocus) {
+    this.setOption(() => {
+      if (autofocus) {
+        this.autofocus = autofocus;
       }
     });
   }
@@ -162,7 +176,9 @@ export class CodePlay extends Events {
    */
   play() {
     if (this.status !== 'PLAY') {
-      this.editor.focus();
+      if (this.autofocus) {
+        this.editor.focus();
+      }
       this.emit('play');
       this.playChanges();
     }
@@ -225,7 +241,9 @@ export class CodePlay extends Events {
     this.statusBeforeSeeking = this.status;
     this.speed = 0;
     this.seekTime = seekTime;
-    this.editor.focus();
+    if (this.autofocus) {
+      this.editor.focus();
+    }
     this.pause();
     if (this.lastOperationTime < this.seekTime) {
       this.playChanges();
