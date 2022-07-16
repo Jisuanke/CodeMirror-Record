@@ -1,6 +1,8 @@
 ![CodeMirror-Record](https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8)
 
-It is a project for recording and playing back activities in the CodeMirror editor and the surrounding environment. You can try this project on the [online demo page](http://codemirror-record.haoranyu.com/demo/).
+It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment. You can try this project on the [online demo page](http://codemirror-record.haoranyu.com/demo/).
+
+_NOTE: The latest CodeMirror (version 6.x) is not yet supported by this library. We are still working on it._
 
 ## Local Demo
 
