@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Record CodeMirror 5 editing sessions as portable JSON and replay them with pause, seek, and speed controls."
+    >
+    <meta name="theme-color" content="#020617">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CodeMirror Record">
+    <meta
+      property="og:description"
+      content="Record a CodeMirror session, move it as JSON, and replay the timeline."
+    >
+    <meta property="og:url" content="https://codemirror-record.haoranyu.com/">
+    <meta
+      property="og:image"
+      content="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
+    >
+    <meta property="og:image:alt" content="CodeMirror Record project artwork">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://codemirror-record.haoranyu.com/">
+    <link rel="preconnect" href="https://repository-images.githubusercontent.com">
+    <link rel="icon" href="data:,">
+    <title>CodeMirror Record — Record and replay CodeMirror 5 sessions</title>
+    <link rel="stylesheet" href="./demo/style.css?v=1.1.6">
+    <link rel="stylesheet" href="./homepage.css?v=1.1.6">
+  </head>
+  <body class="home-page">
+    <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+    <header class="site-header">
+      <div class="page-shell header-content">
+        <a class="brand" href="./">CodeMirror Record</a>
+        <nav aria-label="Primary navigation">
+          <a href="#workflow">How it works</a>
+          <a href="#quick-start">Quick start</a>
+          <a href="#limits">Limits</a>
+          <a
+            href="https://github.com/Jisuanke/CodeMirror-Record"
+            target="_blank"
+            rel="noreferrer"
+          >GitHub</a>
+          <a class="nav-cta" href="./demo/#demo-workbench">Try the demo</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="hero page-shell" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">CodeMirror 5 · MIT</p>
+          <h1 id="page-title">Record editing activity.<br>Replay the timeline.</h1>
+          <p class="hero-summary">
+            <code>CodeRecord</code> captures editor activity—and application
+            events you add—as a JSON string. <code>CodePlay</code> loads that
+            string for pause, seek, and speed-controlled playback.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="./demo/#demo-workbench">
+              Try the interactive demo
+            </a>
+            <a class="text-link" href="#quick-start">Read the quick start</a>
+          </div>
+          <div class="home-install" aria-label="Install command">
+            <span aria-hidden="true">$</span>
+            <code>npm install codemirror-record codemirror@5</code>
+          </div>
+        </div>
+
+        <figure class="home-hero-visual">
+          <div class="home-hero-visual-header">
+            <span>
+              <span class="status-dot" aria-hidden="true"></span>
+              Session trace
+            </span>
+            <span>03 operations</span>
+          </div>
+          <div class="home-hero-stage">
+            <div class="home-hero-artwork" aria-hidden="true">
+              <img
+                src="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
+                alt=""
+                width="1280"
+                height="640"
+                fetchpriority="high"
+              >
+            </div>
+            <div class="home-session-readout">
+              <p>Recorded activity</p>
+              <ol>
+                <li>
+                  <time datetime="PT0.8S">00:00.8</time>
+                  <span><b>change</b><small>+12 characters</small></span>
+                </li>
+                <li>
+                  <time datetime="PT1.4S">00:01.4</time>
+                  <span><b>cursor</b><small>line 2 · ch 18</small></span>
+                </li>
+                <li>
+                  <time datetime="PT2.1S">00:02.1</time>
+                  <span><b>activity</b><small>run preview</small></span>
+                </li>
+              </ol>
+            </div>
+          </div>
+          <figcaption aria-label="CodeRecord produces a JSON string for CodePlay">
+            <span>CodeRecord</span>
+            <span class="home-flow-line" aria-hidden="true"></span>
+            <span>JSON string</span>
+            <span class="home-flow-line" aria-hidden="true"></span>
+            <span>CodePlay</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="workflow-section" id="workflow" aria-labelledby="workflow-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <p class="eyebrow">How it works</p>
+            <h2 id="workflow-title">One session, four explicit steps</h2>
+            <p>
+              Recording and playback remain separate. The JSON string is the
+              bridge, so your application decides when and where a session moves.
+            </p>
+          </div>
+
+          <ol class="workflow-steps" aria-label="CodeMirror Record workflow">
+            <li class="workflow-step is-complete">
+              <span class="step-number">01</span>
+              <div>
+                <h3>Record</h3>
+                <p>Attach <code>CodeRecord</code> and call <code>listen()</code>.</p>
+              </div>
+            </li>
+            <li class="workflow-step is-complete">
+              <span class="step-number">02</span>
+              <div>
+                <h3>Capture</h3>
+                <p><code>getRecords()</code> drains pending activity into JSON.</p>
+              </div>
+            </li>
+            <li class="workflow-step is-complete">
+              <span class="step-number">03</span>
+              <div>
+                <h3>Load</h3>
+                <p>Pass a non-empty records string to <code>addOperations()</code>.</p>
+              </div>
+            </li>
+            <li class="workflow-step is-active" aria-current="step">
+              <span class="step-number">04</span>
+              <div>
+                <h3>Replay</h3>
+                <p>Play, pause, seek, and adjust the timeline speed.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="home-capabilities page-shell" aria-labelledby="capabilities-title">
+        <div class="home-section-heading">
+          <p class="eyebrow">What gets recorded</p>
+          <h2 id="capabilities-title">The editor state your replay needs</h2>
+          <p>
+            CodeMirror Record keeps the payload compact while preserving the
+            interaction details that make a coding session understandable.
+          </p>
+        </div>
+
+        <div class="home-feature-grid">
+          <article class="home-feature-card">
+            <span class="feature-index">01</span>
+            <h3>Editor activity</h3>
+            <p>Capture text changes, selections, and cursor movement from CodeMirror 5.</p>
+            <code>changes · cursorActivity</code>
+          </article>
+          <article class="home-feature-card">
+            <span class="feature-index">02</span>
+            <h3>Application activity</h3>
+            <p>Add JSON-serializable events that happen outside the editor.</p>
+            <code>recordExtraActivity()</code>
+          </article>
+          <article class="home-feature-card">
+            <span class="feature-index">03</span>
+            <h3>Playback control</h3>
+            <p>Pause, seek, change speed, and subscribe to player lifecycle events.</p>
+            <code>play · pause · seek · end</code>
+          </article>
+        </div>
+
+        <aside class="home-demo-callout" aria-labelledby="demo-callout-title">
+          <div>
+            <p class="eyebrow">Interactive playground</p>
+            <h2 id="demo-callout-title">See the data move</h2>
+            <p>
+              Edit code, capture a batch, inspect the JSON, load it, and replay the
+              same sequence in a separate editor.
+            </p>
+          </div>
+          <div class="home-demo-actions">
+            <a class="button button-accent" href="./demo/#demo-workbench">
+              Open the playground
+            </a>
+            <span>Record <b aria-hidden="true">→</b> JSON <b aria-hidden="true">→</b> Replay</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="integration-section" id="quick-start" aria-labelledby="quick-start-title">
+        <div class="page-shell integration-grid">
+          <div class="integration-copy">
+            <p class="eyebrow">Quick start</p>
+            <h2 id="quick-start-title">Wire the round trip in a few calls</h2>
+            <p>
+              Start both editors with the same document. Capture only after the
+              user has interacted with the recording editor, then guard against an
+              empty batch before loading it.
+            </p>
+            <div class="home-link-list">
+              <a href="https://github.com/Jisuanke/CodeMirror-Record#api">
+                Read the complete API and data format
+                <span aria-hidden="true">→</span>
+              </a>
+              <a href="https://www.npmjs.com/package/codemirror-record">
+                View the package on npm
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="code-sample">
+            <div class="code-sample-header">
+              <span>quick-start.js</span>
+              <span>CodeMirror 5</span>
+            </div>
+            <pre tabindex="0"><code>import {CodeRecord, CodePlay} from 'codemirror-record';
+
+playEditor.setValue(recordEditor.getValue());
+
+const recorder = new CodeRecord(recordEditor);
+const player = new CodePlay(playEditor, {
+  maxDelay: 3000,
+  speed: 1,
+});
+
+recorder.listen();
+
+function replayPendingOperations() {
+  const records = recorder.getRecords();
+
+  if (JSON.parse(records).length === 0) return;
+
+  player.addOperations(records);
+  player.play();
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-limits page-shell" id="limits" aria-labelledby="limits-title">
+        <div class="home-limits-card">
+          <div>
+            <p class="eyebrow">Compatibility</p>
+            <h2 id="limits-title">Built for CodeMirror 5</h2>
+            <p>
+              Use the same starting document in the recorder and player.
+              CodeMirror 6 uses a different API and is not supported by this release.
+            </p>
+          </div>
+          <dl class="home-compatibility-list">
+            <div>
+              <dt>Editor</dt>
+              <dd>CodeMirror 5.37+</dd>
+            </div>
+            <div>
+              <dt>Payload</dt>
+              <dd>JSON string</dd>
+            </div>
+            <div>
+              <dt>License</dt>
+              <dd>MIT</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="home-final-cta" aria-labelledby="final-cta-title">
+        <div class="page-shell">
+          <p class="eyebrow">Ready for the full round trip?</p>
+          <h2 id="final-cta-title">Record an edit. Inspect the JSON. Replay the timeline.</h2>
+          <div class="hero-actions">
+            <a class="button button-primary" href="./demo/#demo-workbench">
+              Try the interactive demo
+            </a>
+            <a
+              class="button button-secondary"
+              href="https://github.com/Jisuanke/CodeMirror-Record#api"
+            >
+              Read the API
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="page-shell">
+        <span>CodeMirror Record · MIT License</span>
+        <span>Recording and playback for CodeMirror 5.</span>
+      </div>
+    </footer>
+  </body>
+</html>

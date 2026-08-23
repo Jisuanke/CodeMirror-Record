@@ -160,10 +160,9 @@ function convertChsToInterval(chs, direction = 1) {
  * compressContinuousSelect - Compress continues selection operations
  *
  * @param  {type} operations    The array of operations
- * @param  {type} direction = 1 Positive is left to right. Negative is opposite.
  * @return {type}               Compressed selection operations
  */
-function compressContinuousSelect(operations, direction = 1) {
+function compressContinuousSelect(operations) {
   const newOperations = [];
   while (operations.length > 0) {
     const operation = _cloneDeep(operations.pop());

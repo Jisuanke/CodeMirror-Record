@@ -1,18 +1,18 @@
 ![CodeMirror-Record](https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8)
 
-It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment. You can try this project on the [online demo page](http://codemirror-record.haoranyu.com/demo/).
+It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment. You can try this project on the [online demo page](https://codemirror-record.haoranyu.com/demo/).
 
 _NOTE: The latest CodeMirror (version 6.x) is not yet supported by this library. We are still working on it._
 
 ## Local Demo
 
-After cloning this repository, follow the steps below to run the local demo in the directory.
+After cloning this repository, use Node.js 24 LTS and follow the steps below to run the local demo in the directory.
 
 1. Solve dependencies by running `npm install`.
 2. Use `npm run build` to build the project.
 3. Use `npm run serve` to start a node server that hosts the local demo of the project.
 4. If a page is not automatically loaded in your browser you could visit  `http://localhost:8080/demo/` manually in your browser.
-5. Coding in the editor on the left. All changes will be recorded and synced. Then you can play the records in the editor on the right.
+5. Edit in the recorder, capture its JSON payload, load that payload into the player, and replay the timeline.
 
 ## API
 
@@ -32,7 +32,7 @@ codeRecorder.listen();
 
 #### Record extra activities
 
-The function `recordExtraActivity` can be used to record any activity that is not happened in the CodeMirror editor. The parameter can be anything that can be played by the `extraActivityHandler` function in the player.
+The function `recordExtraActivity` can be used to record JSON-serializable activity that happens outside the CodeMirror editor. The player can handle the value with `extraActivityHandler`.
 
 ```javascript
 // moreActivities is some external value we would like to record
@@ -41,7 +41,7 @@ codeRecorder.recordExtraActivity(moreActivities);
 
 #### Get record result string
 
-After a series of operations inside and outside the editor, an array describing all operations can be obtained by calling `getRecords`.
+After a series of operations inside and outside the editor, call `getRecords` to obtain a JSON string describing the pending operations. The call drains that pending batch.
 
 ```js
 let records = '';
@@ -121,7 +121,7 @@ All options set will not be changed.
 
 ##### Add recorded operations
 
-Add `records` array of operation objects provided by `codeRecorder`.
+Add a non-empty `records` JSON string provided by `codeRecorder`.
 
 ```javascript
 codePlayer.addOperations(records);

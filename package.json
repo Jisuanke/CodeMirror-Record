@@ -1,11 +1,13 @@
 {
   "name": "codemirror-record",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "A recording and playing library for CodeMirror. Compatible with version later than 5.37.0.",
   "scripts": {
+    "lint": "eslint .",
+    "prebuild": "npm run lint",
     "build": "webpack --mode=production",
-    "serve": "./node_modules/http-server/bin/http-server -o /demo",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "serve": "http-server -o /demo",
+    "test": "npm run build && node --test"
   },
   "main": "./dist/main.js",
   "module": "./src/index.js",
@@ -16,10 +18,10 @@
     "*.js",
     "*.md"
   ],
-  "homepage": "http://codemirror-record.haoranyu.com/",
+  "homepage": "https://codemirror-record.haoranyu.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/haoranyu/codemirror-record"
+    "url": "https://github.com/Jisuanke/CodeMirror-Record"
   },
   "keywords": [
     "record",
@@ -28,20 +30,21 @@
     "code"
   ],
   "devDependencies": {
-    "@babel/core": "^7.15.0",
-    "@babel/preset-env": "^7.15.0",
-    "babel-loader": "^8.2.2",
-    "codemirror": "^5.62.3",
-    "eslint": "^7.32.0",
-    "eslint-config-google": "^0.14.0",
-    "eslint-webpack-plugin": "^3.0.1",
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@eslint/js": "^10.0.1",
+    "babel-loader": "^10.1.1",
+    "codemirror": "^5.65.21",
+    "eslint": "^10.9.0",
+    "globals": "^17.11.0",
     "http-server": "^14.1.1",
-    "webpack": "^5.51.1",
-    "webpack-cli": "^4.8.0"
+    "webpack": "^5.109.2",
+    "webpack-cli": "^7.2.2"
   },
   "author": "Haoran Yu",
   "license": "MIT",
   "dependencies": {
+    "events": "^3.3.0",
     "lodash.clonedeep": "^4.5.0"
   }
 }
