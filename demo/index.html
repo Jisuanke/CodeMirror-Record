@@ -1,7 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Getting Started</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Record, serialize, and replay a CodeMirror 5 editing session with CodeMirror Record."
+    >
+    <title>CodeMirror Record — Interactive workflow</title>
+    <link rel="icon" href="data:,">
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/codemirror.min.css"
@@ -11,44 +18,340 @@
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
-    <main class="editors">
-      <div>
-        <h3>Recording Editor</h3>
-        <textarea id="editor-record"></textarea>
+    <a class="skip-link" href="#demo-workbench">Skip to the interactive demo</a>
+
+    <header class="site-header">
+      <div class="page-shell header-content">
+        <a class="brand" href="#top" aria-label="CR CodeMirror Record">
+          <span class="brand-mark" aria-hidden="true">CR</span>
+          <span>CodeMirror Record</span>
+        </a>
+        <nav aria-label="Page navigation">
+          <a href="#workflow">Workflow</a>
+          <a href="#integration">Integration</a>
+          <a
+            href="https://github.com/Jisuanke/CodeMirror-Record"
+            target="_blank"
+            rel="noreferrer"
+          >GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
       </div>
-      <div>
-        <h3>Playing Editor</h3>
-        <textarea id="editor-play"></textarea>
-      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero page-shell" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">CodeMirror 5 · session playback</p>
+          <h1 id="page-title">Record an edit.<br>Replay the timeline.</h1>
+          <p class="hero-summary">
+            CodeMirror Record captures text edits, selections, and cursor activity
+            as portable JSON. Load that payload into a player to reproduce the
+            coding session at any speed.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#demo-workbench">Try the workflow</a>
+            <a class="text-link" href="#integration">See the integration code</a>
+          </div>
+        </div>
+
+        <div class="signal-card" aria-label="Library workflow summary">
+          <div class="signal-card-header">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Session pipeline</span>
+            <span class="version">v1.1.6</span>
+          </div>
+          <ol class="pipeline">
+            <li><code>CodeRecord.listen()</code></li>
+            <li><code>getRecords()</code></li>
+            <li><code>addOperations(json)</code></li>
+            <li><code>CodePlay.play()</code></li>
+          </ol>
+          <p>Editor activity <span aria-hidden="true">→</span> JSON <span aria-hidden="true">→</span> repeatable playback</p>
+        </div>
+      </section>
+
+      <section class="workflow-section" id="workflow" aria-labelledby="workflow-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <p class="eyebrow">The mental model</p>
+            <h2 id="workflow-title">One session, four explicit steps</h2>
+            <p>
+              Recording and playback are separate. The JSON payload is the bridge
+              between them, so it can be stored, sent, or replayed later.
+            </p>
+          </div>
+
+          <ol class="workflow-steps" aria-label="CodeMirror Record workflow">
+            <li class="workflow-step is-active" data-flow-step="1" aria-current="step">
+              <span class="step-number">01</span>
+              <div>
+                <h3>Listen</h3>
+                <p>Attach <code>CodeRecord</code> to an editable CodeMirror instance.</p>
+              </div>
+            </li>
+            <li class="workflow-step" data-flow-step="2">
+              <span class="step-number">02</span>
+              <div>
+                <h3>Capture</h3>
+                <p>Call <code>getRecords()</code> to drain pending activity into JSON.</p>
+              </div>
+            </li>
+            <li class="workflow-step" data-flow-step="3">
+              <span class="step-number">03</span>
+              <div>
+                <h3>Load</h3>
+                <p>Pass the payload to <code>CodePlay.addOperations()</code>.</p>
+              </div>
+            </li>
+            <li class="workflow-step" data-flow-step="4">
+              <span class="step-number">04</span>
+              <div>
+                <h3>Replay</h3>
+                <p>Play, pause, seek, or change speed without touching the recording.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section
+        class="workbench-section page-shell"
+        id="demo-workbench"
+        aria-labelledby="workbench-title"
+      >
+        <div class="workbench-heading">
+          <div>
+            <p class="eyebrow">Interactive demo</p>
+            <h2 id="workbench-title">Move a real recording through the pipeline</h2>
+            <p>Edit on the left, inspect the serialized payload, then replay it on the right.</p>
+          </div>
+          <button class="button button-secondary" id="reset-demo" type="button">
+            Reset demo
+          </button>
+        </div>
+
+        <div class="workbench">
+          <article class="workspace-card recorder-card" aria-labelledby="recorder-title">
+            <header class="card-header">
+              <div>
+                <span class="card-step">01 · Record</span>
+                <h3 id="recorder-title">Recorder</h3>
+              </div>
+              <span
+                class="state-badge state-listening"
+                id="recorder-state"
+                role="status"
+                aria-live="polite"
+              >
+                <span aria-hidden="true"></span>
+                Listening
+              </span>
+            </header>
+            <p class="card-description">
+              Change the starter code. Every edit and cursor movement is queued by
+              <code>CodeRecord</code>.
+            </p>
+            <div class="editor-frame">
+              <div class="editor-label">
+                <span>session.js</span>
+                <span>Editable</span>
+              </div>
+              <textarea id="editor-record"></textarea>
+            </div>
+            <div class="card-footer">
+              <p id="recorder-hint">Make an edit to create the first operation.</p>
+              <button class="button button-quiet" id="sample-edit" type="button">
+                Insert sample edit
+              </button>
+            </div>
+          </article>
+
+          <section class="transfer-card" aria-labelledby="transfer-title">
+            <header>
+              <span class="card-step">02–03 · Transfer</span>
+              <h3 id="transfer-title">JSON bridge</h3>
+              <p>Capture drains pending operations. Load sends the cumulative payload to the player.</p>
+            </header>
+
+            <button
+              class="button button-primary button-full"
+              id="capture-records"
+              type="button"
+              disabled
+            >
+              Capture pending edits
+            </button>
+
+            <div class="payload-panel">
+              <div class="payload-header">
+                <span>recording.json</span>
+                <button class="copy-button" id="copy-payload" type="button" disabled>
+                  Copy JSON
+                </button>
+              </div>
+              <pre id="payload-output" tabindex="0" aria-label="Captured recording JSON"><code>No payload yet.
+
+Edit the recorder, then capture.</code></pre>
+              <dl class="payload-metrics">
+                <div>
+                  <dt>Entries</dt>
+                  <dd id="operation-count">0</dd>
+                </div>
+                <div>
+                  <dt>Size</dt>
+                  <dd id="payload-size">0 B</dd>
+                </div>
+              </dl>
+            </div>
+
+            <button
+              class="button button-accent button-full"
+              id="load-operations"
+              type="button"
+              disabled
+            >
+              Load into player
+            </button>
+            <p class="transfer-note" id="transfer-note" role="status" aria-live="polite">
+              Waiting for a recorded edit.
+            </p>
+          </section>
+
+          <article class="workspace-card player-card" aria-labelledby="player-title">
+            <header class="card-header">
+              <div>
+                <span class="card-step">04 · Replay</span>
+                <h3 id="player-title">Player</h3>
+              </div>
+              <span
+                class="state-badge"
+                id="player-state"
+                role="status"
+                aria-live="polite"
+              >Not loaded</span>
+            </header>
+            <p class="card-description">
+              <code>CodePlay</code> applies the loaded operations to an identical
+              starting document.
+            </p>
+            <div class="editor-frame">
+              <div class="editor-label">
+                <span>replay.js</span>
+                <span>Read only</span>
+              </div>
+              <textarea id="editor-play"></textarea>
+            </div>
+
+            <div class="player-controls">
+              <div class="transport-controls" aria-label="Playback controls">
+                <button class="button button-accent" id="play" type="button" disabled>
+                  Play
+                </button>
+                <button class="button button-secondary" id="pause" type="button" disabled>
+                  Pause
+                </button>
+                <button class="button button-secondary" id="replay" type="button" disabled>
+                  Replay
+                </button>
+              </div>
+
+              <div class="speed-control">
+                <label for="speed">Playback speed</label>
+                <select id="speed" disabled>
+                  <option value="0.5">0.5×</option>
+                  <option value="1" selected>1×</option>
+                  <option value="1.5">1.5×</option>
+                  <option value="2">2×</option>
+                  <option value="3">3×</option>
+                </select>
+              </div>
+
+              <div class="timeline-control">
+                <div class="timeline-label">
+                  <label for="playback-progress">Timeline</label>
+                  <output id="playback-time" for="playback-progress">0:00.0 / 0:00.0</output>
+                </div>
+                <input
+                  id="playback-progress"
+                  type="range"
+                  min="0"
+                  max="1"
+                  value="0"
+                  step="1"
+                  disabled
+                >
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <section class="event-panel" aria-labelledby="event-title">
+          <div>
+            <span class="card-step">Runtime feedback</span>
+            <h3 id="event-title">Event stream</h3>
+            <p>Player events make application state easy to synchronize.</p>
+          </div>
+          <ol id="event-log" aria-live="polite" aria-relevant="additions">
+            <li><span class="event-name">Ready</span><span>Listening for editor activity.</span></li>
+          </ol>
+        </section>
+      </section>
+
+      <section class="integration-section" id="integration" aria-labelledby="integration-title">
+        <div class="page-shell integration-grid">
+          <div class="integration-copy">
+            <p class="eyebrow">Minimal integration</p>
+            <h2 id="integration-title">The same workflow in code</h2>
+            <p>
+              The recorder and player can live in different views—or different
+              systems. Preserve the same starting document and move the JSON
+              payload wherever the replay needs to run.
+            </p>
+            <ul class="implementation-notes">
+              <li><code>getRecords()</code> returns a JSON string and clears the pending batch.</li>
+              <li><code>addOperations()</code> accepts that string and prepares the timeline.</li>
+              <li>Subscribe to <code>play</code>, <code>pause</code>, <code>seek</code>, and <code>end</code>.</li>
+            </ul>
+          </div>
+
+          <div class="code-sample">
+            <div class="code-sample-header">
+              <span>workflow.js</span>
+              <span>CodeMirror 5</span>
+            </div>
+            <pre tabindex="0"><code>import {CodeRecord, CodePlay} from 'codemirror-record';
+
+const recorder = new CodeRecord(editor);
+recorder.listen();
+
+// Capture and persist this JSON string.
+const records = recorder.getRecords();
+
+const player = new CodePlay(replayEditor, {
+  maxDelay: 3000,
+  speed: 1,
+});
+
+player.on('end', () =&gt; {
+  console.log('Replay complete');
+});
+
+if (JSON.parse(records).length &gt; 0) {
+  player.addOperations(records);
+  player.play();
+}</code></pre>
+          </div>
+        </div>
+      </section>
     </main>
-    <div class="control-buttons">
-      <button id="get-records">Recorder: Get records (visible in console)</button>
-    </div>
-    <div class="control-buttons">
-      <button id="add-operations">Player: Add operations</button>
-      <button id="play">Player: play</button>
-      <button id="pause">Player: pause</button>
-      <span class="speed-set">
-        Player speed:
-        <select id="speed">
-          <option>0.1</option>
-          <option>0.5</option>
-          <option selected>1.0</option>
-          <option>1.5</option>
-          <option>2.0</option>
-          <option>3.0</option>
-        </select>
-      </span>
-    </div>
-    <div
-      class="progress-bar"
-      id="progress-bar"
-    >
-      <div
-        class="progress-bar-slider"
-        id="progress-bar-slider"
-      />
-    </div>
+
+    <footer class="site-footer">
+      <div class="page-shell">
+        <span>CodeMirror Record · MIT License</span>
+        <span>Built for observable, replayable coding experiences.</span>
+      </div>
+    </footer>
+
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/codemirror.min.js"
       integrity="sha512-2GhuAIxcoXqN+nBSa8DZSpChVQNliC1wHHgTE6BEkISu+0+3ywUEF5RJrmWyD67Kxm6XjJkULfpU8hdzLMuFhA=="
