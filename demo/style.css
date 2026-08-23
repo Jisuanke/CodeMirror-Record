@@ -129,20 +129,6 @@ input:focus-visible,
   text-decoration: none;
 }
 
-.brand-mark {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0;
-}
-
 .site-header nav {
   display: flex;
   align-items: center;

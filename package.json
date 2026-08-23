@@ -18,10 +18,10 @@
     "*.js",
     "*.md"
   ],
-  "homepage": "http://codemirror-record.haoranyu.com/",
+  "homepage": "https://codemirror-record.haoranyu.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/haoranyu/codemirror-record"
+    "url": "https://github.com/Jisuanke/CodeMirror-Record"
   },
   "keywords": [
     "record",
