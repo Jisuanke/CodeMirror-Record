@@ -1,5 +1,6 @@
 import minify from './utils/minify';
 import compress from './func/compress';
+import _cloneDeep from 'lodash.clonedeep';
 
 /**
  * A class for code recording
@@ -181,10 +182,12 @@ export class CodeRecord {
       if ('ops' in operations[i]) {
         newOperations.push(operations[i]);
         // Following `if` statement is to preserve selection after paste
-        if (i > 0 && this.isPasteOperation(operations[i])) {
-          operations[i - 1].startTime = operations[i].startTime + 1;
-          operations[i - 1].endTime = operations[i].endTime + 1;
-          newOperations.push(operations[i - 1]);
+        if (i > 0 && this.isPasteOperation(operations[i]) &&
+            'crs' in operations[i - 1]) {
+          const cursorOperation = _cloneDeep(operations[i - 1]);
+          cursorOperation.startTime = operations[i].startTime + 1;
+          cursorOperation.endTime = operations[i].endTime + 1;
+          newOperations.push(cursorOperation);
         }
       } else if (!(i < operations.length - 1 && 'ops' in operations[i + 1])) {
         newOperations.push(operations[i]);

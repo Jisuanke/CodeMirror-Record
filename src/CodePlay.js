@@ -1,6 +1,7 @@
 import extract from './func/extract';
 import CONFIG from './config';
 import Events from 'events';
+import _cloneDeep from 'lodash.clonedeep';
 
 /**
  * A class for playing recorded code
@@ -32,7 +33,6 @@ export class CodePlay extends Events {
   initialize() {
     this.operations = [];
     this.playedOperations = [];
-    this.cachedValue = null;
     this.status = 'PAUSE';
     clearTimeout(this.timer);
     this.timer = null;
@@ -44,6 +44,7 @@ export class CodePlay extends Events {
     this.playedTimeBeforeOperation = 0;
     this.playedTimeBeforePause = 0;
     this.speedBeforeSeeking = null;
+    this.statusBeforeSeeking = null;
   }
 
   /**
@@ -237,18 +238,23 @@ export class CodePlay extends Events {
    */
   seek(seekTime) {
     this.emit('seek');
-    this.speedBeforeSeeking = this.speed;
-    this.statusBeforeSeeking = this.status;
+    const isAlreadySeeking = this.seekTime !== null;
+    if (!isAlreadySeeking) {
+      this.speedBeforeSeeking = this.speed;
+      this.statusBeforeSeeking = this.status;
+    }
+    this.pause();
     this.speed = 0;
-    this.seekTime = seekTime;
+    this.seekTime = Math.min(Math.max(seekTime, 0), this.duration);
     if (this.autofocus) {
       this.editor.focus();
     }
-    this.pause();
     if (this.lastOperationTime < this.seekTime) {
       this.playChanges();
     } else if (this.lastOperationTime > this.seekTime) {
       this.revertChanges();
+    } else {
+      this.stopSeek();
     }
   }
 
@@ -257,13 +263,16 @@ export class CodePlay extends Events {
    */
   stopSeek() {
     this.pause();
-    if (this.seekTime) {
+    if (this.seekTime !== null) {
+      const statusBeforeSeeking = this.statusBeforeSeeking;
       this.playedTimeBeforeOperation = this.seekTime - this.lastOperationTime;
       if (this.speedBeforeSeeking !== null) {
-        this.setSpeed(this.speedBeforeSeeking);
+        this.speed = this.speedBeforeSeeking;
       }
       this.seekTime = null;
-      if (this.statusBeforeSeeking === 'PLAY') {
+      this.speedBeforeSeeking = null;
+      this.statusBeforeSeeking = null;
+      if (statusBeforeSeeking === 'PLAY' && this.operations.length > 0) {
         this.play();
       }
     }
@@ -280,7 +289,7 @@ export class CodePlay extends Events {
       this.currentOperation = operations[0];
       const currentOperation = this.currentOperation;
       const currentOperationDelay = this.getOperationDelay(currentOperation);
-      if (this.seekTime && currentOperation.t > this.seekTime) {
+      if (this.seekTime !== null && currentOperation.t > this.seekTime) {
         this.stopSeek();
         return;
       }
@@ -294,6 +303,7 @@ export class CodePlay extends Events {
         }
       }, (this.speed === 0) ? 0 : currentOperationDelay / this.speed);
     } else {
+      this.pause();
       this.emit('end');
     }
   }
@@ -321,11 +331,18 @@ export class CodePlay extends Events {
    */
   playChange(editor, currentOperation) {
     this.playedTimeBeforeOperation = 0;
-    const valueBeforeChange = editor.getValue();
-    if (this.cachedValue === null || this.cachedValue !== valueBeforeChange) {
-      this.cachedValue = valueBeforeChange;
-      currentOperation.revertValue = valueBeforeChange;
-    }
+    const selections = _cloneDeep(editor.listSelections());
+    const primaryAnchor = editor.getCursor('anchor');
+    const primaryHead = editor.getCursor('head');
+    const primaryIndex = selections.findIndex((selection) =>
+      this.positionsEqual(selection.anchor, primaryAnchor) &&
+      this.positionsEqual(selection.head, primaryHead),
+    );
+    currentOperation.revertState = {
+      value: editor.getValue(),
+      selections,
+      primaryIndex: primaryIndex < 0 ? 0 : primaryIndex,
+    };
 
     for (let i = 0; i < currentOperation.o.length; i++) {
       if (this.playExtraActivity(currentOperation)) {
@@ -363,6 +380,18 @@ export class CodePlay extends Events {
     }
     this.playedOperations.unshift(currentOperation);
     this.playChanges();
+  }
+
+  /**
+   * positionsEqual - Compare two CodeMirror positions by public coordinates.
+   *
+   * @param {object} firstPosition First CodeMirror position
+   * @param {object} secondPosition Second CodeMirror position
+   * @return {boolean} Whether both positions identify the same coordinate
+   */
+  positionsEqual(firstPosition, secondPosition) {
+    return firstPosition.line === secondPosition.line &&
+      firstPosition.ch === secondPosition.ch;
   }
 
   /**
@@ -422,12 +451,21 @@ export class CodePlay extends Events {
    */
   revertChange(editor, currentOperation) {
     this.lastOperationTime = currentOperation.t;
-    if (this.seekTime && this.lastOperationTime <= this.seekTime) {
+    if (this.seekTime !== null && this.lastOperationTime <= this.seekTime) {
       this.stopSeek();
       return;
     }
-    if (currentOperation.revertValue !== undefined) {
-      editor.setValue(currentOperation.revertValue);
+    if (currentOperation.revertState !== undefined) {
+      const revertState = currentOperation.revertState;
+      editor.operation(() => {
+        if (editor.getValue() !== revertState.value) {
+          editor.setValue(revertState.value);
+        }
+        editor.setSelections(
+            _cloneDeep(revertState.selections),
+            revertState.primaryIndex,
+        );
+      });
     }
     this.revertExtraActivity(currentOperation);
     this.playedOperations.shift();

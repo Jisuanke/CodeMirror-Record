@@ -1,8 +1,25 @@
 ![CodeMirror-Record](https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8)
 
-It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment. You can try this project on the [online demo page](https://codemirror-record.haoranyu.com/demo/).
+It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment.
 
-_NOTE: The latest CodeMirror (version 6.x) is not yet supported by this library. We are still working on it._
+> This `release/1.x` branch is the maintained CodeMirror 5 line. For new
+> CodeMirror 6 applications, use the
+> [default CodeMirror 6 v2 README](https://github.com/Jisuanke/CodeMirror-Record/tree/master#readme).
+> Existing applications can follow the
+> [CM5 → CM6 migration guide](https://github.com/Jisuanke/CodeMirror-Record/blob/master/docs/MIGRATING.md)
+> or its [rendered migration page](https://codemirror-record.haoranyu.com/migration/).
+
+Install this major with CodeMirror 5. The `cm5` dist-tag is a convenient
+non-moving selector for the maintained line:
+
+```sh
+npm install codemirror-record@^1 codemirror@^5
+# or: npm install codemirror-record@cm5 codemirror@^5
+```
+
+The default [project homepage](https://codemirror-record.haoranyu.com/) and
+[demo](https://codemirror-record.haoranyu.com/demo/) now describe the
+CodeMirror 6 v2 line and link back to this branch.
 
 ## Local Demo
 

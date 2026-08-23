@@ -1,0 +1,30 @@
+name: CodeMirror 5 maintenance CI
+
+on:
+  push:
+    branches:
+      - release/1.x
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 20.19.0
+          - 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --omit=dev
+      - run: npm pack --dry-run
