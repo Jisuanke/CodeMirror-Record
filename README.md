@@ -9,8 +9,8 @@ It is a project for recording and playing back activities in the **CodeMirror 5*
 > [CM5 → CM6 migration guide](https://github.com/Jisuanke/CodeMirror-Record/blob/master/docs/MIGRATING.md)
 > or its [rendered migration page](https://codemirror-record.haoranyu.com/migration/).
 
-Install this major with CodeMirror 5. The `cm5` dist-tag is a convenient
-non-moving selector for the maintained line:
+Install this major with CodeMirror 5. The moving `cm5` dist-tag selects the
+newest maintained v1 release, while `^1` follows compatible v1 updates:
 
 ```sh
 npm install codemirror-record@^1 codemirror@^5
@@ -20,6 +20,10 @@ npm install codemirror-record@^1 codemirror@^5
 The current maintenance release is v1.1.8. It keeps the established recording
 format while aligning seek/terminal state with v2 and making equal-time
 compressed recordings safe for both maintained and historical v1 players.
+It also reads historical ungrouped `t: [start, end]` records with no `l` at
+their logical `end` time and writes a scalar timestamp for new ungrouped
+records. Published v1.0.0 through v1.1.6 players exposed a non-numeric duration
+for that unchanged historical shape.
 
 The default [project homepage](https://codemirror-record.haoranyu.com/) and
 [demo](https://codemirror-record.haoranyu.com/demo/) now describe the
@@ -84,7 +88,7 @@ You may add an object of extra setting options as the second parameter of `CodeP
 
 | Option Name | Meaning | Default |
 | --- | --- | --- |
-| maxDelay | The maximum pause supported by the player (in millisecond). The pause with time length longer than the value of this option will be replaced with this value. Only non-negative values will be adopted. | `-1` |
+| maxDelay | The maximum pause supported by the player (in millisecond). The pause with time length longer than the value of this option will be replaced with this value. Only non-negative values will be adopted. | `0` |
 | autoplay | The player will play recorded operations immediately after being added to the recorder if the value of this option is `true`. | `false` |
 | autofocus | The editor will be focused whenever recorded operations play if the value of this option is `true`. | `false` |
 | speed | The multiples of playing speed in the player that decides how fast the player playback the operations. | `1` |
@@ -180,8 +184,7 @@ codePlayer.seek(seekTime);
 Get the status of the player. If there is any recorded operation being played, the value is `PLAY`. Otherwise, the value is `PAUSE`.
 
 ```javascript
-let seekTime = 10102;
-codePlayer.seek(seekTime);
+codePlayer.getStatus();
 ```
 
 ##### Get current time position
@@ -257,7 +260,7 @@ The record of data is a list of objects corresponding to operations. Each of the
   - "a": The content for insertion. Possible types: `String | String List | List of String List`.
     - `String`: The content to be inserted or replaced on given position of cursor or part of selected string.
     - `String List` / `List of String List`: The content to be inserted or replaced on circumstance of multiple lines insertion or replacement.
-  - "r": The description of continuous deletion. Possible types: `List of Integer List`.
+  - "d": The description of continuous deletion. Possible types: `List of Integer List`.
     - `List of Integer List`: It is composed of one or more lists with length two. For each list, the first item is the number of characters deleted at once, and the second is the number of such deletions. For example, `[[1,11], [2,3]]` correspond to 11 times of deletion of 1 character each time followed by 3 times of deletion of 2 characters each time.
   - "s": It describes the tail position of selection. The value of it is a list consisting of items with format `[line, [ch]]` or `[line, [ch1, ch2]]`. `line` is the line number which the tail position of selection holds. `ch` indicates the positions within the line for tail position of selection. `ch1, ch2` illustrates the movement of tail position from `ch1` position to `ch2` position within the line. For instance, `[[4, [5,6]], [5,[6]]]` shows that the tail position is firstly at line 4, char 5 and then moves to line 4, char 6 and then to line 5, char 6. (You may find the head position of selection with the data described in `"i"`)
   - "o": The type of operation. The type is `String` and you can find the mapping between the value and its meaning according to the following table.

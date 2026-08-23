@@ -39,6 +39,21 @@ test('links both ways to the default CodeMirror 6 line and migration guide',
       assert.match(readme, /codemirror-record\.haoranyu\.com\/migration\//);
     });
 
+test('documents the maintained CM5 selector and wire facts accurately', () => {
+  assert.match(readme, /moving `cm5` dist-tag/);
+  assert.doesNotMatch(readme, /non-moving selector/);
+  assert.match(readme, /\| maxDelay .* \| `0` \|/);
+  assert.match(readme, /codePlayer\.seek\(seekTime\)/);
+  assert.match(readme, /codePlayer\.getStatus\(\)/);
+  assert.match(readme, /- "d": The description of continuous deletion/);
+  assert.doesNotMatch(
+      readme,
+      /- "r": The description of continuous deletion/,
+  );
+  assert.match(readme, /ungrouped `t: \[start, end\]` records with no `l`/);
+  assert.match(readme, /Published v1\.0\.0 through v1\.1\.6 players/);
+});
+
 test('ships the declared MIT license text', () => {
   assert.match(license, /^MIT License/);
   assert.match(license, /Copyright \(c\) 2019-2026 Haoran Yu/);
