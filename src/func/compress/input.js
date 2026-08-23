@@ -1,4 +1,5 @@
 import CONFIG from '../../config';
+import {hasLegacyExpandableTimeRange} from './time';
 
 let longDelayCount = 0;
 let longDelayAverage = 0;
@@ -82,7 +83,9 @@ function areInputPositionsContinue(firstChange, secondChange) {
 function isContinueInput(firstChange, secondChange) {
   const minOperationDelay = CONFIG.acceptableMinOperationDelay;
 
-  if (firstChange.ops.length !== secondChange.ops.length) {
+  if (!hasLegacyExpandableTimeRange(firstChange, secondChange)) {
+    return false;
+  } else if (firstChange.ops.length !== secondChange.ops.length) {
     return false; // Number of cursors differs
   } else if (secondChange.delayDuration >= minOperationDelay) {
     if (!combineLongDelayInput(firstChange, secondChange)) {

@@ -166,6 +166,52 @@ test('seek to the end while playing emits one terminal end', async () => {
   assert.equal(player.getStatus(), 'PAUSE');
 });
 
+test('expands an equal-time compressed group from a scalar timestamp',
+    async () => {
+      const editor = createEditor('');
+      const player = new CodePlay(editor, {maxDelay: 1});
+      player.addOperations(JSON.stringify([
+        {t: 10, l: 2, o: [{o: 'i', i: [0, 0], a: 'ab'}]},
+      ]));
+
+      assert.equal(player.getDuration(), 10);
+      await playToEnd(player);
+      assert.equal(editor.getValue(), 'ab');
+      assert.equal(player.getCurrentTime(), 10);
+    });
+
+test('never writes a compressed group with a scalar timestamp', () => {
+  const contentCases = [
+    [
+      rawContentOperation('+input', 0, 0, ['a'], ['']),
+      rawContentOperation('+input', 1, 1, ['b'], ['']),
+    ],
+    [
+      rawContentOperation('*compose', 0, 0, ['a'], ['']),
+      rawContentOperation('*compose', 1, 1, ['b'], ['']),
+    ],
+    [
+      rawContentOperation('+delete', 2, 3, [''], ['c']),
+      rawContentOperation('+delete', 1, 2, [''], ['b']),
+    ],
+  ];
+  const cursorCases = [
+    [rawCursorOperation(0, 0), rawCursorOperation(1, 1)],
+    [rawCursorOperation(0, 1), rawCursorOperation(0, 2)],
+  ];
+
+  for (const operations of [...contentCases, ...cursorCases]) {
+    const recorder = new CodeRecord(createEditor('abc'));
+    recorder.operations = operations;
+    const records = JSON.parse(recorder.getRecords());
+
+    assert.equal(records.length, 2);
+    assert.ok(records.every((record) =>
+      !('l' in record) && typeof(record.t) === 'number',
+    ));
+  }
+});
+
 test('paste preservation clones only a cursor predecessor', () => {
   const recorder = new CodeRecord(createEditor('seed'));
   const content = contentOperation('+input', 10);
@@ -285,6 +331,35 @@ function contentOperation(origin, time) {
       origin,
       removed: [''],
       text: ['x'],
+    }],
+    combo: 1,
+  };
+}
+
+function rawContentOperation(origin, from, to, text, removed) {
+  return {
+    startTime: 10,
+    endTime: 10,
+    delayDuration: 0,
+    ops: [{
+      from: {line: 0, ch: from},
+      to: {line: 0, ch: to},
+      origin,
+      removed,
+      text,
+    }],
+    combo: 1,
+  };
+}
+
+function rawCursorOperation(anchor, head) {
+  return {
+    startTime: 10,
+    endTime: 10,
+    delayDuration: 0,
+    crs: [{
+      anchor: {line: 0, ch: anchor},
+      head: {line: 0, ch: head},
     }],
     combo: 1,
   };

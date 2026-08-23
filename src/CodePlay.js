@@ -519,6 +519,9 @@ export class CodePlay extends Events {
     for (let operation of operations) {
       operation = this.classifyOperation(operation);
       if ('l' in operation) {
+        if (!Array.isArray(operation.t)) {
+          operation.t = [operation.t, operation.t];
+        }
         for (let i = 0; i < operation.l; i++) {
           if (operation.o[0].o === 'i') {
             extractedOperations.push(extract.input(operation, i));

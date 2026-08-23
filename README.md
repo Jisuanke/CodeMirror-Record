@@ -17,6 +17,10 @@ npm install codemirror-record@^1 codemirror@^5
 # or: npm install codemirror-record@cm5 codemirror@^5
 ```
 
+The current maintenance release is v1.1.8. It keeps the established recording
+format while aligning seek/terminal state with v2 and making equal-time
+compressed recordings safe for both maintained and historical v1 players.
+
 The default [project homepage](https://codemirror-record.haoranyu.com/) and
 [demo](https://codemirror-record.haoranyu.com/demo/) now describe the
 CodeMirror 6 v2 line and link back to this branch.

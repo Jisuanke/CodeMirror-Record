@@ -10,7 +10,7 @@ const readme = readFileSync(join(root, 'README.md'), 'utf8');
 const license = readFileSync(join(root, 'LICENSE'), 'utf8');
 
 test('identifies the maintained CodeMirror 5 release line', () => {
-  assert.equal(packageMetadata.version, '1.1.7');
+  assert.equal(packageMetadata.version, '1.1.8');
   assert.match(readme, /release\/1\.x/);
   assert.match(readme, /codemirror-record@\^1 codemirror@\^5/);
   assert.match(readme, /codemirror-record@cm5/);

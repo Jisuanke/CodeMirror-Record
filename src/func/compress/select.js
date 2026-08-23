@@ -1,5 +1,6 @@
 import _cloneDeep from 'lodash.clonedeep';
 import CONFIG from '../../config';
+import {hasLegacyExpandableTimeRange} from './time';
 
 
 let longDelayCount = 0;
@@ -78,7 +79,9 @@ function areSelectionsHeadsContinue(firstChange, secondChange) {
 function isContinueSelect(firstChange, secondChange) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
 
-  if (firstChange.crs.length !== secondChange.crs.length) {
+  if (!hasLegacyExpandableTimeRange(firstChange, secondChange)) {
+    return false;
+  } else if (firstChange.crs.length !== secondChange.crs.length) {
     return false; // Number of cursors differs
   } else if (secondChange.delayDuration >= minCursorMoveDelay) {
     if (!combineLongDelaySelect(firstChange, secondChange)) {

@@ -1,4 +1,5 @@
 import CONFIG from '../../config';
+import {hasLegacyExpandableTimeRange} from './time';
 
 let longDelayCount = 0;
 let longDelayAverage = 0;
@@ -79,7 +80,9 @@ function areCursorsPositionsContinue(firstChange, secondChange, direction) {
 function isContinueCursorMove(firstChange, secondChange, direction = 1) {
   const minCursorMoveDelay = CONFIG.acceptableMinCursorMoveDelay;
 
-  if (firstChange.crs.length !== secondChange.crs.length) {
+  if (!hasLegacyExpandableTimeRange(firstChange, secondChange)) {
+    return false;
+  } else if (firstChange.crs.length !== secondChange.crs.length) {
     return false; // Number of cursors differs
   } else if (secondChange.delayDuration >= minCursorMoveDelay) {
     if (!combineLongDelayCursorMove(firstChange, secondChange)) {

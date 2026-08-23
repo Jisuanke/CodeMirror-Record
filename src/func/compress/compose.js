@@ -1,3 +1,5 @@
+import {hasLegacyExpandableTimeRange} from './time';
+
 /**
  * isContinueCompose - Whether two compose operations are treated continues
  *
@@ -6,7 +8,9 @@
  * @return {boolean}             Judge result whether operations are continues
  */
 function isContinueCompose(firstChange, secondChange) {
-  if (firstChange.ops.length !== secondChange.ops.length) {
+  if (!hasLegacyExpandableTimeRange(firstChange, secondChange)) {
+    return false;
+  } else if (firstChange.ops.length !== secondChange.ops.length) {
     return false;
   } else {
     for (let i = 0; i < secondChange.ops.length; i++) {
