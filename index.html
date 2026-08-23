@@ -22,6 +22,7 @@
     <meta property="og:image:alt" content="CodeMirror Record project artwork">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="canonical" href="https://codemirror-record.haoranyu.com/">
+    <link rel="preconnect" href="https://repository-images.githubusercontent.com">
     <link rel="icon" href="data:,">
     <title>CodeMirror Record — Record and replay CodeMirror 5 sessions</title>
     <link rel="stylesheet" href="./demo/style.css?v=1.1.6">
@@ -50,12 +51,12 @@
     <main id="main-content">
       <section class="hero page-shell" aria-labelledby="page-title">
         <div class="hero-copy">
-          <p class="eyebrow">Recording and playback for CodeMirror 5</p>
-          <h1 id="page-title">Record a CodeMirror session.<br>Replay the timeline.</h1>
+          <p class="eyebrow">CodeMirror 5 · MIT</p>
+          <h1 id="page-title">Record editing activity.<br>Replay the timeline.</h1>
           <p class="hero-summary">
-            Capture edits, selections, and cursor activity as a compact JSON
-            string. Load that payload into <code>CodePlay</code> to play, pause,
-            seek, or change speed.
+            <code>CodeRecord</code> captures editor activity—and application
+            events you add—as a JSON string. <code>CodePlay</code> loads that
+            string for pause, seek, and speed-controlled playback.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="./demo/#demo-workbench">
@@ -73,22 +74,44 @@
           <div class="home-hero-visual-header">
             <span>
               <span class="status-dot" aria-hidden="true"></span>
-              Open source project
+              Session trace
             </span>
-            <span>MIT</span>
+            <span>03 operations</span>
           </div>
-          <div class="home-hero-image">
-            <img
-              src="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
-              alt="CodeMirror Record project artwork"
-              width="1280"
-              height="640"
-              fetchpriority="high"
-            >
+          <div class="home-hero-stage">
+            <div class="home-hero-artwork" aria-hidden="true">
+              <img
+                src="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
+                alt=""
+                width="1280"
+                height="640"
+                fetchpriority="high"
+              >
+            </div>
+            <div class="home-session-readout">
+              <p>Recorded activity</p>
+              <ol>
+                <li>
+                  <time datetime="PT0.8S">00:00.8</time>
+                  <span><b>change</b><small>+12 characters</small></span>
+                </li>
+                <li>
+                  <time datetime="PT1.4S">00:01.4</time>
+                  <span><b>cursor</b><small>line 2 · ch 18</small></span>
+                </li>
+                <li>
+                  <time datetime="PT2.1S">00:02.1</time>
+                  <span><b>activity</b><small>run preview</small></span>
+                </li>
+              </ol>
+            </div>
           </div>
-          <figcaption>
-            Editor activity <span aria-hidden="true">→</span> JSON
-            <span aria-hidden="true">→</span> repeatable playback
+          <figcaption aria-label="CodeRecord produces a JSON string for CodePlay">
+            <span>CodeRecord</span>
+            <span class="home-flow-line" aria-hidden="true"></span>
+            <span>JSON string</span>
+            <span class="home-flow-line" aria-hidden="true"></span>
+            <span>CodePlay</span>
           </figcaption>
         </figure>
       </section>
