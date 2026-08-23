@@ -180,6 +180,19 @@ test('expands an equal-time compressed group from a scalar timestamp',
       assert.equal(player.getCurrentTime(), 10);
     });
 
+test('uses the end of an uncompressed legacy time interval', async () => {
+  const editor = createEditor('A');
+  const player = new CodePlay(editor, {maxDelay: 1});
+  player.addOperations(JSON.stringify([
+    {t: [3, 4], o: [{o: 'i', i: [0, 1], a: 'B'}]},
+  ]));
+
+  assert.equal(player.getDuration(), 4);
+  await playToEnd(player);
+  assert.equal(editor.getValue(), 'AB');
+  assert.equal(player.getCurrentTime(), 4);
+});
+
 test('never writes a compressed group with a scalar timestamp', () => {
   const contentCases = [
     [
@@ -209,6 +222,51 @@ test('never writes a compressed group with a scalar timestamp', () => {
     assert.ok(records.every((record) =>
       !('l' in record) && typeof(record.t) === 'number',
     ));
+  }
+});
+
+test('writes real uncompressed operations at scalar end timestamps', () => {
+  const editor = createEditor('');
+  const RealDate = globalThis.Date;
+  let currentTime = RealDate.parse('2026-01-01T00:00:00Z');
+
+  class TickingDate extends RealDate {
+    constructor(...arguments_) {
+      super(...(arguments_.length === 0 ? [currentTime] : arguments_));
+      if (arguments_.length === 0) {
+        currentTime += 1;
+      }
+    }
+
+    static now() {
+      return currentTime;
+    }
+  }
+
+  globalThis.Date = TickingDate;
+  try {
+    const recorder = new CodeRecord(editor);
+    recorder.listen();
+    editor.replaceRange('x', editor.posFromIndex(0), undefined, '+input');
+    recorder.recordExtraActivity({kind: 'tick'});
+
+    const content = recorder.operations.find((operation) =>
+      'ops' in operation && operation.ops[0].origin === '+input',
+    );
+    const extra = recorder.operations.find((operation) =>
+      'ops' in operation && operation.ops[0].origin === 'extra',
+    );
+    assert.ok(content.startTime < content.endTime);
+    assert.ok(extra.startTime < extra.endTime);
+    const contentEndTime = content.endTime;
+    const extraEndTime = extra.endTime;
+
+    assert.deepEqual(JSON.parse(recorder.getRecords()), [
+      {t: contentEndTime, o: [{o: 'i', i: [0, 0], a: 'x'}]},
+      {t: extraEndTime, o: [{activity: {kind: 'tick'}, o: 'e'}]},
+    ]);
+  } finally {
+    globalThis.Date = RealDate;
   }
 });
 

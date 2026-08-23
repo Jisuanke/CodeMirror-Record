@@ -536,6 +536,11 @@ export class CodePlay extends Events {
           }
         }
       } else {
+        // A v1 recorder could sample two adjacent milliseconds for one
+        // ungrouped operation. Schedule that operation at its interval end.
+        if (Array.isArray(operation.t)) {
+          operation.t = operation.t[1];
+        }
         extractedOperations.push(operation);
       }
     }

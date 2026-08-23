@@ -19,17 +19,14 @@ function getInterval(operation) {
 }
 
 /**
- * minifyTime - Remove duplication of identical startTime and endTime
+ * minifyTime - Serialize one operation at its end or retain a group interval
  *
  * @param  {array} timeInterval Time interval of an operation
- * @return {array|number}       Minify to single number if startTime is endTime
+ * @param  {number} combo Number of logical operations represented
+ * @return {array|number} Scalar end time or compressed-group interval
  */
-function minifyTime(timeInterval) {
-  if (timeInterval[0] === timeInterval[1]) {
-    return timeInterval[0];
-  } else {
-    return timeInterval;
-  }
+function minifyTime(timeInterval, combo = 1) {
+  return combo === 1 ? timeInterval[1] : timeInterval;
 }
 
 /**
@@ -77,7 +74,10 @@ export default function(operations) {
       delete operation.ops[i].to;
     }
 
-    operation.t = minifyTime([operation.startTime, operation.endTime]);
+    operation.t = minifyTime(
+        [operation.startTime, operation.endTime],
+        operation.combo,
+    );
     operation.l = operation.combo;
     operation.o = operation.ops;
 
