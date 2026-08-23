@@ -22,7 +22,7 @@ format while aligning seek/terminal state with v2 and making equal-time
 compressed recordings safe for both maintained and historical v1 players.
 It also reads historical ungrouped `t: [start, end]` records with no `l` at
 their logical `end` time and writes a scalar timestamp for new ungrouped
-records. Published v1.0.0 through v1.1.6 players exposed a non-numeric duration
+records. Published v0.3.1 through v1.1.6 players exposed a non-numeric duration
 for that unchanged historical shape.
 
 The default [project homepage](https://codemirror-record.haoranyu.com/) and

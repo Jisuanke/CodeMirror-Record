@@ -51,7 +51,7 @@ test('documents the maintained CM5 selector and wire facts accurately', () => {
       /- "r": The description of continuous deletion/,
   );
   assert.match(readme, /ungrouped `t: \[start, end\]` records with no `l`/);
-  assert.match(readme, /Published v1\.0\.0 through v1\.1\.6 players/);
+  assert.match(readme, /Published v0\.3\.1 through v1\.1\.6 players/);
 });
 
 test('ships the declared MIT license text', () => {
