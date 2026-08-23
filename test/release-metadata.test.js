@@ -11,7 +11,7 @@ const license = readFileSync(join(root, 'LICENSE'), 'utf8');
 
 test('identifies the maintained CodeMirror 5 release line', () => {
   assert.equal(packageMetadata.version, '1.1.8');
-  assert.match(readme, /release\/1\.x/);
+  assert.match(readme, /This `v1` branch/);
   assert.match(readme, /codemirror-record@\^1 codemirror@\^5/);
   assert.match(readme, /codemirror-record@cm5/);
   assert.equal(packageMetadata.publishConfig.tag, 'cm5');
@@ -34,8 +34,8 @@ test('refuses to publish the CM5 line under any tag except cm5', () => {
 
 test('links both ways to the default CodeMirror 6 line and migration guide',
     () => {
-      assert.match(readme, /tree\/master#readme/);
-      assert.match(readme, /blob\/master\/docs\/MIGRATING\.md/);
+      assert.match(readme, /tree\/main#readme/);
+      assert.match(readme, /blob\/main\/docs\/MIGRATING\.md/);
       assert.match(readme, /codemirror-record\.haoranyu\.com\/migration\//);
     });
 

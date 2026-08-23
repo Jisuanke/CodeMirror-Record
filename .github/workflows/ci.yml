@@ -3,7 +3,7 @@ name: CodeMirror 5 maintenance CI
 on:
   push:
     branches:
-      - release/1.x
+      - v1
   pull_request:
 
 permissions:

@@ -2,11 +2,11 @@
 
 It is a project for recording and playing back activities in the **CodeMirror 5** editor and the surrounding environment.
 
-> This `release/1.x` branch is the maintained CodeMirror 5 line. For new
+> This `v1` branch is the maintained CodeMirror 5 line. For new
 > CodeMirror 6 applications, use the
-> [default CodeMirror 6 v2 README](https://github.com/Jisuanke/CodeMirror-Record/tree/master#readme).
+> [default CodeMirror 6 v2 README](https://github.com/Jisuanke/CodeMirror-Record/tree/main#readme).
 > Existing applications can follow the
-> [CM5 → CM6 migration guide](https://github.com/Jisuanke/CodeMirror-Record/blob/master/docs/MIGRATING.md)
+> [CM5 → CM6 migration guide](https://github.com/Jisuanke/CodeMirror-Record/blob/main/docs/MIGRATING.md)
 > or its [rendered migration page](https://codemirror-record.haoranyu.com/migration/).
 
 Install this major with CodeMirror 5. The moving `cm5` dist-tag selects the
