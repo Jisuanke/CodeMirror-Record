@@ -6,7 +6,7 @@ _NOTE: The latest CodeMirror (version 6.x) is not yet supported by this library.
 
 ## Local Demo
 
-After cloning this repository, follow the steps below to run the local demo in the directory.
+After cloning this repository, use Node.js 24 LTS and follow the steps below to run the local demo in the directory.
 
 1. Solve dependencies by running `npm install`.
 2. Use `npm run build` to build the project.
