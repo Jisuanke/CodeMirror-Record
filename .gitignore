@@ -54,6 +54,7 @@ typings/
 
 # Output of 'npm pack'
 *.tgz
+/test/browser/fixture.bundle.js*
 
 # Yarn Integrity file
 .yarn-integrity
