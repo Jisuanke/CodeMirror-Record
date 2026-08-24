@@ -1692,6 +1692,197 @@ async function verifyModernChangeOnlySelection() {
   }
 }
 
+async function verifyModernForwardDelete() {
+  const initialDocument = 'abcd';
+  const {editor, records} = modernRuntime.capture(
+      initialDocument,
+      ({at, editor}) => {
+        at(10, () => editor.dispatch({
+          changes: {from: 1, to: 2},
+          selection: EditorSelection.cursor(1),
+          annotations: Transaction.userEvent.of('delete.forward'),
+        }));
+      },
+  );
+  const message =
+    'real CM6 delete.forward recording through published CM5 and packaged ' +
+    `CM6 players\n${records}`;
+  const expectedRecords =
+    '[{"t":10,"o":[{"o":"d","i":[[0,1],[0,2]]}]}]';
+
+  assert.equal(
+      records,
+      expectedRecords,
+      `${message}: exact legacy delete wire bytes and timestamp`,
+  );
+  assert.equal(modernRuntime.document(editor), 'acd', message);
+  assert.deepEqual(
+      modernRuntime.selection(editor),
+      {ranges: [[1, 1]], mainIndex: 0},
+      message,
+  );
+
+  const traces = await verifySamePayloadAcrossPlayers({
+    initialDocument,
+    records,
+    message,
+  });
+  const expectedOperationBoundaries = [
+    {
+      timestamp: 0,
+      document: 'abcd',
+      selection: {ranges: [[0, 0]], mainIndex: 0},
+    },
+    {
+      timestamp: 10,
+      document: 'acd',
+      selection: {ranges: [[1, 1]], mainIndex: 0},
+    },
+  ];
+  for (const [playerName, trace] of [
+    ['published CM5', traces.legacyNatural],
+    ['packaged CM6', traces.modernNatural],
+  ]) {
+    assert.deepEqual(
+        trace.map((snapshot) => ({
+          timestamp: snapshot.time,
+          document: snapshot.document,
+          selection: snapshot.selection,
+        })),
+        expectedOperationBoundaries,
+        `${message}: ${playerName} natural operation-boundary oracle`,
+    );
+  }
+}
+
+async function verifyModernBatchedTransactions() {
+  const initialDocument = 'ace';
+  const documentUpdates = [];
+  const editor = new EditorView({
+    parent: createHost('modern-batched-transaction-record'),
+    state: EditorState.create({
+      doc: initialDocument,
+      extensions: [EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          documentUpdates.push(update);
+        }
+      })],
+    }),
+  });
+  modernViews.push(editor);
+
+  let firstTransaction;
+  let secondTransaction;
+  const records = withControlledClock((at) => {
+    const recorder = new ModernCodeRecord(editor);
+    recorder.listen();
+    at(10, () => {
+      firstTransaction = editor.state.update({
+        changes: {from: 1, insert: 'b'},
+        selection: EditorSelection.cursor(2),
+        annotations: Transaction.userEvent.of('input.type'),
+      });
+    });
+    at(25, () => {
+      secondTransaction = firstTransaction.state.update({
+        changes: {from: 3, insert: 'd'},
+        selection: EditorSelection.cursor(4),
+        annotations: Transaction.userEvent.of('input.type'),
+      });
+    });
+    at(40, () => editor.dispatch([
+      firstTransaction,
+      secondTransaction,
+    ]));
+    return recorder.getRecords();
+  });
+  const message =
+    'one CM6 ViewUpdate with two sequential Transactions through both ' +
+    `real players\n${records}`;
+
+  assert.equal(documentUpdates.length, 1, message);
+  const [batchedUpdate] = documentUpdates;
+  assert.equal(batchedUpdate.transactions.length, 2, message);
+  assert.deepEqual(
+      batchedUpdate.transactions.map((transaction) => ({
+        timestamp: transaction.annotation(Transaction.time) -
+          initialClockTime,
+        startDocument: transaction.startState.doc.toString(),
+        document: transaction.newDoc.toString(),
+        selection: {
+          ranges: transaction.newSelection.ranges.map((range) => [
+            range.anchor,
+            range.head,
+          ]),
+          mainIndex: transaction.newSelection.mainIndex,
+        },
+      })),
+      [
+        {
+          timestamp: 10,
+          startDocument: 'ace',
+          document: 'abce',
+          selection: {ranges: [[2, 2]], mainIndex: 0},
+        },
+        {
+          timestamp: 25,
+          startDocument: 'abce',
+          document: 'abcde',
+          selection: {ranges: [[4, 4]], mainIndex: 0},
+        },
+      ],
+      `${message}: dispatched transaction boundaries`,
+  );
+  assert.equal(modernRuntime.document(editor), 'abcde', message);
+  assert.deepEqual(
+      modernRuntime.selection(editor),
+      {ranges: [[4, 4]], mainIndex: 0},
+      message,
+  );
+  assert.deepEqual(
+      parsedRecords(records).flatMap(expandedTimes),
+      [10, 25],
+      `${message}: recorded logical timestamps`,
+  );
+
+  const traces = await verifySamePayloadAcrossPlayers({
+    initialDocument,
+    records,
+    message,
+  });
+  const expectedOperationBoundaries = [
+    {
+      time: 0,
+      document: 'ace',
+      selection: {ranges: [[0, 0]], mainIndex: 0},
+    },
+    {
+      time: 10,
+      document: 'abce',
+      selection: {ranges: [[2, 2]], mainIndex: 0},
+    },
+    {
+      time: 25,
+      document: 'abcde',
+      selection: {ranges: [[4, 4]], mainIndex: 0},
+    },
+  ];
+  for (const [playerName, trace] of [
+    ['published CM5', traces.legacyNatural],
+    ['packaged CM6', traces.modernNatural],
+  ]) {
+    assert.deepEqual(
+        trace.map((snapshot) => ({
+          time: snapshot.time,
+          document: snapshot.document,
+          selection: snapshot.selection,
+        })),
+        expectedOperationBoundaries,
+        `${message}: ${playerName} operation-boundary oracle`,
+    );
+  }
+}
+
 async function verifyMultipleChangesStayInOneOperation(direction) {
   const initialDocument = 'aa\nbb\ncc';
   const {editor, records} = direction.producer.capture(
@@ -2823,6 +3014,8 @@ try {
     await verifyBidirectionalDifferentialTrace(legacyRuntime);
     await verifyBidirectionalDifferentialTrace(modernRuntime);
     await verifyModernChangeOnlySelection();
+    await verifyModernForwardDelete();
+    await verifyModernBatchedTransactions();
     for (const direction of directions) {
       await verifyCompressedInput(direction);
       await verifyEqualTimeInput(direction);
