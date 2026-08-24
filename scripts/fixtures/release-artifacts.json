@@ -1,6 +1,11 @@
 {
   "schema": 1,
   "publicNpmRegistry": "https://registry.npmjs.org/",
+  "codeMirror5Artifact": {
+    "version": "5.65.21",
+    "integrity": "sha512-6teYk0bA0nR3QP0ihGMoxuKzpl5W80FpnHpBJpgy66NK3cZv5b/d/HY8PnRvfSsCG1MTfr92u2WUl+wT0E40mQ==",
+    "provenance": "npm-registry"
+  },
   "legacyCandidateVersion": "1.1.8",
   "legacyArtifacts": {
     "0.3.1": {"integrity": "sha512-cHhsf65m7mjnrTiQyohnDoDzqeZ8U+U2pCYMyc81jFcL4B7lOqrdCniPmc9YiDo8mJO6YboBdi4yUM/8aTRpnQ==", "provenance": "npm-registry"},

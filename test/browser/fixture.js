@@ -205,4 +205,148 @@ window.browserSmoke = {
   },
 };
 
+const crossGenerationInitialDocument = 'abc\ndef';
+
+function withControlledClock(callback) {
+  const RealDate = window.Date;
+  const initialTime = RealDate.parse('2026-01-01T00:00:00Z');
+  let currentTime = initialTime;
+
+  class ControlledDate extends RealDate {
+    constructor(...arguments_) {
+      if (arguments_.length === 0) {
+        super(currentTime);
+      } else {
+        super(...arguments_);
+      }
+    }
+
+    static now() {
+      return currentTime;
+    }
+  }
+
+  window.Date = ControlledDate;
+  try {
+    return callback((relativeTime, action) => {
+      currentTime = initialTime + relativeTime;
+      return action();
+    });
+  } finally {
+    window.Date = RealDate;
+  }
+}
+
+function createCrossGenerationView() {
+  const host = document.createElement('div');
+  host.dataset.browserFixture = 'cross-generation';
+  document.body.append(host);
+  const view = new EditorView({
+    parent: host,
+    state: EditorState.create({
+      doc: crossGenerationInitialDocument,
+      extensions: [EditorState.allowMultipleSelections.of(true)],
+    }),
+  });
+  return {host, view};
+}
+
+function playCrossGenerationPayload(Player, payload) {
+  const {host, view} = createCrossGenerationView();
+  const activities = [];
+  const player = new Player(view, {
+    extraActivityHandler(activity) {
+      activities.push(activity);
+    },
+    maxDelay: 1,
+    speed: 100,
+  });
+  player.addOperations(payload);
+
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      view.destroy();
+      host.remove();
+      reject(new Error(
+          'Cross-generation CM6 playback did not finish within 5 seconds',
+      ));
+    }, 5000);
+    player.once('end', () => {
+      window.clearTimeout(timeout);
+      const result = {
+        activities,
+        document: view.state.doc.toString(),
+        duration: player.getDuration(),
+        payload,
+        selection: selectionJSON(view.state.selection),
+      };
+      player.pause();
+      view.destroy();
+      host.remove();
+      resolve(result);
+    });
+    player.play();
+  });
+}
+
+window.browserCrossGeneration = {
+  capture() {
+    const Recorder = window.CodeRecord;
+    if (typeof Recorder !== 'function') {
+      throw new TypeError('The packed v2 CodeRecord export is unavailable');
+    }
+    const {host, view} = createCrossGenerationView();
+    try {
+      return withControlledClock((at) => {
+        const recorder = new Recorder(view);
+        recorder.listen();
+        at(10, () => view.dispatch({
+          annotations: Transaction.userEvent.of('input.type'),
+          changes: {from: 0, insert: 'X'},
+          selection: EditorSelection.cursor(1),
+        }));
+        at(20, () => view.dispatch({
+          annotations: Transaction.userEvent.of('input.type'),
+          changes: {from: 1, insert: 'Y'},
+          selection: EditorSelection.cursor(2),
+        }));
+        at(30, () => view.dispatch({
+          annotations: Transaction.userEvent.of('delete.backward'),
+          changes: {from: 4, to: 5, insert: ''},
+          selection: EditorSelection.cursor(4),
+        }));
+        at(40, () => recorder.recordExtraActivity({
+          kind: 'golden',
+          value: 1,
+        }));
+        at(50, () => view.dispatch({
+          selection: EditorSelection.create([
+            EditorSelection.range(3, 0),
+            EditorSelection.range(8, 5),
+          ], 1),
+        }));
+        return {
+          document: view.state.doc.toString(),
+          payload: recorder.getRecords(),
+          selection: selectionJSON(view.state.selection),
+        };
+      });
+    } finally {
+      view.destroy();
+      host.remove();
+    }
+  },
+
+  play(payload) {
+    if (typeof payload !== 'string') {
+      throw new TypeError('Cross-generation payload must remain a string');
+    }
+    const Player = window.CodePlay;
+    if (typeof Player !== 'function') {
+      throw new TypeError('The packed v2 CodePlay export is unavailable');
+    }
+    return playCrossGenerationPayload(Player, payload);
+  },
+};
+
 window.browserSmokeReady = true;
