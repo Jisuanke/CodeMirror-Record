@@ -58,6 +58,24 @@ test('keeps the CM5 demo within v1 while linking to the CM6 demo', () => {
   );
 });
 
+test('self-hosts the reviewed homepage artwork', () => {
+  assert.equal(
+      homepage.querySelector('.home-hero-artwork img').getAttribute('src'),
+      './assets/project-artwork.png',
+  );
+  assert.equal(
+      homepage.querySelector('meta[property="og:image"]').content,
+      'https://codemirror-record.haoranyu.com/v1/assets/project-artwork.png',
+  );
+  assert.doesNotMatch(homepageHtml, /repository-images\.githubusercontent\.com/);
+  assert.equal(
+      createHash('sha256').update(readFileSync(
+          join(root, 'assets/project-artwork.png'),
+      )).digest('hex'),
+      '2499961b317f1e8d227fb7208adc5c050e1ef6e1161362e2a819aa2f9a2a2d36',
+  );
+});
+
 test('self-hosts the exact locked CodeMirror 5 runtime used by the demo', () => {
   const browserAssets = [
     ...demo.querySelectorAll('link[rel="stylesheet"][href], script[src]'),

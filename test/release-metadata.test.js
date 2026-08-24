@@ -8,6 +8,10 @@ const root = process.cwd();
 const packageMetadata = require('../package.json');
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
 const license = readFileSync(join(root, 'LICENSE'), 'utf8');
+const ciWorkflow = readFileSync(
+    join(root, '.github/workflows/ci.yml'),
+    'utf8',
+);
 
 test('identifies the maintained CodeMirror 5 release line', () => {
   assert.equal(packageMetadata.version, '1.1.8');
@@ -64,4 +68,10 @@ test('documents the maintained CM5 selector and wire facts accurately', () => {
 test('ships the declared MIT license text', () => {
   assert.match(license, /^MIT License/);
   assert.match(license, /Copyright \(c\) 2019-2026 Haoran Yu/);
+});
+
+test('uses the current Node 24 GitHub Actions runtimes', () => {
+  assert.match(ciWorkflow, /uses: actions\/checkout@v7/);
+  assert.match(ciWorkflow, /uses: actions\/setup-node@v7/);
+  assert.doesNotMatch(ciWorkflow, /uses: actions\/(?:checkout|setup-node)@v4/);
 });
