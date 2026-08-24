@@ -44,6 +44,12 @@
   white-space: normal;
 }
 
+.home-install-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .home-hero-visual {
   position: relative;
   overflow: hidden;

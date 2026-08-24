@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Haoran Yu &amp; Jisuanke Team">
     <meta
       name="description"
       content="Record CodeMirror 5 editing sessions as portable JSON and replay them with pause, seek, and speed controls."
@@ -14,19 +15,19 @@
       property="og:description"
       content="Record a CodeMirror session, move it as JSON, and replay the timeline."
     >
-    <meta property="og:url" content="https://codemirror-record.haoranyu.com/">
+    <meta property="og:url" content="https://codemirror-record.haoranyu.com/v1/">
     <meta
       property="og:image"
       content="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
     >
     <meta property="og:image:alt" content="CodeMirror Record project artwork">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="canonical" href="https://codemirror-record.haoranyu.com/">
+    <link rel="canonical" href="https://codemirror-record.haoranyu.com/v1/">
     <link rel="preconnect" href="https://repository-images.githubusercontent.com">
     <link rel="icon" href="data:,">
     <title>CodeMirror Record — Record and replay CodeMirror 5 sessions</title>
-    <link rel="stylesheet" href="./demo/style.css?v=1.1.6">
-    <link rel="stylesheet" href="./homepage.css?v=1.1.6">
+    <link rel="stylesheet" href="./demo/style.css?v=1.1.8">
+    <link rel="stylesheet" href="./homepage.css?v=1.1.8">
   </head>
   <body class="home-page">
     <a class="skip-link" href="#main-content">Skip to the main content</a>
@@ -34,17 +35,24 @@
     <header class="site-header">
       <div class="page-shell header-content">
         <a class="brand" href="./">CodeMirror Record</a>
-        <nav aria-label="Primary navigation">
-          <a href="#workflow">How it works</a>
-          <a href="#quick-start">Quick start</a>
-          <a href="#limits">Limits</a>
-          <a
-            href="https://github.com/Jisuanke/CodeMirror-Record"
-            target="_blank"
-            rel="noreferrer"
-          >GitHub</a>
-          <a class="nav-cta" href="./demo/#demo-workbench">Try the demo</a>
-        </nav>
+        <div class="header-navigation">
+          <nav class="version-switcher" aria-label="Editor version">
+            <a data-version="cm5" href="./" aria-current="page">CM5 <span>v1</span></a>
+            <a data-version="cm6" href="../">CM6 <span>v2</span></a>
+          </nav>
+          <nav class="primary-navigation" aria-label="Primary navigation">
+            <a href="#workflow">How it works</a>
+            <a href="#quick-start">Quick start</a>
+            <a href="#limits">Limits</a>
+            <a href="../migration/">Migration</a>
+            <a
+              href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1"
+              target="_blank"
+              rel="noreferrer"
+            >GitHub</a>
+            <a class="nav-cta" href="./demo/#demo-workbench">Try the demo</a>
+          </nav>
+        </div>
       </div>
     </header>
 
@@ -66,8 +74,12 @@
           </div>
           <div class="home-install" aria-label="Install command">
             <span aria-hidden="true">$</span>
-            <code>npm install codemirror-record codemirror@5</code>
+            <code>npm install codemirror-record@^1 codemirror@^5</code>
           </div>
+          <p class="home-install-note">
+            Prefer an explicit maintenance selector? Use
+            <code>codemirror-record@cm5</code>.
+          </p>
         </div>
 
         <figure class="home-hero-visual">
@@ -220,7 +232,7 @@
               empty batch before loading it.
             </p>
             <div class="home-link-list">
-              <a href="https://github.com/Jisuanke/CodeMirror-Record#api">
+              <a href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#api">
                 Read the complete API and data format
                 <span aria-hidden="true">→</span>
               </a>
@@ -267,7 +279,10 @@ function replayPendingOperations() {
             <h2 id="limits-title">Built for CodeMirror 5</h2>
             <p>
               Use the same starting document in the recorder and player.
-              CodeMirror 6 uses a different API and is not supported by this release.
+              CodeMirror 6 uses a different editor API and is supported by
+              <a href="../">package v2</a>. Existing recording JSON stays portable;
+              follow the <a href="../migration/">migration guide</a> when changing
+              editor generations.
             </p>
           </div>
           <dl class="home-compatibility-list">
@@ -297,7 +312,7 @@ function replayPendingOperations() {
             </a>
             <a
               class="button button-secondary"
-              href="https://github.com/Jisuanke/CodeMirror-Record#api"
+              href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#api"
             >
               Read the API
             </a>
@@ -308,7 +323,7 @@ function replayPendingOperations() {
 
     <footer class="site-footer">
       <div class="page-shell">
-        <span>CodeMirror Record · MIT License</span>
+        <span data-author-credit>Haoran Yu &amp; Jisuanke Team</span>
         <span>Recording and playback for CodeMirror 5.</span>
       </div>
     </footer>

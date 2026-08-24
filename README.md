@@ -25,9 +25,11 @@ their logical `end` time and writes a scalar timestamp for new ungrouped
 records. Published v0.3.1 through v1.1.7 players exposed a non-numeric duration
 when that unchanged historical shape was the terminal record.
 
-The default [project homepage](https://codemirror-record.haoranyu.com/) and
-[demo](https://codemirror-record.haoranyu.com/demo/) now describe the
-CodeMirror 6 v2 line and link back to this branch.
+The maintained [CodeMirror 5 homepage](https://codemirror-record.haoranyu.com/v1/)
+and [CM5 demo](https://codemirror-record.haoranyu.com/v1/demo/) are sourced from
+this branch. The default [CodeMirror 6 homepage](https://codemirror-record.haoranyu.com/)
+and [CM6 demo](https://codemirror-record.haoranyu.com/demo/) link back to the v1
+experience and keep the migration path visible.
 
 ## Local Demo
 
