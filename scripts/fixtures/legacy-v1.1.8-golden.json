@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "generator": {
+    "package": "codemirror-record",
+    "packageVersion": "1.1.8",
+    "codeMirrorVersion": "5.65.21",
+    "source": {
+      "kind": "npm-registry",
+      "spec": "codemirror-record@1.1.8",
+      "integrity": "sha512-2WCdbc2le6Rolih7q4pfJltvLECXYx/N7DoS/tZbozOdvLI+/opAhwJQtYtfyaEWpSC/HYfyCYV3PIwcbO0HoA=="
+    }
+  },
+  "scenario": "compressed input, deletion, selection, and extra activity",
+  "initialDocument": "abc\ndef",
+  "finalDocument": "XYab\ndef",
+  "finalSelection": [
+    0,
+    3
+  ],
+  "records": "[{\"t\":[10,20],\"l\":2,\"o\":[{\"o\":\"i\",\"i\":[0,0],\"a\":\"XY\"}]},{\"t\":30,\"o\":[{\"o\":\"d\",\"i\":[[0,4],[0,5]]}]},{\"t\":40,\"o\":[{\"activity\":{\"kind\":\"golden\",\"value\":1},\"o\":\"e\"}]},{\"t\":50,\"o\":[{\"o\":\"o\",\"i\":[[0,0],[0,3]]}]}]"
+}

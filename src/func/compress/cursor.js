@@ -56,7 +56,9 @@ function areCursorsPositionsContinue(firstChange, secondChange, direction) {
     const firstCh = firstChange.crs[i];
     const secondCh = secondChange.crs[i];
     if (firstCh.anchor.line !== firstCh.head.line ||
-        firstCh.anchor.ch !== firstCh.head.ch) {
+        firstCh.anchor.ch !== firstCh.head.ch ||
+        secondCh.anchor.line !== secondCh.head.line ||
+        secondCh.anchor.ch !== secondCh.head.ch) {
       return false;
     } else if (
       firstChange.crs[i].anchor.ch + direction !== secondCh.anchor.ch) {

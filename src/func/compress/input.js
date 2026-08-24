@@ -54,7 +54,11 @@ function areInputPositionsContinue(firstChange, secondChange) {
   for (let i = 0; i < secondChange.ops.length; i++) {
     const firstOp = firstChange.ops[i];
     const secondOp = secondChange.ops[i];
-    if (firstOp.text.length !== 1) {
+    const firstText = normalizeInsertedText(firstOp.text);
+    const secondText = normalizeInsertedText(secondOp.text);
+    const secondIsSingleInput = secondChange.combo === 1;
+    if (firstText.length !== 1 ||
+        (secondIsSingleInput && secondText.length !== 1)) {
       return false;
     }
     if (secondOp.from.line !== secondOp.to.line ||
@@ -62,10 +66,14 @@ function areInputPositionsContinue(firstChange, secondChange) {
         secondOp.from.ch !== secondOp.to.ch ||
         firstOp.from.ch !== firstOp.to.ch) {
       return false;
-    } else if (
-      firstOp.from.ch + 1 !== secondOp.from.ch &&
-      !(firstOp.from.line + 1 === secondOp.from.line &&
-      secondOp.from.ch === 0)) { // For new line
+    }
+    const continuesOnSameLine =
+      firstOp.from.line === secondOp.from.line &&
+      firstOp.from.ch + 1 === secondOp.from.ch;
+    const continuesAfterNewline = firstText === '\n' &&
+      firstOp.from.line + 1 === secondOp.from.line &&
+      secondOp.from.ch === 0;
+    if (!continuesOnSameLine && !continuesAfterNewline) {
       return false;
     }
   }
@@ -105,18 +113,19 @@ function isContinueInput(firstChange, secondChange) {
  */
 function compressOperationsTexts(change) {
   for (let i = 0; i < change.ops.length; i++) {
-    let compressedTexts = '';
-    for (let j = 0; j < change.ops[i].text.length; j++) {
-      if (change.ops[i].text[j] !== '') {
-        compressedTexts += change.ops[i].text[j];
-      } else if (j + 1 < change.ops[i].text.length &&
-                change.ops[i].text[j + 1] === '') {
-        compressedTexts += '\n';
-      }
-    }
-    change.ops[i].text = compressedTexts;
+    change.ops[i].text = normalizeInsertedText(change.ops[i].text);
   }
   return change;
+}
+
+/**
+ * Convert CodeMirror's line-array insertion representation to exact text.
+ *
+ * @param {array|string} text Inserted content
+ * @return {string} Inserted content with line breaks preserved
+ */
+export function normalizeInsertedText(text) {
+  return typeof(text) === 'string' ? text : text.join('\n');
 }
 
 /**
@@ -160,7 +169,8 @@ function compressContinuousInput(changes) {
             change.ops[i].from = lastChange.ops[i].from;
             change.ops[i].to = lastChange.ops[i].to;
             change.ops[i].text =
-              lastChange.ops[i].text.concat(change.ops[i].text);
+              normalizeInsertedText(lastChange.ops[i].text) +
+              normalizeInsertedText(change.ops[i].text);
           }
         } else {
           changes.push(lastChange);

@@ -3,7 +3,7 @@ const globals = require('globals');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'demo/main.js'],
+    ignores: ['dist/**', 'demo/main.js', 'test/browser/fixture.bundle.js'],
   },
   js.configs.recommended,
   {
@@ -18,7 +18,30 @@ module.exports = [
     },
   },
   {
-    files: ['eslint.config.js', 'test/**/*.js', 'webpack.config.js'],
+    files: ['test/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  {
+    files: ['scripts/**/*.mjs', 'test/**/*.mjs', 'vitest.config.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
+  {
+    files: [
+      'eslint.config.js',
+      'scripts/**/*.cjs',
+      'webpack.config.js',
+    ],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'commonjs',

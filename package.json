@@ -1,27 +1,51 @@
 {
   "name": "codemirror-record",
-  "version": "1.1.6",
-  "description": "A recording and playing library for CodeMirror. Compatible with version later than 5.37.0.",
+  "version": "2.0.0",
+  "description": "Record and replay CodeMirror 6 editing sessions using the established codemirror-record interface and wire format.",
   "scripts": {
     "lint": "eslint .",
     "prebuild": "npm run lint",
     "build": "webpack --mode=production",
+    "build:browser-fixture": "webpack --mode=production --env browserFixture",
     "serve": "http-server -o /demo",
-    "test": "npm run build && node --test"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:types": "tsc --noEmit -p test/types/tsconfig.json",
+    "test:package": "npm run build && node test/package-smoke.mjs",
+    "test:compat": "npm run build && node scripts/test-peer-compatibility.mjs",
+    "test:browser": "npm run build && npm run build:browser-fixture && node test/browser-smoke.mjs",
+    "benchmark:compression": "npm run build && node scripts/benchmark-compression.mjs",
+    "test:all": "npm run lint && npm test && npm run test:types && npm run test:package && npm run test:compat && npm run benchmark:compression && npm run test:browser",
+    "prepublishOnly": "node scripts/require-publish-tag.cjs && npm run test:all && npm run test:coverage"
   },
-  "main": "./dist/main.js",
-  "module": "./src/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/main.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.cjs"
+    }
+  },
   "files": [
     "dist/*",
     "src/*",
-    "*.json",
-    "*.js",
-    "*.md"
+    "LICENSE",
+    "README.md",
+    "docs/COMPRESSION.md",
+    "docs/MIGRATING.md",
+    "docs/migration-contract.json",
+    "docs/RELEASING.md",
+    "scripts/require-publish-tag.cjs"
   ],
   "homepage": "https://codemirror-record.haoranyu.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Jisuanke/CodeMirror-Record"
+    "url": "git+https://github.com/Jisuanke/CodeMirror-Record.git"
   },
   "keywords": [
     "record",
@@ -32,19 +56,41 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.7",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.9",
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "babel-loader": "^10.1.1",
-    "codemirror": "^5.65.21",
+    "codemirror": "^6.0.2",
     "eslint": "^10.9.0",
     "globals": "^17.11.0",
     "http-server": "^14.1.1",
+    "jsdom": "^29.1.1",
+    "playwright": "^1.62.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
     "webpack": "^5.109.2",
     "webpack-cli": "^7.2.2"
   },
-  "author": "Haoran Yu",
+  "author": "Haoran Yu & Jisuanke Team",
   "license": "MIT",
+  "publishConfig": {
+    "tag": "cm6"
+  },
   "dependencies": {
     "events": "^3.3.0",
     "lodash.clonedeep": "^4.5.0"
+  },
+  "peerDependencies": {
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "bugs": {
+    "url": "https://github.com/Jisuanke/CodeMirror-Record/issues"
   }
 }

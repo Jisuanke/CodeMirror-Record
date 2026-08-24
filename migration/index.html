@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Haoran Yu &amp; Jisuanke Team">
+    <meta
+      name="description"
+      content="A deterministic CodeMirror Record migration guide from CodeMirror 5 and package v1 to CodeMirror 6 and package v2."
+    >
+    <meta name="theme-color" content="#020617">
+    <meta name="codemirror-record:migration-schema" content="1">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Migrate CodeMirror Record from CM5 to CM6">
+    <meta
+      property="og:description"
+      content="Change the editor runtime, retain the recorder/player surface, and move recordings without conversion."
+    >
+    <meta
+      property="og:url"
+      content="https://codemirror-record.haoranyu.com/migration/"
+    >
+    <link
+      rel="canonical"
+      href="https://codemirror-record.haoranyu.com/migration/"
+    >
+    <link
+      rel="alternate"
+      type="text/markdown"
+      href="https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/main/docs/MIGRATING.md"
+    >
+    <link
+      rel="alternate"
+      type="application/json"
+      href="../docs/migration-contract.json"
+    >
+    <link rel="icon" href="data:,">
+    <title>CM5 to CM6 migration — CodeMirror Record</title>
+    <link rel="stylesheet" href="../demo/style.css">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body class="migration-page">
+    <a class="skip-link" href="#main-content">Skip to the migration guide</a>
+
+    <header class="site-header">
+      <div class="page-shell header-content">
+        <a class="brand" href="../">CodeMirror Record</a>
+        <nav aria-label="Primary navigation">
+          <a class="nav-home" href="../">Home</a>
+          <a href="#install">Install</a>
+          <a href="#retained-api">API seam</a>
+          <a href="#editor-map">Editor map</a>
+          <a href="#agent-checklist">Checklist</a>
+          <a class="nav-source" href="https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/main/docs/MIGRATING.md">Markdown source</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="migration-hero page-shell" aria-labelledby="page-title">
+        <div class="migration-hero-copy">
+          <p class="eyebrow">Migration runbook / schema 1</p>
+          <h1 id="page-title">Change the editor.<br>Keep the recording.</h1>
+          <p class="hero-summary">
+            Move from CodeMirror 5 and <code>codemirror-record@1</code> to
+            CodeMirror 6 and <code>codemirror-record@2</code>. The editor
+            architecture changes; the recorder/player calls and recording JSON
+            seam stay in place.
+          </p>
+          <div class="migration-actions">
+            <a class="button button-primary" href="#start-diff">Start with the diff</a>
+            <a class="text-link" href="#agent-checklist">Open the verification gate</a>
+          </div>
+          <p class="audience-note">
+            Written as a deterministic runbook for application developers and
+            coding agents. Read the canonical prose
+            <a href="https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/main/docs/MIGRATING.md"><code>docs/MIGRATING.md</code></a>
+            or load the canonical structured
+            <a href="../docs/migration-contract.json"><code>migration-contract.json</code></a>.
+          </p>
+        </div>
+
+        <figure class="migration-ledger" aria-labelledby="ledger-title ledger-caption">
+          <div class="ledger-heading">
+            <span id="ledger-title">Runtime migration ledger</span>
+            <span>wire revision 1</span>
+          </div>
+          <div class="ledger-track">
+            <article class="ledger-node ledger-cm5">
+              <span class="ledger-tag">from</span>
+              <strong>CM5</strong>
+              <code>codemirror-record@1</code>
+              <small>CodeMirror instance</small>
+            </article>
+            <div class="ledger-wire" aria-label="Recording format stays unchanged">
+              <span>opaque JSON</span>
+              <strong>{ p · r · x · s · e }</strong>
+              <small>no transform</small>
+            </div>
+            <article class="ledger-node ledger-cm6">
+              <span class="ledger-tag">to</span>
+              <strong>CM6</strong>
+              <code>codemirror-record@2</code>
+              <small>EditorView</small>
+            </article>
+          </div>
+          <figcaption id="ledger-caption">
+            CM5 <span aria-hidden="true">→</span> wire
+            <span aria-hidden="true">→</span> CM6, and back again
+          </figcaption>
+        </figure>
+      </section>
+
+      <aside class="no-transform page-shell" aria-labelledby="no-transform-title">
+        <span class="callout-mark" aria-hidden="true">!</span>
+        <div>
+          <p class="callout-label">Recording boundary</p>
+          <h2 id="no-transform-title">Do not transform existing recordings</h2>
+          <p>
+            Pass the serialized string from <code>getRecords()</code> directly to
+            <code>addOperations()</code>. Do not parse and rewrite its positions
+            as CM6 offsets. The v2 adapter owns that translation.
+          </p>
+        </div>
+        <code class="callout-code">v1 JSON bytes → addOperations(records)</code>
+      </aside>
+
+      <div class="guide-shell page-shell">
+        <aside class="guide-index">
+          <p>On this page</p>
+          <nav aria-label="Migration guide sections">
+            <a href="#migration-contract"><span>00</span> Contract</a>
+            <a href="#install"><span>01</span> Install</a>
+            <a href="#start-diff"><span>02</span> Constructor</a>
+            <a href="#retained-api"><span>03</span> Retained API</a>
+            <a href="#editor-map"><span>04</span> Editor map</a>
+            <a href="#selections"><span>05</span> Selections</a>
+            <a href="#events"><span>06</span> Events</a>
+            <a href="#options"><span>07</span> Options</a>
+            <a href="#read-only"><span>08</span> Read-only</a>
+            <a href="#history"><span>09</span> History</a>
+            <a href="#wire-contract"><span>10</span> Recordings</a>
+            <a href="#procedure"><span>11</span> Procedure</a>
+            <a href="#agent-checklist"><span>12</span> Verify</a>
+          </nav>
+        </aside>
+
+        <article class="migration-guide">
+          <section class="guide-section" id="migration-contract" aria-labelledby="contract-title">
+            <header class="section-header">
+              <span class="section-number">00 / Contract</span>
+              <h2 id="contract-title">One deliberate break at the editor boundary</h2>
+            </header>
+            <p class="section-lede">
+              Upgrade the editor and recorder package together. Pass an
+              <code>EditorView</code> where v1 received a CM5 instance. Keep the
+              recorder/player surface and serialized recording seam.
+            </p>
+            <div class="contract-grid">
+              <article>
+                <span>Changes</span>
+                <strong>Editor runtime API</strong>
+                <p>Construction, values, edits, positions, events, options, CSS, and history.</p>
+              </article>
+              <article>
+                <span>Retained</span>
+                <strong>Recorder/player API</strong>
+                <p>Named exports, constructor roles, methods, options, and player events.</p>
+              </article>
+              <article>
+                <span>Invariant</span>
+                <strong>Recording JSON</strong>
+                <p>Opaque v1 wire payload, tested in both producer/player directions.</p>
+              </article>
+            </div>
+            <p class="contract-note">
+              Compatibility is a release contract enforced by bidirectional
+              packaged-artifact tests. It does not mean that CM5 and CM6 editor
+              APIs are interchangeable. The canonical structured fields live
+              in the
+              <a href="../docs/migration-contract.json">machine-readable migration contract</a>.
+            </p>
+          </section>
+
+          <section class="guide-section" id="install" aria-labelledby="install-title">
+            <header class="section-header">
+              <span class="section-number">01 / Install</span>
+              <h2 id="install-title">Select the package major by editor generation</h2>
+            </header>
+            <div class="install-grid">
+              <article class="install-card install-cm5">
+                <div>
+                  <span class="track-label">CodeMirror 5 / maintenance</span>
+                  <strong>Keep v1 while preparing fixtures</strong>
+                </div>
+                <pre><code>npm install codemirror-record@^1 codemirror@^5</code></pre>
+                <a href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#readme">
+                  Open the <code>v1</code> README
+                </a>
+              </article>
+              <article class="install-card install-cm6">
+                <div>
+                  <span class="track-label">CodeMirror 6 / current</span>
+                  <strong>Install v2 with required peer packages</strong>
+                </div>
+                <pre><code>npm install codemirror-record@^2 @codemirror/state@^6 @codemirror/view@^6</code></pre>
+                <a href="../README.md">Open the default v2 README</a>
+              </article>
+            </div>
+            <p>
+              Add only the language and feature packages the editor uses. The
+              umbrella <code>codemirror@^6</code> package provides
+              <code>basicSetup</code>; language support remains separate. Keep one
+              resolved copy of each <code>@codemirror/*</code> package.
+            </p>
+          </section>
+
+          <section class="guide-section" id="start-diff" aria-labelledby="diff-title">
+            <header class="section-header">
+              <span class="section-number">02 / Constructor</span>
+              <h2 id="diff-title">Replace the editor object, not the workflow</h2>
+            </header>
+            <div class="code-diff">
+              <article class="code-column code-before">
+                <header>
+                  <span>Before</span>
+                  <strong>CM5 instance</strong>
+                </header>
+                <pre><code>import CodeMirror from 'codemirror';
+import {CodePlay, CodeRecord}
+  from 'codemirror-record';
+
+const recordEditor = CodeMirror(
+  recordMount,
+  {
+    value: initialDocument,
+    mode: 'javascript',
+    lineNumbers: true,
+  },
+);
+
+const playEditor = CodeMirror(
+  playMount,
+  {
+    value: initialDocument,
+    readOnly: 'nocursor',
+  },
+);
+
+const recorder = new CodeRecord(recordEditor);
+recorder.listen();
+const player = new CodePlay(playEditor);</code></pre>
+              </article>
+
+              <article class="code-column code-after">
+                <header>
+                  <span>After</span>
+                  <strong>CM6 EditorView</strong>
+                </header>
+                <pre><code>import {EditorState}
+  from '@codemirror/state';
+import {EditorView, lineNumbers}
+  from '@codemirror/view';
+import {javascript}
+  from '@codemirror/lang-javascript';
+import {CodePlay, CodeRecord}
+  from 'codemirror-record';
+
+const recordEditor = new EditorView({
+  parent: recordMount,
+  doc: initialDocument,
+  extensions: [lineNumbers(), javascript()],
+});
+
+const playEditor = new EditorView({
+  parent: playMount,
+  doc: initialDocument,
+  extensions: [
+    EditorState.readOnly.of(true),
+    EditorView.editable.of(false),
+  ],
+});
+
+const recorder = new CodeRecord(recordEditor);
+recorder.listen();
+const player = new CodePlay(playEditor);</code></pre>
+              </article>
+            </div>
+            <p>
+              <code>CodeRecord.listen()</code> installs its transaction listener.
+              Do not add a second DOM/input listener for recording. CM6 has no
+              direct <code>CodeMirror.fromTextArea</code> equivalent; create a view
+              and copy <code>view.state.doc.toString()</code> back on form submit.
+            </p>
+          </section>
+
+          <section class="guide-section" id="retained-api" aria-labelledby="api-title">
+            <header class="section-header">
+              <span class="section-number">03 / Retained API</span>
+              <h2 id="api-title">Keep recorder and player call sites</h2>
+            </header>
+            <div class="table-region" role="region" aria-label="Retained recorder and player API" tabindex="0">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Surface</th>
+                    <th scope="col">Retained in v2</th>
+                    <th scope="col">Migration action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Recorder</th>
+                    <td><code>CodeRecord(editor)</code>, <code>listen()</code></td>
+                    <td>Pass an <code>EditorView</code></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">External activity</th>
+                    <td><code>recordExtraActivity(value)</code></td>
+                    <td>Keep values JSON-serializable</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Serialization</th>
+                    <td><code>getRecords()</code></td>
+                    <td>Store the returned string unchanged</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Player</th>
+                    <td><code>CodePlay(editor, options)</code></td>
+                    <td>Pass an <code>EditorView</code>; keep options</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Load + transport</th>
+                    <td><code>addOperations()</code>, <code>play()</code>, <code>pause()</code>, <code>seek()</code>, <code>clear()</code></td>
+                    <td>No call-site change</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Timeline reads</th>
+                    <td><code>getStatus()</code>, <code>getCurrentTime()</code>, <code>getDuration()</code></td>
+                    <td>No call-site change</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Player events</th>
+                    <td><code>on()</code>, <code>off()</code>, <code>once()</code></td>
+                    <td>Keep <code>play</code>, <code>pause</code>, <code>seek</code>, <code>end</code>, and <code>clear</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 id="player-options">Player options stay named the same</h3>
+            <div class="option-list">
+              <div><code>maxDelay</code><span>Maximum gap between operations; zero disables the cap.</span></div>
+              <div><code>autoplay</code><span>Start when operations are added.</span></div>
+              <div><code>autofocus</code><span>Focus the editor during playback.</span></div>
+              <div><code>speed</code><span>Playback speed multiplier.</span></div>
+              <div><code>extraActivityHandler</code><span>Apply surrounding application activity.</span></div>
+              <div><code>extraActivityReverter</code><span>Revert application activity during backward seek.</span></div>
+            </div>
+            <p>
+              Keep the matching setters: <code>setMaxDelay</code>,
+              <code>setAutoplay</code>, <code>setAutofocus</code>,
+              <code>setSpeed</code>, <code>setExtraActivityHandler</code>, and
+              <code>setExtraActivityReverter</code>.
+            </p>
+            <div class="contract-note">
+              <p><strong>Corrected edge behavior.</strong> Maintained v1.1.8
+                and v2.0.0 deliberately align these runtime details:</p>
+              <ul>
+                <li><code>seek(0)</code> restores the configured playback speed
+                  and a normal <code>PAUSE</code> state.</li>
+                <li>Backward seek restores the document, every directed
+                  selection, and its primary range.</li>
+                <li>Terminal playback enters <code>PAUSE</code> and emits
+                  <code>pause</code> before <code>end</code>; do not preserve the
+                  v1.1.6 <code>PLAY</code>-inside-<code>end</code> bug.</li>
+                <li>Paste capture never mutates or duplicates a non-cursor
+                  predecessor.</li>
+                <li>A replacement seek issued while an earlier seek is still
+                  running preserves the configured playback speed and the
+                  original <code>PLAY</code> or <code>PAUSE</code> state.</li>
+                <li>A seek to duration during active playback emits exactly
+                  one <code>end</code> event.</li>
+                <li>An equal-time compressed group with scalar <code>t</code>
+                  expands every logical operation at that timestamp. Published
+                  v0.3.1 through v1.1.7 readers indexed the scalar as an
+                  interval and produced invalid timing; v1.1.8 and v2 accept
+                  the unchanged bytes and write <code>t: [time, time]</code>
+                  for new compressed equal-time groups.</li>
+                <li>An ungrouped record with interval
+                  <code>t: [start, end]</code> and no <code>l</code> is one
+                  operation at the interval end. Published v0.3.1 through
+                  v1.1.7 players exposed a non-numeric duration when the record
+                  was terminal; v1.1.8 and v2 normalize it and emit a scalar
+                  for new ungrouped records.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="guide-section" id="editor-map" aria-labelledby="map-title">
+            <header class="section-header">
+              <span class="section-number">04 / Editor map</span>
+              <h2 id="map-title">Translate application-owned editor calls</h2>
+            </header>
+            <p>
+              CM6 state is immutable. Apply changes with transactions and use
+              numeric UTF-16 offsets in application code.
+            </p>
+            <div class="table-region" role="region" aria-label="CodeMirror editor method mappings" tabindex="0">
+              <table class="mapping-table">
+                <thead>
+                  <tr>
+                    <th scope="col">CodeMirror 5</th>
+                    <th scope="col">CodeMirror 6</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>cm.getValue()</code></td><td><code>view.state.doc.toString()</code></td></tr>
+                  <tr><td><code>cm.getRange(a, b)</code></td><td><code>view.state.sliceDoc(a, b)</code></td></tr>
+                  <tr><td><code>cm.getLine(n)</code></td><td><code>view.state.doc.line(n + 1).text</code></td></tr>
+                  <tr><td><code>cm.lineCount()</code></td><td><code>view.state.doc.lines</code></td></tr>
+                  <tr><td><code>cm.replaceRange(text, from, to)</code></td><td><code>view.dispatch({changes: {from, to, insert: text}})</code></td></tr>
+                  <tr><td><code>cm.replaceSelection(text)</code></td><td><code>view.dispatch(view.state.replaceSelection(text))</code></td></tr>
+                  <tr><td><code>cm.setValue(text)</code></td><td>Dispatch a replacement over <code>0..doc.length</code></td></tr>
+                  <tr><td><code>cm.operation(() =&gt; edits)</code></td><td>Dispatch one transaction with a change set</td></tr>
+                  <tr><td><code>cm.focus()</code></td><td><code>view.focus()</code></td></tr>
+                  <tr><td><code>cm.getWrapperElement()</code></td><td><code>view.dom</code></td></tr>
+                  <tr><td>Remove wrapper DOM</td><td><code>view.destroy()</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="position-note">
+              <div>
+                <span>Application boundary</span>
+                <strong><code>{line, ch}</code> becomes a numeric offset</strong>
+              </div>
+              <div>
+                <span>Recording boundary</span>
+                <strong>Legacy line/character positions stay unchanged</strong>
+              </div>
+            </div>
+            <p>
+              CM6 <code>Text.line(n)</code> is one-based. A CM5 line maps with
+              the clipping <code>cm5PositionToOffset</code> helper below. It
+              clips lines before/after the document and clips <code>ch</code>
+              to the target line, matching CM5. Use that conversion only for
+              application-owned coordinates, never serialized recordings.
+            </p>
+          </section>
+
+          <section class="guide-section" id="selections" aria-labelledby="selections-title">
+            <header class="section-header">
+              <span class="section-number">05 / Selections</span>
+              <h2 id="selections-title">Preserve anchor, head, and primary range</h2>
+            </header>
+            <div class="table-region" role="region" aria-label="Selection API mappings" tabindex="0">
+              <table class="mapping-table">
+                <thead>
+                  <tr><th scope="col">CodeMirror 5</th><th scope="col">CodeMirror 6</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>cm.getCursor()</code></td><td><code>view.state.selection.main.head</code></td></tr>
+                  <tr><td><code>cm.listSelections()</code></td><td><code>view.state.selection.ranges</code></td></tr>
+                  <tr><td><code>cm.getSelection()</code></td><td>Slice <code>selection.main.from..to</code></td></tr>
+                  <tr><td><code>cm.getSelections()</code></td><td>Slice every range from state</td></tr>
+                  <tr><td><code>cm.somethingSelected()</code></td><td>Test whether any range is non-empty</td></tr>
+                  <tr><td><code>cm.setCursor(pos)</code></td><td>Convert <code>pos</code> to an offset, then dispatch the numeric anchor</td></tr>
+                  <tr><td><code>cm.setSelection(anchor, head)</code></td><td>Convert both positions to offsets, then dispatch numeric anchor/head values</td></tr>
+                  <tr><td><code>cm.setSelections(ranges, primary)</code></td><td>Convert each anchor/head to offsets with <code>EditorSelection.range</code>, then call <code>EditorSelection.create(selectionRanges, primaryIndex)</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Use <code>anchor</code> and <code>head</code> when direction matters;
+              <code>from</code> and <code>to</code> are normalized bounds.
+            </p>
+            <p>
+              Convert each anchor/head to offsets with
+              <code>EditorSelection.range</code>, then call
+              <code>EditorSelection.create(selectionRanges, primaryIndex)</code>.
+            </p>
+            <pre><code>import {EditorSelection, EditorState} from '@codemirror/state';
+import {EditorView} from '@codemirror/view';
+
+const editorState = EditorState.create({
+  doc: initialValue,
+  extensions: [
+    EditorState.allowMultipleSelections.of(true),
+    // ...the rest of the application's extensions
+  ],
+});
+const view = new EditorView({state: editorState, parent: editorMount});
+const previousPrimaryIndex = view.state.selection.mainIndex;
+
+function cm5PositionToOffset(doc, {line, ch}) {
+  if (line &lt; 0) return 0;
+  if (line &gt;= doc.lines) return doc.length;
+  const targetLine = doc.line(line + 1);
+  const clippedCh = ch == null ? targetLine.length :
+    Math.max(0, Math.min(targetLine.length, ch));
+  return targetLine.from + clippedCh;
+}
+
+const selectionRanges = cm5Ranges.map(({anchor, head = anchor}) =&gt;
+  EditorSelection.range(
+    cm5PositionToOffset(view.state.doc, anchor),
+    cm5PositionToOffset(view.state.doc, head),
+  ));
+if (selectionRanges.length &gt; 0) {
+  const primaryIndex = cm5PrimaryIndex ?? Math.min(
+    selectionRanges.length - 1,
+    previousPrimaryIndex,
+  );
+
+  view.dispatch({
+    selection: EditorSelection.create(selectionRanges, primaryIndex),
+  });
+}</code></pre>
+            <p>
+              Enable <code>EditorState.allowMultipleSelections.of(true)</code>
+              when creating the state. This recipe accepts an already-normalized
+              <code>cm.listSelections()</code> snapshot. CM5's default
+              <code>selectionsMayTouch: false</code> can merge touching or
+              overlapping raw <code>setSelections</code> inputs differently
+              from CM6, including direction; normalize them while CM5 is
+              available or define and test the application's merge rule first.
+              Pass through CM5's explicit
+              <code>primary</code> argument. When omitted, CM5 preserves its
+              previous primary index and clamps it to the new last range, so
+              use <code>Math.min(selectionRanges.length - 1,
+              previousPrimaryIndex)</code>; do not simply choose the last
+              range. For an existing CM5 snapshot, match
+              <code>getCursor('anchor'/'head')</code> against
+              <code>listSelections()</code> and pass that index. CM6 exposes
+              the choice as <code>selection.mainIndex</code>. Empty ranges are
+              a no-op, and raw CM5 <code>{anchor, head}</code> objects are not
+              CM6 <code>SelectionRange</code> instances.
+            </p>
+          </section>
+
+          <section class="guide-section" id="events" aria-labelledby="events-title">
+            <header class="section-header">
+              <span class="section-number">06 / Events</span>
+              <h2 id="events-title">Observe transactions, not DOM text</h2>
+            </header>
+            <div class="table-region" role="region" aria-label="Editor event mappings" tabindex="0">
+              <table class="mapping-table">
+                <thead>
+                  <tr><th scope="col">CM5 integration</th><th scope="col">CM6 integration</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>change</code> / <code>changes</code></td><td><code>EditorView.updateListener</code>, view plugin, or state field</td></tr>
+                  <tr><td><code>cursorActivity</code></td><td>Compare starting and resulting selections</td></tr>
+                  <tr><td><code>beforeChange</code></td><td><code>EditorState.changeFilter</code> or transaction filter</td></tr>
+                  <tr><td><code>beforeSelectionChange</code></td><td>Transaction filter</td></tr>
+                  <tr><td><code>change.origin</code></td><td><code>Transaction.userEvent</code> and <code>isUserEvent()</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <pre><code>const appObserver = EditorView.updateListener.of((update) =&gt; {
+  if (update.docChanged) {
+    onDocumentValue(update.state.doc.toString());
+  }
+
+  if (!update.startState.selection.eq(update.state.selection)) {
+    onSelection(update.state.selection);
+  }
+});</code></pre>
+            <p>
+              A view update may contain several transactions, and one
+              transaction may contain several simultaneous changes. Iterate
+              <code>update.transactions</code> for transaction-sensitive logic.
+              The recorder already does this and maps user-event annotations to
+              the established recording origin vocabulary.
+            </p>
+            <p>
+              Playback uses the reserved <code>Transaction.userEvent</code>
+              value <code>codemirror-record.playback</code>. A string marker
+              remains visible across mixed CommonJS/ESM entry paths, where an
+              identity-based custom <code>Annotation</code> from another
+              <code>@codemirror/state</code> instance would not. Application
+              observers may ignore this value, but must not attach it to
+              ordinary edits.
+            </p>
+          </section>
+
+          <section class="guide-section" id="options" aria-labelledby="options-title">
+            <header class="section-header">
+              <span class="section-number">07 / Options</span>
+              <h2 id="options-title">Move configuration into extensions</h2>
+            </header>
+            <div class="table-region" role="region" aria-label="Editor option mappings" tabindex="0">
+              <table class="mapping-table">
+                <thead>
+                  <tr><th scope="col">CodeMirror 5</th><th scope="col">CodeMirror 6</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>value</code></td><td><code>doc</code> in state/view configuration</td></tr>
+                  <tr><td><code>mode: 'javascript'</code></td><td><code>javascript()</code> language extension</td></tr>
+                  <tr><td><code>lineNumbers: true</code></td><td><code>lineNumbers()</code> extension</td></tr>
+                  <tr><td><code>extraKeys</code> / <code>keyMap</code></td><td><code>keymap.of([...bindings])</code></td></tr>
+                  <tr><td><code>readOnly</code></td><td><code>EditorState.readOnly</code> and optionally <code>EditorView.editable</code></td></tr>
+                  <tr><td><code>cm.setOption(...)</code></td><td>Reconfigure an extension in a <code>Compartment</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <pre><code>const tabSize = new Compartment();
+const view = new EditorView({
+  parent: mount,
+  extensions: [tabSize.of(EditorState.tabSize.of(2))],
+});
+
+view.dispatch({
+  effects: tabSize.reconfigure(EditorState.tabSize.of(4)),
+});</code></pre>
+            <p>
+              A <code>Compartment</code> reconfiguration preserves the recorder
+              listener. After <code>view.setState(newState)</code> or a full
+              top-level <code>StateEffect.reconfigure.of(...)</code>, call the
+              idempotent <code>recorder.listen()</code> again. Because
+              <code>setState</code> is not a transaction, dispatch any document
+              or selection replacement that belongs in the recording before
+              resetting; otherwise start a new recorder and baseline. Keep a
+              recordable change separate from top-level reconfiguration.
+            </p>
+            <p>
+              Rebuild custom CSS for the CM6 DOM. Common changes include
+              <code>.CodeMirror</code> to <code>.cm-editor</code>,
+              <code>.CodeMirror-line</code> to <code>.cm-line</code>, and
+              <code>.CodeMirror-scroll</code> to <code>.cm-scroller</code>.
+              Use decorations for presentation; do not mutate
+              <code>view.contentDOM</code> directly.
+            </p>
+          </section>
+
+          <section class="guide-section split-section" id="read-only" aria-labelledby="readonly-title">
+            <header class="section-header">
+              <span class="section-number">08 / Read-only</span>
+              <h2 id="readonly-title">Separate state policy from DOM editability</h2>
+            </header>
+            <div class="intent-list">
+              <article>
+                <span>Block editing commands</span>
+                <code>EditorState.readOnly.of(true)</code>
+                <p>Keeps the editor focusable and selectable.</p>
+              </article>
+              <article>
+                <span>Disable DOM editing</span>
+                <code>EditorView.editable.of(false)</code>
+                <p>Add this for a non-interactive playback surface.</p>
+              </article>
+              <article>
+                <span>Restore keyboard focus</span>
+                <code>EditorView.contentAttributes.of({tabindex: '0'})</code>
+                <p>Add when an uneditable surface still needs keyboard focus.</p>
+              </article>
+            </div>
+            <p>
+              <code>editable.of(false)</code> alone does not block programmatic
+              dispatch. Playback uses programmatic transactions, so a read-only
+              view can still replay recorded changes.
+            </p>
+          </section>
+
+          <section class="guide-section split-section" id="history" aria-labelledby="history-title">
+            <header class="section-header">
+              <span class="section-number">09 / History</span>
+              <h2 id="history-title">Install undo history explicitly</h2>
+            </header>
+            <pre><code>import {history, historyKeymap, redo, undo}
+  from '@codemirror/commands';
+import {EditorView, keymap} from '@codemirror/view';
+
+const view = new EditorView({
+  parent: mount,
+  extensions: [history(), keymap.of(historyKeymap)],
+});
+
+undo(view);
+redo(view);</code></pre>
+            <p>
+              A bare CM6 view has no history. Use the extensions above or
+              <code>basicSetup</code>. CM6 has no direct
+              <code>clearHistory()</code>; create a fresh state and call
+              <code>view.setState(newState)</code> for a full document reset,
+              then immediately call <code>recorder.listen()</code> when that view
+              is being recorded. <code>setState</code> itself is invisible to the
+              recorder: first dispatch an equivalent replacement when it must
+              remain in the same recording, or finish the old recording and
+              use the fresh state as a new baseline. The player marks replay
+              transactions to stay out of the user's undo stack.
+            </p>
+          </section>
+
+          <section class="guide-section" id="wire-contract" aria-labelledby="wire-title">
+            <header class="section-header">
+              <span class="section-number">10 / Recordings</span>
+              <h2 id="wire-title">Pass the same bytes in both directions</h2>
+            </header>
+            <pre class="wire-example"><code>const records = recorder.getRecords();
+
+// Store or transfer `records` without parsing or rewriting it.
+player.addOperations(records);
+player.play();</code></pre>
+            <div class="direction-grid">
+              <article>
+                <span class="direction-marker cm5-marker">v1 producer</span>
+                <strong>Release gate: CM5 recording → CM6 player</strong>
+                <p>Old stored recordings must load directly in the v2 player.</p>
+              </article>
+              <article>
+                <span class="direction-marker cm6-marker">v2 producer</span>
+                <strong>Release gate: CM6 recording → CM5 player</strong>
+                <p>New recordings must remain readable by the released v1 player.</p>
+              </article>
+            </div>
+            <p>
+              This bidirectional release contract covers supported text,
+              cursor/selection, timing, origin, and external-activity operations.
+              Serialized positions remain zero-based legacy line/character
+              pairs. The gate requires trace equality at every logical boundary
+              for the same payload in both real players, except for operation
+              time, duration, and affected seek timing when a published
+              v0.3.1-v1.1.7 reader consumes either an ungrouped
+              <code>t: [start, end]</code> record with no <code>l</code> or a
+              compressed record with scalar <code>t</code> plus
+              <code>l &gt; 1</code>.
+              Document, selection, origin, and extra-activity traces must still
+              match; v1.1.8 and v2 use the interval end for the first shape and
+              the scalar time for every operation in the second. Never rewrite
+              either payload to hide these reader defects. Exclude operation
+              time only for operations expanded from an affected record,
+              duration only when that record is terminal, and any seek
+              comparison when a payload contains either shape.
+              Keep representative production recording strings as application
+              fixtures in addition to the package compatibility suite.
+            </p>
+          </section>
+
+          <section class="guide-section" id="procedure" aria-labelledby="procedure-title">
+            <header class="section-header">
+              <span class="section-number">11 / Procedure</span>
+              <h2 id="procedure-title">Execute the migration in this order</h2>
+            </header>
+            <ol class="procedure-list">
+              <li><span>01</span><div><strong>Freeze a baseline.</strong><p>Pin v1/CM5 and save representative raw <code>getRecords()</code> strings.</p></div></li>
+              <li><span>02</span><div><strong>Inventory CM5 seams.</strong><p>Find constructors, methods, events, options, CSS, selections, read-only, history, and cleanup.</p></div></li>
+              <li><span>03</span><div><strong>Install v2 and CM6.</strong><p>Add state/view plus only the language and feature extensions in use.</p></div></li>
+              <li><span>04</span><div><strong>Replace editor construction.</strong><p>Create <code>EditorView</code> objects and pass them to existing recorder/player constructors.</p></div></li>
+              <li><span>05</span><div><strong>Translate application integrations.</strong><p>Use transactions, offsets, selection ranges, listeners, extensions, facets, and explicit history.</p></div></li>
+              <li><span>06</span><div><strong>Prove both wire directions.</strong><p>Load unchanged v1 strings in v2 and unchanged v2 strings in a released v1 player.</p></div></li>
+            </ol>
+          </section>
+
+          <section class="guide-section verification-section" id="agent-checklist" aria-labelledby="checklist-title">
+            <header class="section-header">
+              <span class="section-number">12 / Verification gate</span>
+              <h2 id="checklist-title">Checklist for developers and coding agents</h2>
+            </header>
+            <p class="section-lede">
+              Treat every unchecked item as an application migration blocker.
+            </p>
+            <ul class="verification-list">
+              <li><span aria-hidden="true"></span><div><strong>Dependencies</strong><p>One compatible resolved copy of each required <code>@codemirror/*</code> package.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Construction</strong><p>Every recorder and player receives an <code>EditorView</code>.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Recorder lifecycle</strong><p>Dispatch a recordable document/selection replacement before <code>view.setState(newState)</code>, or start a new baseline; then call the idempotent <code>recorder.listen()</code> after every full reset or top-level reconfiguration.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>No transform</strong><p>Recording strings reach <code>addOperations()</code> without parsing, conversion, or reserialization.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Old → new</strong><p>Representative v1 recordings finish with the expected CM6 document, selections, timing, and application state.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>New → old</strong><p>Representative v2 recordings finish with the expected released-v1 CM5 state.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Selections</strong><p>Forward/backward selections, multi-cursor state, and primary range replay correctly.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Input origins</strong><p>Typing, multiline edits, delete, paste, drop, IME composition, undo, and redo are covered where used.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Playback</strong><p>Play, pause/resume, seek zero/forward/backward, speed, max delay, end, and clear work.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>External activity</strong><p>Handlers and reverters receive original JSON-serializable values in both directions.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>Read-only + focus</strong><p>The player matches intended focus, selection, and editability behavior.</p></div></li>
+              <li><span aria-hidden="true"></span><div><strong>History + cleanup</strong><p>History exists where needed, replay adds no user undo entries, and replaced views call <code>destroy()</code>.</p></div></li>
+            </ul>
+          </section>
+
+          <section class="guide-section sources-section" id="sources" aria-labelledby="sources-title">
+            <header class="section-header">
+              <span class="section-number">Sources</span>
+              <h2 id="sources-title">First-party references</h2>
+            </header>
+            <ul class="source-list">
+              <li><a href="https://codemirror.net/5/doc/manual.html"><span>CM5</span> CodeMirror 5 manual</a></li>
+              <li><a href="https://codemirror.net/docs/migration/"><span>CM6</span> Official CodeMirror 5 to 6 migration guide</a></li>
+              <li><a href="https://codemirror.net/docs/guide/"><span>CM6</span> CodeMirror 6 system guide</a></li>
+              <li><a href="https://codemirror.net/docs/ref/"><span>CM6</span> CodeMirror 6 reference</a></li>
+              <li><a href="https://codemirror.net/examples/config/"><span>CM6</span> Dynamic configuration example</a></li>
+              <li><a href="https://codemirror.net/examples/readonly/"><span>CM6</span> Read-only example</a></li>
+              <li><a href="https://codemirror.net/examples/bundle/"><span>CM6</span> Browser bundling example</a></li>
+              <li><a href="../README.md"><span>v2</span> Default CodeMirror Record README</a></li>
+              <li><a href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#readme"><span>v1</span> CodeMirror 5 maintenance README</a></li>
+            </ul>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="migration-footer">
+      <div class="page-shell">
+        <div>
+          <strong>CodeMirror Record</strong>
+          <p data-author-credit>Haoran Yu &amp; Jisuanke Team</p>
+          <p>One recorder/player surface. One portable recording seam.</p>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href="../">Home</a>
+          <a href="../demo/">Demo</a>
+          <a href="../README.md">v2 README</a>
+          <a href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#readme">v1 README</a>
+          <a href="https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/main/docs/MIGRATING.md">Markdown</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

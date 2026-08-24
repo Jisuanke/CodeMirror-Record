@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "migration": "codemirror-record-cm5-to-cm6",
+  "canonicalMarkdown": "./MIGRATING.md",
+  "canonicalMarkdownUrl": "https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/main/docs/MIGRATING.md",
+  "canonicalHtml": "https://codemirror-record.haoranyu.com/migration/",
+  "from": {
+    "editor": "codemirror@5",
+    "recorder": "codemirror-record@1",
+    "editorArgument": "CodeMirror instance"
+  },
+  "to": {
+    "editor": [
+      "@codemirror/state@6",
+      "@codemirror/view@6"
+    ],
+    "recorder": "codemirror-record@2",
+    "editorArgument": "EditorView"
+  },
+  "installCommands": {
+    "cm5": "npm install codemirror-record@^1 codemirror@^5",
+    "cm6": "npm install codemirror-record@^2 @codemirror/state@^6 @codemirror/view@^6"
+  },
+  "wireContract": {
+    "format": "established-v1-json",
+    "recordingTransform": "forbidden",
+    "positions": "zero-based legacy line/character pairs",
+    "verification": [
+      "v1-payload-in-real-v1-and-v2-players",
+      "v2-payload-in-real-v1-and-v2-players",
+      "trace-equality-at-every-logical-boundary-except-documented-immutable-reader-timing-defects"
+    ],
+    "traceEquality": {
+      "default": "required at every logical boundary",
+      "exceptions": [
+        {
+          "id": "ungrouped-interval-reader-timing",
+          "payloadShape": "ungrouped t: [start, end] with no l",
+          "readers": "published codemirror-record v0.3.1 through v1.1.7",
+          "allowedDifference": "operation time, duration, and affected seek timing only",
+          "operationTimeScope": "only operations expanded from the affected record",
+          "durationScope": "only when the terminal record has this shape",
+          "seekScope": "any seek comparison for a payload containing this shape",
+          "stillEqual": "document, directed selections, primary range, origin, and extra-activity trace",
+          "canonicalLogicalTime": "end",
+          "fixedReaders": ["codemirror-record v1.1.8", "codemirror-record v2.0.0"],
+          "maintainedWriterOutput": "scalar end timestamp for an ungrouped record",
+          "payloadTransform": "forbidden"
+        },
+        {
+          "id": "compressed-scalar-reader-timing",
+          "payloadShape": "compressed scalar t with l > 1",
+          "readers": "published codemirror-record v0.3.1 through v1.1.7",
+          "allowedDifference": "operation time, duration, and affected seek timing only",
+          "operationTimeScope": "only operations expanded from the affected record",
+          "durationScope": "only when the terminal record has this shape",
+          "seekScope": "any seek comparison for a payload containing this shape",
+          "stillEqual": "document, directed selections, primary range, origin, and extra-activity trace",
+          "canonicalLogicalTime": "scalar t for every expanded operation",
+          "fixedReaders": ["codemirror-record v1.1.8", "codemirror-record v2.0.0"],
+          "maintainedWriterOutput": "t: [time, time] for a compressed equal-time group",
+          "payloadTransform": "forbidden"
+        }
+      ]
+    }
+  },
+  "recorderListenerLifecycle": {
+    "install": "CodeRecord.listen()",
+    "idempotent": true,
+    "viewSetStateIsRecorded": false,
+    "sameRecordingReset": "dispatch equivalent document and selection transaction before view.setState(newState), then call recorder.listen()",
+    "newRecordingReset": "drain the old recorder, replace state, create a new CodeRecord with the new state as its baseline, then call listen()",
+    "reinstallAfter": ["view.setState(newState)", "StateEffect.reconfigure.of(...)"],
+    "preservedBy": "Compartment.reconfigure(...) when it does not replace the full top-level configuration",
+    "topLevelReconfigure": "keep recordable document and selection changes in a separate transaction before reconfiguration"
+  },
+  "retainedSurface": {
+    "recorder": [
+      "CodeRecord(editor)",
+      "listen()",
+      "recordExtraActivity(value)",
+      "getRecords()"
+    ],
+    "player": [
+      "CodePlay(editor, options)",
+      "setMaxDelay(maxDelay)",
+      "setAutoplay(autoplay)",
+      "setAutofocus(autofocus)",
+      "setSpeed(speed)",
+      "setExtraActivityHandler(handler)",
+      "setExtraActivityReverter(reverter)",
+      "addOperations(records)",
+      "play()",
+      "pause()",
+      "seek(milliseconds)",
+      "clear()",
+      "getStatus()",
+      "getCurrentTime()",
+      "getDuration()",
+      "on(event, listener)",
+      "off(event, listener)",
+      "once(event, listener)"
+    ],
+    "events": [
+      "play",
+      "pause",
+      "seek",
+      "end",
+      "clear"
+    ],
+    "options": [
+      "maxDelay",
+      "autoplay",
+      "autofocus",
+      "speed",
+      "extraActivityHandler",
+      "extraActivityReverter"
+    ]
+  },
+  "editorMappings": {
+    "selections": [
+      {"cm5": "cm.getCursor()", "cm6": "view.state.selection.main.head"},
+      {"cm5": "cm.listSelections()", "cm6": "view.state.selection.ranges"},
+      {"cm5": "cm.getSelection()", "cm6": "selection.main.from..to"},
+      {"cm5": "cm.getSelections()", "cm6": "Slice every range from state"},
+      {"cm5": "cm.somethingSelected()", "cm6": "any range is non-empty"},
+      {"cm5": "cm.setCursor(pos)", "cm6": "Convert pos with cm5PositionToOffset, then dispatch the numeric anchor offset"},
+      {"cm5": "cm.setSelection(anchor, head)", "cm6": "Convert anchor and head with cm5PositionToOffset, then dispatch both numeric offsets"},
+      {"cm5": "cm.setSelections(ranges, primary)", "cm6": "Normalize touching/overlapping input according to application CM5 semantics, convert each anchor/head with EditorSelection.range, then call EditorSelection.create(selectionRanges, primaryIndex)"}
+    ]
+  },
+  "selectionConversion": {
+    "mapping": "Convert each anchor/head to offsets with EditorSelection.range, then call EditorSelection.create(selectionRanges, primaryIndex)",
+    "inputNormalization": "recipe accepts an already-normalized cm.listSelections() snapshot; raw touching or overlapping setSelections input requires explicit CM5/application normalization first",
+    "inputRange": {
+      "anchor": "CM5 {line, ch}; ch may be null or omitted for line end",
+      "head": "CM5 {line, ch}; defaults to anchor; ch may be null or omitted for line end"
+    },
+    "positionConverter": "cm5PositionToOffset(view.state.doc, position)",
+    "positionClipping": {
+      "lineBeforeDocument": "offset 0",
+      "lineAfterDocument": "doc.length",
+      "character": "clamp to 0 through targetLine.length"
+    },
+    "rangeFactory": "EditorSelection.range(anchorOffset, headOffset)",
+    "selectionFactory": "EditorSelection.create(selectionRanges, primaryIndex)",
+    "primaryIndex": {
+      "explicit": "preserve the CM5 primary argument",
+      "omitted": "Math.min(selectionRanges.length - 1, previousPrimaryIndex)",
+      "cm5Default": "preserve the previous primary index, clamped to the new last index",
+      "snapshot": "match cm5.getCursor('anchor') and cm5.getCursor('head') against cm5.listSelections(), then pass that index explicitly"
+    },
+    "emptyRanges": "no-op, matching CM5 setSelections([])",
+    "requiredExtension": "EditorState.allowMultipleSelections.of(true)",
+    "directionInvariant": "preserve anchor/head order; never substitute from/to"
+  },
+  "correctedRuntimeBehavior": [
+    {
+      "id": "seek-zero-restores-pause-and-speed",
+      "requiredTerms": ["seek(0)", "configured playback speed", "PAUSE"]
+    },
+    {
+      "id": "backward-seek-restores-directed-selections-and-primary-range",
+      "requiredTerms": ["backward seek", "directed selection", "primary range"]
+    },
+    {
+      "id": "pause-state-and-event-precede-end",
+      "requiredTerms": ["PAUSE", "pause", "before", "end", "v1.1.6"]
+    },
+    {
+      "id": "paste-capture-never-mutates-a-non-cursor-predecessor",
+      "requiredTerms": ["paste capture", "never mutates", "non-cursor predecessor"]
+    },
+    {
+      "id": "replacement-seek-preserves-original-playback-state",
+      "requiredTerms": ["replacement seek", "configured playback speed", "original PLAY or PAUSE state"]
+    },
+    {
+      "id": "seek-to-duration-emits-one-end",
+      "requiredTerms": ["seek to duration", "exactly one", "end"]
+    },
+    {
+      "id": "scalar-time-compressed-groups-expand-at-one-timestamp",
+      "requiredTerms": ["equal-time compressed group", "scalar t", "every logical operation", "that timestamp"]
+    },
+    {
+      "id": "ungrouped-interval-uses-end-timestamp",
+      "requiredTerms": ["ungrouped record", "interval t: [start, end]", "no l", "interval end", "non-numeric duration"],
+      "wireShape": {
+        "t": "[start, end]",
+        "l": "absent"
+      },
+      "logicalTime": "end",
+      "affectedReaders": ["published codemirror-record v0.3.1 through v1.1.7"],
+      "fixedReaders": ["codemirror-record v1.1.8", "codemirror-record v2.0.0"],
+      "writerOutput": "scalar end timestamp for every new ungrouped record",
+      "payloadTransform": "forbidden"
+    }
+  ],
+  "sections": [
+    {"number": "00", "markdownAnchor": "migration-contract", "htmlId": "migration-contract"},
+    {"number": "01", "markdownAnchor": "package-installs", "htmlId": "install"},
+    {"number": "02", "markdownAnchor": "before-after", "htmlId": "start-diff"},
+    {"number": "03", "markdownAnchor": "api-surface", "htmlId": "retained-api"},
+    {"number": "04", "markdownAnchor": "editor-mappings", "htmlId": "editor-map"},
+    {"number": "05", "markdownAnchor": "selections", "htmlId": "selections"},
+    {"number": "06", "markdownAnchor": "events-transactions", "htmlId": "events"},
+    {"number": "07", "markdownAnchor": "options-extensions", "htmlId": "options"},
+    {"number": "08", "markdownAnchor": "read-only", "htmlId": "read-only"},
+    {"number": "09", "markdownAnchor": "history", "htmlId": "history"},
+    {"number": "10", "markdownAnchor": "wire-format", "htmlId": "wire-contract"},
+    {"number": "11", "markdownAnchor": "agent-procedure", "htmlId": "procedure"},
+    {"number": "12", "markdownAnchor": "agent-checklist", "htmlId": "agent-checklist"}
+  ]
+}

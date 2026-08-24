@@ -1,22 +1,39 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
+import {createRequire} from 'node:module';
 
-const {CodePlay, CodeRecord} = require('../dist/main.js');
+import {EditorView} from '@codemirror/view';
+import {afterEach, describe, expect, test} from 'vitest';
 
-test('published bundle exposes the public classes', () => {
-  assert.equal(typeof CodePlay, 'function');
-  assert.equal(typeof CodeRecord, 'function');
+const require = createRequire(import.meta.url);
+const {CodePlay, CodeRecord} = require('../dist/index.cjs');
+const views = [];
+
+afterEach(() => {
+  while (views.length > 0) {
+    views.pop().destroy();
+  }
+  document.body.replaceChildren();
 });
 
-test('CodePlay includes its EventEmitter runtime dependency', () => {
-  const player = new CodePlay({});
-  let cleared = false;
-
-  player.on('clear', () => {
-    cleared = true;
+describe('published CommonJS bundle', () => {
+  test('exposes the two public classes', () => {
+    expect(typeof CodePlay).toBe('function');
+    expect(typeof CodeRecord).toBe('function');
   });
-  player.clear();
 
-  assert.equal(cleared, true);
-  assert.equal(player.getStatus(), 'PAUSE');
+  test('includes the EventEmitter runtime dependency', () => {
+    const parent = document.createElement('div');
+    document.body.append(parent);
+    const view = new EditorView({parent});
+    views.push(view);
+    const player = new CodePlay(view);
+    let cleared = false;
+
+    player.on('clear', () => {
+      cleared = true;
+    });
+    player.clear();
+
+    expect(cleared).toBe(true);
+    expect(player.getStatus()).toBe('PAUSE');
+  });
 });

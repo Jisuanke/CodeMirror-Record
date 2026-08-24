@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CodeMirror Record browser smoke fixture</title>
+    <link rel="icon" href="data:,">
+    <style>
+      body {
+        display: grid;
+        gap: 20px;
+        margin: 20px;
+        font-family: sans-serif;
+      }
+
+      .editor {
+        width: 640px;
+        min-height: 180px;
+        border: 1px solid #777;
+      }
+
+      #drag-source {
+        width: max-content;
+        padding: 8px 12px;
+        border: 1px solid #777;
+        cursor: grab;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Browser smoke fixture</h1>
+      <p id="drag-source" draggable="true">DROP</p>
+      <section aria-label="Recorder">
+        <h2>Recorder</h2>
+        <div class="editor" id="record-editor"></div>
+      </section>
+      <section aria-label="Player">
+        <h2>Player</h2>
+        <div class="editor" id="play-editor"></div>
+      </section>
+    </main>
+    <script src="../../dist/main.js"></script>
+    <script src="./fixture.bundle.js"></script>
+  </body>
+</html>

@@ -1,6 +1,13 @@
 import extract from './func/extract';
 import CONFIG from './config';
 import Events from 'events';
+import {
+  applyEditorOperation,
+  assertEditorView,
+  ensureMultipleSelections,
+  getEditorValue,
+  restoreEditorState,
+} from './codemirror6';
 
 /**
  * A class for playing recorded code
@@ -9,20 +16,42 @@ export class CodePlay extends Events {
   /**
    * constructor - Initialize a instance for playing recorded code.
    *
-   * @param  {object} editor  CodeMirror instance
+   * @param {EditorView} editor CodeMirror 6 editor view
    * @param  {object} options Options for player
    */
   constructor(editor, options) {
     super();
+    assertEditorView(editor);
     this.editor = editor;
+    ensureMultipleSelections(this.editor);
     this.initialize();
+    this.maxDelay = CONFIG.maxDelayBetweenOperations;
+    this.autoplay = false;
+    this.autofocus = false;
+    this.speed = 1;
+    this.extraActivityHandler = null;
+    this.extraActivityReverter = null;
     if (options) {
-      this.maxDelay = options.maxDelay || CONFIG.maxDelayBetweenOperations;
-      this.autoplay = options.autoplay || false;
-      this.autofocus = options.autofocus || false;
-      this.speed = options.speed || 1;
-      this.extraActivityHandler = options.extraActivityHandler || null;
-      this.extraActivityReverter = options.extraActivityReverter || null;
+      if (Number.isFinite(options.maxDelay) && options.maxDelay >= 0) {
+        this.maxDelay = options.maxDelay;
+      }
+      if (typeof(options.autoplay) === 'boolean') {
+        this.autoplay = options.autoplay;
+      }
+      if (typeof(options.autofocus) === 'boolean') {
+        this.autofocus = options.autofocus;
+      }
+      if (Number.isFinite(options.speed) && options.speed >= 0) {
+        this.speed = options.speed;
+      }
+      if (typeof(options.extraActivityHandler) === 'function' ||
+          options.extraActivityHandler === null) {
+        this.extraActivityHandler = options.extraActivityHandler;
+      }
+      if (typeof(options.extraActivityReverter) === 'function' ||
+          options.extraActivityReverter === null) {
+        this.extraActivityReverter = options.extraActivityReverter;
+      }
     }
   }
 
@@ -32,7 +61,6 @@ export class CodePlay extends Events {
   initialize() {
     this.operations = [];
     this.playedOperations = [];
-    this.cachedValue = null;
     this.status = 'PAUSE';
     clearTimeout(this.timer);
     this.timer = null;
@@ -44,6 +72,7 @@ export class CodePlay extends Events {
     this.playedTimeBeforeOperation = 0;
     this.playedTimeBeforePause = 0;
     this.speedBeforeSeeking = null;
+    this.statusBeforeSeeking = null;
   }
 
   /**
@@ -68,7 +97,7 @@ export class CodePlay extends Events {
    */
   setMaxDelay(maxDelay) {
     this.setOption(() => {
-      if (maxDelay) {
+      if (Number.isFinite(maxDelay) && maxDelay >= 0) {
         this.maxDelay = maxDelay;
       }
     });
@@ -81,7 +110,7 @@ export class CodePlay extends Events {
    */
   setAutoplay(autoplay) {
     this.setOption(() => {
-      if (autoplay) {
+      if (typeof(autoplay) === 'boolean') {
         this.autoplay = autoplay;
       }
     });
@@ -94,7 +123,7 @@ export class CodePlay extends Events {
    */
   setAutofocus(autofocus) {
     this.setOption(() => {
-      if (autofocus) {
+      if (typeof(autofocus) === 'boolean') {
         this.autofocus = autofocus;
       }
     });
@@ -107,7 +136,7 @@ export class CodePlay extends Events {
    */
   setSpeed(speed) {
     this.setOption(() => {
-      if (speed) {
+      if (Number.isFinite(speed) && speed >= 0) {
         this.speed = speed;
       }
     });
@@ -120,7 +149,8 @@ export class CodePlay extends Events {
    */
   setExtraActivityHandler(extraActivityHandler) {
     this.setOption(() => {
-      if (extraActivityHandler) {
+      if (typeof(extraActivityHandler) === 'function' ||
+          extraActivityHandler === null) {
         this.extraActivityHandler = extraActivityHandler;
       }
     });
@@ -133,7 +163,8 @@ export class CodePlay extends Events {
    */
   setExtraActivityReverter(extraActivityReverter) {
     this.setOption(() => {
-      if (extraActivityReverter) {
+      if (typeof(extraActivityReverter) === 'function' ||
+          extraActivityReverter === null) {
         this.extraActivityReverter = extraActivityReverter;
       }
     });
@@ -146,8 +177,14 @@ export class CodePlay extends Events {
    */
   addOperations(operations) {
     const parsedOperations = this.parseOperations(operations);
+    if (parsedOperations.length === 0) {
+      return;
+    }
     this.operations = this.operations.concat(parsedOperations);
-    this.duration = parsedOperations[parsedOperations.length - 1].t;
+    this.duration = Math.max(
+        this.duration,
+        parsedOperations[parsedOperations.length - 1].t,
+    );
     if (this.autoplay) {
       this.play();
     }
@@ -237,18 +274,23 @@ export class CodePlay extends Events {
    */
   seek(seekTime) {
     this.emit('seek');
-    this.speedBeforeSeeking = this.speed;
-    this.statusBeforeSeeking = this.status;
+    const isAlreadySeeking = this.seekTime !== null;
+    if (!isAlreadySeeking) {
+      this.speedBeforeSeeking = this.speed;
+      this.statusBeforeSeeking = this.status;
+    }
+    this.pause();
     this.speed = 0;
-    this.seekTime = seekTime;
+    this.seekTime = Math.min(Math.max(seekTime, 0), this.duration);
     if (this.autofocus) {
       this.editor.focus();
     }
-    this.pause();
     if (this.lastOperationTime < this.seekTime) {
       this.playChanges();
     } else if (this.lastOperationTime > this.seekTime) {
       this.revertChanges();
+    } else {
+      this.stopSeek();
     }
   }
 
@@ -257,13 +299,16 @@ export class CodePlay extends Events {
    */
   stopSeek() {
     this.pause();
-    if (this.seekTime) {
+    if (this.seekTime !== null) {
+      const statusBeforeSeeking = this.statusBeforeSeeking;
       this.playedTimeBeforeOperation = this.seekTime - this.lastOperationTime;
       if (this.speedBeforeSeeking !== null) {
-        this.setSpeed(this.speedBeforeSeeking);
+        this.speed = this.speedBeforeSeeking;
       }
       this.seekTime = null;
-      if (this.statusBeforeSeeking === 'PLAY') {
+      this.speedBeforeSeeking = null;
+      this.statusBeforeSeeking = null;
+      if (statusBeforeSeeking === 'PLAY' && this.operations.length > 0) {
         this.play();
       }
     }
@@ -280,8 +325,11 @@ export class CodePlay extends Events {
       this.currentOperation = operations[0];
       const currentOperation = this.currentOperation;
       const currentOperationDelay = this.getOperationDelay(currentOperation);
-      if (this.seekTime && currentOperation.t > this.seekTime) {
+      if (this.seekTime !== null && currentOperation.t > this.seekTime) {
         this.stopSeek();
+        return;
+      }
+      if (this.speed === 0 && this.seekTime === null) {
         return;
       }
       this.timer = setTimeout(() => {
@@ -292,8 +340,11 @@ export class CodePlay extends Events {
           this.currentOperation = null;
           this.stopSeek();
         }
-      }, (this.speed === 0) ? 0 : currentOperationDelay / this.speed);
+      }, this.speed === 0 ? 0 : currentOperationDelay / this.speed);
     } else {
+      // Lifecycle observers must see the terminal public state. Published v1
+      // emitted `end` while still reporting PLAY; v2 closes that inconsistency.
+      this.pause();
       this.emit('end');
     }
   }
@@ -321,45 +372,29 @@ export class CodePlay extends Events {
    */
   playChange(editor, currentOperation) {
     this.playedTimeBeforeOperation = 0;
-    const valueBeforeChange = editor.getValue();
-    if (this.cachedValue === null || this.cachedValue !== valueBeforeChange) {
-      this.cachedValue = valueBeforeChange;
-      currentOperation.revertValue = valueBeforeChange;
-    }
+    const valueBeforeChange = getEditorValue(editor);
+    currentOperation.revertValue = valueBeforeChange;
+    currentOperation.revertSelection = editor.state.selection;
 
-    for (let i = 0; i < currentOperation.o.length; i++) {
-      if (this.playExtraActivity(currentOperation)) {
-        break;
-      }
-      const insertContent = this.insertionText(currentOperation.o[i]);
-      let insertPos = currentOperation.o[i].i;
-
-      if (typeof(insertPos[0]) === 'number') {
-        insertPos = [insertPos, insertPos];
-      }
-      if (!this.isAutoIndent(currentOperation.o[i])) {
-        if (currentOperation.o[0].a !== '\n\n') {
-          if (i === 0) {
-            editor.setSelection(
-                {line: insertPos[0][0], ch: insertPos[0][1]},
-                {line: insertPos[1][0], ch: insertPos[1][1]},
-            );
-          } else {
-            editor.addSelection(
-                {line: insertPos[0][0], ch: insertPos[0][1]},
-                {line: insertPos[1][0], ch: insertPos[1][1]},
-            );
-          }
+    if (!this.playExtraActivity(currentOperation)) {
+      const segments = currentOperation.o.map((cursorOperation) => {
+        let insertPos = cursorOperation.i;
+        if (typeof(insertPos[0]) === 'number') {
+          insertPos = [insertPos, insertPos];
         }
-      }
-
-      if (currentOperation.type === 'content') {
-        editor.replaceRange(
-            insertContent,
-            {line: insertPos[0][0], ch: insertPos[0][1]},
-            {line: insertPos[1][0], ch: insertPos[1][1]},
-        );
-      }
+        return {
+          from: {line: insertPos[0][0], ch: insertPos[0][1]},
+          to: {line: insertPos[1][0], ch: insertPos[1][1]},
+          insert: this.insertionText(cursorOperation),
+          select: !this.isAutoIndent(cursorOperation) &&
+            currentOperation.o[0].a !== '\n\n',
+        };
+      });
+      applyEditorOperation(
+          editor,
+          segments,
+          currentOperation.type === 'content',
+      );
     }
     this.playedOperations.unshift(currentOperation);
     this.playChanges();
@@ -422,12 +457,16 @@ export class CodePlay extends Events {
    */
   revertChange(editor, currentOperation) {
     this.lastOperationTime = currentOperation.t;
-    if (this.seekTime && this.lastOperationTime <= this.seekTime) {
+    if (this.seekTime !== null && this.lastOperationTime <= this.seekTime) {
       this.stopSeek();
       return;
     }
     if (currentOperation.revertValue !== undefined) {
-      editor.setValue(currentOperation.revertValue);
+      restoreEditorState(
+          editor,
+          currentOperation.revertValue,
+          currentOperation.revertSelection,
+      );
     }
     this.revertExtraActivity(currentOperation);
     this.playedOperations.shift();
@@ -481,6 +520,12 @@ export class CodePlay extends Events {
     for (let operation of operations) {
       operation = this.classifyOperation(operation);
       if ('l' in operation) {
+        // Historical v1 recordings can contain a compressed group whose
+        // operations all happened in one millisecond. JSON then carries a
+        // scalar timestamp even though the extractors expect an interval.
+        if (!Array.isArray(operation.t)) {
+          operation.t = [operation.t, operation.t];
+        }
         for (let i = 0; i < operation.l; i++) {
           if (operation.o[0].o === 'i') {
             extractedOperations.push(extract.input(operation, i));
@@ -495,6 +540,12 @@ export class CodePlay extends Events {
           }
         }
       } else {
+        // Some v1 compressors emitted an interval for an operation that was
+        // not grouped. Treat it as one event at the interval's end so the
+        // recording keeps its final timestamp and remains schedulable.
+        if (Array.isArray(operation.t)) {
+          operation.t = operation.t[1];
+        }
         extractedOperations.push(operation);
       }
     }

@@ -74,7 +74,7 @@ a:focus-visible,
 select:focus-visible,
 input:focus-visible,
 [tabindex="0"]:focus-visible,
-.CodeMirror-focused {
+.cm-editor.cm-focused {
   outline: 3px solid var(--warning);
   outline-offset: 3px;
 }
@@ -644,7 +644,7 @@ pre {
   text-transform: uppercase;
 }
 
-.CodeMirror {
+.cm-editor {
   height: 330px;
   background: var(--page-raised);
   color: #e2e8f0;
@@ -653,53 +653,29 @@ pre {
   line-height: 1.65;
 }
 
-.CodeMirror-gutters {
-  border-right-color: var(--border);
-  background: #050c19;
+.cm-scroller {
+  overflow: auto;
+  font-family: inherit;
 }
 
-.CodeMirror-linenumber {
+.cm-gutters {
+  border-right-color: var(--border);
+  background: #050c19;
   color: #94a3b8;
 }
 
-.CodeMirror-cursor {
+.cm-lineNumbers .cm-gutterElement {
+  color: #94a3b8;
+}
+
+.cm-editor .cm-cursor,
+.cm-editor .cm-dropCursor {
   border-left-color: var(--accent);
 }
 
-.CodeMirror-selected,
-.CodeMirror-focused .CodeMirror-selected {
+.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
   background: rgb(56 189 248 / 24%);
-}
-
-.cm-s-default .cm-comment {
-  color: #94a3b8;
-}
-
-.cm-s-default .cm-keyword,
-.cm-s-default .cm-atom {
-  color: #c4b5fd;
-}
-
-.cm-s-default .cm-def,
-.cm-s-default .cm-variable-2 {
-  color: #7dd3fc;
-}
-
-.cm-s-default .cm-variable {
-  color: #e2e8f0;
-}
-
-.cm-s-default .cm-number {
-  color: #fde047;
-}
-
-.cm-s-default .cm-string {
-  color: #86efac;
-}
-
-.cm-s-default .cm-operator,
-.cm-s-default .cm-property {
-  color: #f8fafc;
 }
 
 .card-footer {
@@ -1105,7 +1081,7 @@ input[type="range"]:disabled {
     width: min(100% - 32px, 560px);
   }
 
-  .site-header nav a:not(:last-child) {
+  .demo-page .site-header nav a:not(.nav-home):not(:last-child) {
     display: none;
   }
 
@@ -1166,7 +1142,7 @@ input[type="range"]:disabled {
     min-height: auto;
   }
 
-  .CodeMirror {
+  .cm-editor {
     height: 300px;
   }
 
