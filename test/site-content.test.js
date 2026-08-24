@@ -1,8 +1,10 @@
+import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 
 import {EditorSelection, EditorState} from '@codemirror/state';
 import {Linter} from 'eslint';
+import {JSDOM} from 'jsdom';
 import {describe, expect, test} from 'vitest';
 
 const homepage = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
@@ -52,7 +54,39 @@ const deployedMigrationMarkdown =
   'https://raw.githubusercontent.com/Jisuanke/CodeMirror-Record/' +
   'main/docs/MIGRATING.md';
 
+const homepageDocument = new JSDOM(homepage).window.document;
+const demoDocument = new JSDOM(demo).window.document;
+
+function editorVersionLinks(document) {
+  return [...document.querySelectorAll(
+      'nav[aria-label="Editor version"] a',
+  )].map((link) => ({
+    current: link.getAttribute('aria-current'),
+    href: link.getAttribute('href'),
+    text: link.textContent.replace(/\s+/g, ' ').trim(),
+  }));
+}
+
 describe('public site version guidance', () => {
+  test('links the CM6 homepage and demo directly to their CM5 equivalents',
+      () => {
+        expect(editorVersionLinks(homepageDocument)).toEqual([
+          {current: null, href: './v1/', text: 'CM5 v1'},
+          {current: 'page', href: './', text: 'CM6 v2'},
+        ]);
+        expect(editorVersionLinks(demoDocument)).toEqual([
+          {current: null, href: '../v1/demo/', text: 'CM5 v1'},
+          {current: 'page', href: './', text: 'CM6 v2'},
+        ]);
+        expect(
+            demoDocument.querySelector('.primary-navigation .nav-home')
+                .getAttribute('href'),
+        ).toBe('../');
+        expect(
+            demoDocument.querySelector('link[rel="canonical"]').href,
+        ).toBe('https://codemirror-record.haoranyu.com/demo/');
+      });
+
   test('uses one author credit across every public page', () => {
     const author = 'Haoran Yu &amp; Jisuanke Team';
 
@@ -60,6 +94,25 @@ describe('public site version guidance', () => {
       expect(page).toContain(`<meta name="author" content="${author}">`);
       expect(page).toContain(`data-author-credit>${author}<`);
     }
+  });
+
+  test('self-hosts the reviewed homepage artwork', () => {
+    expect(
+        homepageDocument.querySelector('.home-hero-artwork img')
+            .getAttribute('src'),
+    ).toBe('./assets/project-artwork.png');
+    expect(
+        homepageDocument.querySelector('meta[property="og:image"]')
+            .getAttribute('content'),
+    ).toBe(
+        'https://codemirror-record.haoranyu.com/assets/project-artwork.png',
+    );
+    expect(homepage).not.toContain('repository-images.githubusercontent.com');
+    expect(createHash('sha256').update(readFileSync(
+        join(process.cwd(), 'assets/project-artwork.png'),
+    )).digest('hex')).toBe(
+        '2499961b317f1e8d227fb7208adc5c050e1ef6e1161362e2a819aa2f9a2a2d36',
+    );
   });
 
   test('publishes one agent-readable CM5 to CM6 migration contract', () => {
@@ -505,6 +558,8 @@ describe('public site version guidance', () => {
     expect(readme).toContain('npm install codemirror-record@^2');
     expect(readme).toContain('./docs/MIGRATING.md');
     expect(readme).toContain('/tree/v1#api');
+    expect(readme).toContain('codemirror-record.haoranyu.com/v1/');
+    expect(readme).toContain('codemirror-record.haoranyu.com/v1/demo/');
     expect(readme).toMatch(/every published v1\.x\s+release/);
     expect(readme).not.toMatch(/first v2 beta|planned preview/i);
 
@@ -535,7 +590,7 @@ describe('public site version guidance', () => {
     expect(demo).toContain('<div id="editor-play"></div>');
     expect(demo).not.toContain('cdnjs.cloudflare.com/ajax/libs/codemirror/5');
     expect(demoStyles).toContain(
-        '.demo-page .site-header nav a:not(.nav-home):not(:last-child)',
+        '.demo-page .primary-navigation a:not(.nav-home)',
     );
   });
 

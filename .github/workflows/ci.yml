@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,3 +27,169 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:all
       - run: npm run test:coverage
+
+  pages:
+    name: Build and smoke-test versioned Pages
+    needs: test
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out the exact reviewed main revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          path: sources/main
+          persist-credentials: false
+
+      - name: Read and validate the pinned v1 revision
+        id: sources
+        working-directory: sources/main
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_COMMIT=$(git rev-parse HEAD)
+          test "$MAIN_COMMIT" = "${{ github.sha }}"
+          V1_COMMIT=$(node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+
+          const manifest = JSON.parse(
+            readFileSync('.github/pages-sources.json', 'utf8'),
+          );
+          if (
+            manifest.schemaVersion !== 1 ||
+            manifest.v1?.branch !== 'v1' ||
+            !/^[0-9a-f]{40}$/.test(manifest.v1?.commit ?? '')
+          ) {
+            throw new Error('Invalid .github/pages-sources.json v1 pin');
+          }
+          process.stdout.write(manifest.v1.commit);
+          NODE
+          )
+          {
+            printf 'main-commit=%s\n' "$MAIN_COMMIT"
+            printf 'v1-commit=%s\n' "$V1_COMMIT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out the exact pinned v1 revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.sources.outputs.v1-commit }}
+          fetch-depth: 0
+          path: sources/v1
+          persist-credentials: false
+
+      - name: Fetch and verify the protected v1 branch ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C sources/v1 fetch --no-tags origin \
+            '+refs/heads/v1:refs/remotes/origin/v1'
+          test "$(git -C sources/v1 rev-parse HEAD)" = \
+            "${{ steps.sources.outputs.v1-commit }}"
+          git -C sources/v1 merge-base --is-ancestor \
+            "${{ steps.sources.outputs.v1-commit }}" \
+            refs/remotes/origin/v1
+
+      - name: Configure GitHub Pages metadata
+        uses: actions/configure-pages@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.13.0
+          cache: npm
+          cache-dependency-path: sources/main/package-lock.json
+
+      - name: Install and build the main source only
+        working-directory: sources/main
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Chromium for the site smoke test
+        working-directory: sources/main
+        run: npx playwright install --with-deps chromium
+
+      - name: Assemble the immutable versioned site
+        working-directory: sources/main
+        run: |
+          node scripts/build-versioned-site.mjs \
+            --main-root . \
+            --v1-root ../v1 \
+            --output ../../site-artifact \
+            --main-sha "${{ steps.sources.outputs.main-commit }}" \
+            --v1-branch-ref refs/remotes/origin/v1
+
+      - name: Smoke-test both live-generation demos
+        working-directory: sources/main
+        run: >-
+          node scripts/site-browser-smoke.mjs
+          --site-dir ../../site-artifact
+          --block-external-assets
+
+      - name: Upload the pull request review artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: versioned-pages-review-${{ github.event.pull_request.number }}-${{ github.sha }}
+          path: site-artifact
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload the production Pages artifact
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site-artifact
+          retention-days: 14
+
+  deploy-pages:
+    name: Deploy versioned Pages
+    needs: [test, pages]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Refuse a stale main deployment
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_MAIN_COMMIT=$(gh api \
+            "repos/$GITHUB_REPOSITORY/git/ref/heads/main" \
+            --jq .object.sha)
+          if test "$CURRENT_MAIN_COMMIT" != "$GITHUB_SHA"; then
+            printf 'Stale artifact for %s; current main is %s. Skipping.\n' \
+              "$GITHUB_SHA" "$CURRENT_MAIN_COMMIT"
+            printf 'deploy=false\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'deploy=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy the exact assembled artifact
+        if: steps.freshness.outputs.deploy == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v5

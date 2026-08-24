@@ -62,7 +62,9 @@ shape when it was terminal, while v1.1.8 and v2 normalize it without rewriting
 stored bytes.
 
 CodeMirror 5 users can stay on `codemirror-record@^1` or the `cm5` tag. Its
-[maintenance README](https://github.com/Jisuanke/CodeMirror-Record/tree/v1#readme)
+[versioned homepage](https://codemirror-record.haoranyu.com/v1/),
+[real CM5 demo](https://codemirror-record.haoranyu.com/v1/demo/),
+[maintenance README](https://github.com/Jisuanke/CodeMirror-Record/tree/v1#readme),
 and [CM5 API reference](https://github.com/Jisuanke/CodeMirror-Record/tree/v1#api)
 remain available. Applications that intentionally host both editor generations
 can use npm aliases; see the

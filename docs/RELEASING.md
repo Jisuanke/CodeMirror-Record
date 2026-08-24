@@ -70,7 +70,7 @@ export V2_VERSION=2.0.0
 export V2_BRANCH=main
 export EXPECTED_V1_RELEASE_COMMIT=ee6cf90fa6533247c780001511496bf557b47f88
 export EXPECTED_V1_PREVIOUS_CM5_RELEASE_COMMIT=84d7e90405ed96db3a963bc489fb3e00124848f1
-export EXPECTED_V1_BRANCH_COMMIT=45f0d71ec072b54f2d6ce0524eac58bf045630eb
+export EXPECTED_V1_BRANCH_COMMIT=16bafb5cf2cc065bd8f18bccdca6232c5ad87844
 export EXPECTED_V1_PREVIOUS_CM5_INTEGRITY=sha512-if1hp4NyH7+Lpwx79PNrYfa2WA4IxrL15dJ83pDWhLdx/wXCfPvh6hF4RzLuAltDaJc/13A82KbaeKJi0n8Nsw==
 export EXPECTED_V1_INTEGRITY=sha512-2WCdbc2le6Rolih7q4pfJltvLECXYx/N7DoS/tZbozOdvLI+/opAhwJQtYtfyaEWpSC/HYfyCYV3PIwcbO0HoA==
 export RELEASE_WORKSPACE
@@ -745,7 +745,7 @@ Expected permanent install paths are `codemirror-record@^2` with
 `@codemirror/state@^6` and `@codemirror/view@^6` for CM6, and
 `codemirror-record@^1` with `codemirror@^5` for CM5.
 
-### Phase 5: verify `main` and Pages byte-for-byte
+### Phase 5: verify `main` and versioned Pages byte-for-byte
 
 Only the exact tagged and registry-verified commit may remain on `main`. The
 local branch, remote branch, and peeled local tag must all equal
@@ -777,10 +777,11 @@ test "$(git ls-remote origin "refs/heads/$V2_BRANCH" | cut -f1)" = "$RELEASE_COM
 test -z "$(git status --porcelain)"
 ```
 
-The repository default branch must be `main`, and Pages must publish from
-`main:/`. These are assertions, not assumptions. Wait for the Pages build
-whose source commit is exactly `MAIN_COMMIT`; then compare each public route
-with the corresponding raw GitHub file at that immutable commit. A successful
+The repository default branch must be `main`, and Pages must publish the
+versioned artifact built by the `CI` Actions workflow. Follow the architecture
+and operating rules in [PAGES.md](./PAGES.md). The successful deployment, its
+downloaded `github-pages` artifact, `site-build.json`, and every public byte
+must all identify the exact `MAIN_COMMIT` and reviewed v1 source. A successful
 HTTP response with stale or transformed bytes fails the release.
 
 ```sh
@@ -789,38 +790,117 @@ set -euo pipefail
 test "${MAIN_COMMIT:?}" = "${RELEASE_COMMIT:?}"
 test "$(gh repo view "$REPOSITORY" --json defaultBranchRef --jq .defaultBranchRef.name)" = main
 PAGES_CONFIGURATION=$(gh api "repos/$REPOSITORY/pages")
-test "$(printf '%s' "$PAGES_CONFIGURATION" | jq -r .source.branch)" = main
-test "$(printf '%s' "$PAGES_CONFIGURATION" | jq -r .source.path)" = /
-PAGES_COMMIT=$(gh api "repos/$REPOSITORY/pages/builds/latest" --jq .commit)
-PAGES_STATUS=$(gh api "repos/$REPOSITORY/pages/builds/latest" --jq .status)
-test "$PAGES_COMMIT" = "$MAIN_COMMIT"
-test "$PAGES_STATUS" = built
+test "$(printf '%s' "$PAGES_CONFIGURATION" | jq -r .build_type)" = workflow
+
+export PAGES_V1_COMMIT
+PAGES_V1_COMMIT=$(node --input-type=module <<'NODE'
+import {readFileSync} from 'node:fs';
+
+const manifest = JSON.parse(
+  readFileSync('.github/pages-sources.json', 'utf8'),
+);
+if (
+  manifest.schemaVersion !== 1 ||
+  manifest.v1?.branch !== 'v1' ||
+  !/^[0-9a-f]{40}$/.test(manifest.v1?.commit ?? '')
+) {
+  throw new Error('Invalid Pages source manifest');
+}
+process.stdout.write(manifest.v1.commit);
+NODE
+)
+test "$PAGES_V1_COMMIT" = "$V1_BRANCH_COMMIT"
+git fetch --no-tags origin \
+  '+refs/heads/v1:refs/remotes/origin/v1'
+git merge-base --is-ancestor "$PAGES_V1_COMMIT" refs/remotes/origin/v1
+
+PAGES_RUNS=$(gh run list \
+  --repo "$REPOSITORY" \
+  --workflow ci.yml \
+  --branch main \
+  --limit 50 \
+  --json databaseId,headSha,event,conclusion)
+export PAGES_RUN_ID
+PAGES_RUN_ID=$(printf '%s' "$PAGES_RUNS" | jq -r \
+  --arg commit "$MAIN_COMMIT" \
+  '[.[] | select(
+    .headSha == $commit and
+    .conclusion == "success" and
+    (.event == "push" or .event == "workflow_dispatch")
+  )][0].databaseId // empty')
+test -n "$PAGES_RUN_ID"
+PAGES_RUN_JOBS=$(gh run view "$PAGES_RUN_ID" \
+  --repo "$REPOSITORY" \
+  --json jobs)
+test "$(printf '%s' "$PAGES_RUN_JOBS" | jq \
+  '[.jobs[] | select(
+    .name == "Deploy versioned Pages" and .conclusion == "success"
+  )] | length')" = 1
+
+PAGES_DEPLOYMENT_ID=$(gh api \
+  "repos/$REPOSITORY/deployments?environment=github-pages&sha=$MAIN_COMMIT&per_page=100" \
+  --jq '.[0].id // empty')
+test -n "$PAGES_DEPLOYMENT_ID"
+test "$(gh api \
+  "repos/$REPOSITORY/deployments/$PAGES_DEPLOYMENT_ID/statuses" \
+  --jq '.[0].state')" = success
 
 PAGES_CHECK_DIR=$(mktemp -d "$RELEASE_WORKSPACE/pages.XXXXXX")
-RAW_ORIGIN="https://raw.githubusercontent.com/$REPOSITORY/$MAIN_COMMIT"
 SITE_ORIGIN=https://codemirror-record.haoranyu.com
+gh run download "$PAGES_RUN_ID" \
+  --repo "$REPOSITORY" \
+  --name github-pages \
+  --dir "$PAGES_CHECK_DIR/download"
+PAGES_ARTIFACT_TAR=$(find "$PAGES_CHECK_DIR/download" \
+  -type f -name artifact.tar -print -quit)
+test -f "$PAGES_ARTIFACT_TAR"
+mkdir "$PAGES_CHECK_DIR/artifact"
+tar -xf "$PAGES_ARTIFACT_TAR" -C "$PAGES_CHECK_DIR/artifact"
+export PAGES_ARTIFACT_DIR="$PAGES_CHECK_DIR/artifact"
+
+node --input-type=module <<'NODE'
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
+
+const provenance = JSON.parse(readFileSync(
+  join(process.env.PAGES_ARTIFACT_DIR, 'site-build.json'),
+  'utf8',
+));
+assert.deepEqual(provenance, {
+  schemaVersion: 1,
+  sources: {
+    main: {commit: process.env.MAIN_COMMIT},
+    v1: {branch: 'v1', commit: process.env.PAGES_V1_COMMIT},
+  },
+  routes: ['/', '/demo/', '/migration/', '/v1/', '/v1/demo/'],
+});
+NODE
 
 PAGES_ASSET_COUNT=0
-while IFS= read -r ASSET; do
-  case "$ASSET" in
-    *.html|*.json|*.js|*.css) ;;
-    *) continue ;;
-  esac
-  mkdir -p \
-    "$PAGES_CHECK_DIR/raw/$(dirname "$ASSET")" \
-    "$PAGES_CHECK_DIR/public/$(dirname "$ASSET")"
-  curl --fail-with-body --location --retry 3 --retry-all-errors \
-    "$RAW_ORIGIN/$ASSET" --output "$PAGES_CHECK_DIR/raw/$ASSET"
+while IFS= read -r -d '' ARTIFACT_FILE; do
+  ASSET=${ARTIFACT_FILE#"$PAGES_ARTIFACT_DIR"/}
+  test "$ASSET" != .nojekyll || continue
+  mkdir -p "$PAGES_CHECK_DIR/public/$(dirname "$ASSET")"
   curl --fail-with-body --location --retry 3 --retry-all-errors \
     "$SITE_ORIGIN/$ASSET" --output "$PAGES_CHECK_DIR/public/$ASSET"
-  cmp "$PAGES_CHECK_DIR/raw/$ASSET" "$PAGES_CHECK_DIR/public/$ASSET"
+  cmp "$ARTIFACT_FILE" "$PAGES_CHECK_DIR/public/$ASSET"
   PAGES_ASSET_COUNT=$((PAGES_ASSET_COUNT + 1))
-done < <(git ls-tree -r --name-only "$MAIN_COMMIT")
+done < <(find "$PAGES_ARTIFACT_DIR" -type f -print0 | sort -z)
 test "$PAGES_ASSET_COUNT" -gt 0
 
-grep -Fq 'CodeMirror 6 · stable v2' "$PAGES_CHECK_DIR/public/index.html"
-grep -Fq 'class="nav-home" href="../">Home</a>' "$PAGES_CHECK_DIR/public/demo/index.html"
-grep -Fq 'Migration runbook / schema 1' "$PAGES_CHECK_DIR/public/migration/index.html"
+for ROUTE_FILE in \
+  ':index.html' \
+  'demo/:demo/index.html' \
+  'migration/:migration/index.html' \
+  'v1/:v1/index.html' \
+  'v1/demo/:v1/demo/index.html'; do
+  ROUTE=${ROUTE_FILE%%:*}
+  FILE=${ROUTE_FILE#*:}
+  curl --fail-with-body --location --retry 3 --retry-all-errors \
+    "$SITE_ORIGIN/$ROUTE" --output "$PAGES_CHECK_DIR/route.html"
+  cmp "$PAGES_ARTIFACT_DIR/$FILE" "$PAGES_CHECK_DIR/route.html"
+done
 
 SITE_ORIGIN="$SITE_ORIGIN" node --input-type=module <<'NODE'
 import assert from 'node:assert/strict';
@@ -829,21 +909,34 @@ import {chromium} from 'playwright';
 const browser = await chromium.launch({headless: true});
 const errors = [];
 try {
-  for (const route of ['/', '/migration/', '/demo/']) {
+  for (const route of ['/', '/demo/', '/migration/', '/v1/', '/v1/demo/']) {
     const page = await browser.newPage();
     page.on('pageerror', (error) => errors.push(`${route}: ${error.message}`));
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        errors.push(`${route}: console: ${message.text()}`);
+      }
+    });
     const response = await page.goto(`${process.env.SITE_ORIGIN}${route}`, {
       waitUntil: 'networkidle',
     });
     assert.ok(response?.ok(), `${route} returned ${response?.status()}`);
-    if (route === '/demo/') {
-      assert.equal(await page.locator('.cm-editor').count(), 2);
-      assert.equal(
-          await page.locator('a.nav-home').evaluate((link) => link.href),
-          `${process.env.SITE_ORIGIN}/`,
-      );
+    if (route === '/demo/' || route === '/v1/demo/') {
       await page.locator('#sample-edit').click();
-      assert.equal(await page.locator('#capture-records').isEnabled(), true);
+      await page.locator('#capture-records').click();
+      await page.locator('#load-operations').click();
+      await page.locator('#speed').selectOption('3');
+      await page.locator('#play').click();
+      await page.waitForFunction(
+          () => document.querySelector('#player-state')?.textContent.trim() ===
+            'Complete',
+          null,
+          {timeout: 20_000},
+      );
+      assert.notEqual(
+          await page.locator('#operation-count').textContent(),
+          '0',
+      );
     }
     await page.close();
   }
@@ -854,9 +947,9 @@ assert.deepEqual(errors, []);
 NODE
 ```
 
-If Pages reports `building`, a previous commit, or different bytes, wait for
-the exact deployment and repeat the complete Pages phase. Do not proceed on a
-marker-only check.
+If the workflow, deployment, provenance, route flow, or any byte does not match,
+stop and repeat the complete Pages phase after correcting the deployment. Do
+not proceed on a marker-only or HTTP-status-only check.
 
 ### Phase 6: create the final GitHub release and protect permanent branches
 
@@ -878,8 +971,13 @@ test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE
 test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = "$V1_BRANCH_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V1_VERSION^{}" | cut -f1)" = "$V1_RELEASE_COMMIT"
 test "$(gh repo view "$REPOSITORY" --json defaultBranchRef --jq .defaultBranchRef.name)" = main
-test "$(gh api "repos/$REPOSITORY/pages" --jq .source.branch)" = main
-test "$(gh api "repos/$REPOSITORY/pages" --jq .source.path)" = /
+test "$(gh api "repos/$REPOSITORY/pages" --jq .build_type)" = workflow
+test "${PAGES_V1_COMMIT:?}" = "$V1_BRANCH_COMMIT"
+test "${PAGES_RUN_ID:?}"
+test "${PAGES_DEPLOYMENT_ID:?}"
+test "$(gh api \
+  "repos/$REPOSITORY/deployments/$PAGES_DEPLOYMENT_ID/statuses" \
+  --jq '.[0].state')" = success
 test "$(npm_public view "$PACKAGE_NAME@cm5" version)" = "$V1_VERSION"
 test "$(npm_public view "$PACKAGE_NAME@cm6" version)" = "$V2_VERSION"
 test "$(npm_public view "$PACKAGE_NAME@latest" version)" = "$V2_VERSION"
@@ -1144,7 +1242,7 @@ For a CM6 maintenance release:
   against the current exact `cm5` release;
 - move `cm6`, verify it, then move `latest` to the same immutable artifact;
 - fast-forward protected `main` to the exact tagged commit and repeat every
-  Pages byte comparison;
+  Actions Pages provenance, artifact, live-route, and byte comparison;
 - assert the existing permanent branch protections; and
 - delete the short-lived remote and local release branch only after all registry,
   GitHub Release, `main`, Pages, and protection checks pass.
