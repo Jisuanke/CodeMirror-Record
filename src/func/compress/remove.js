@@ -1,7 +1,20 @@
 import CONFIG from '../../config';
+import {normalizeInsertedText} from './input';
 
 let longDelayCount = 0;
 let longDelayAverage = 0;
+
+/**
+ * Test whether a delete-origin change removes text without replacing it.
+ *
+ * @param {object} change Recorded change group
+ * @return {boolean} Whether every cursor inserts no replacement text
+ */
+function isPureDelete(change) {
+  return change.ops.every((operation) =>
+    normalizeInsertedText(operation.text).length === 0,
+  );
+}
 
 /**
  * combineLongDelayDelete - Test whether long delay combine happens
@@ -145,10 +158,11 @@ function compressContinuousDelete(changes) {
   const newChanges = [];
   while (changes.length > 0) {
     let change = changes.pop();
-    if (change.ops[0].origin === '+delete') {
+    if (change.ops[0].origin === '+delete' && isPureDelete(change)) {
       while (changes.length > 0) {
         const lastChange = changes.pop();
         if (lastChange.ops[0].origin === '+delete' &&
+        isPureDelete(lastChange) &&
         isContinueDelete(lastChange, change)) {
           change.startTime = lastChange.startTime;
           change.delayDuration = lastChange.delayDuration;

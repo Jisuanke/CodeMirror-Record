@@ -3,9 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Haoran Yu &amp; Jisuanke Team">
     <meta
       name="description"
-      content="Record CodeMirror 5 editing sessions as portable JSON and replay them with pause, seek, and speed controls."
+      content="Record and replay CodeMirror 6 editing sessions with a stable v2 API and a wire format shared with the maintained CodeMirror 5 line."
     >
     <meta name="theme-color" content="#020617">
     <meta property="og:type" content="website">
@@ -24,9 +25,9 @@
     <link rel="canonical" href="https://codemirror-record.haoranyu.com/">
     <link rel="preconnect" href="https://repository-images.githubusercontent.com">
     <link rel="icon" href="data:,">
-    <title>CodeMirror Record — Record and replay CodeMirror 5 sessions</title>
-    <link rel="stylesheet" href="./demo/style.css?v=1.1.6">
-    <link rel="stylesheet" href="./homepage.css?v=1.1.6">
+    <title>CodeMirror Record — Record and replay CodeMirror 6</title>
+    <link rel="stylesheet" href="./demo/style.css">
+    <link rel="stylesheet" href="./homepage.css">
   </head>
   <body class="home-page">
     <a class="skip-link" href="#main-content">Skip to the main content</a>
@@ -35,9 +36,10 @@
       <div class="page-shell header-content">
         <a class="brand" href="./">CodeMirror Record</a>
         <nav aria-label="Primary navigation">
+          <a href="#versions">Versions</a>
           <a href="#workflow">How it works</a>
           <a href="#quick-start">Quick start</a>
-          <a href="#limits">Limits</a>
+          <a href="./migration/">Migration</a>
           <a
             href="https://github.com/Jisuanke/CodeMirror-Record"
             target="_blank"
@@ -51,12 +53,12 @@
     <main id="main-content">
       <section class="hero page-shell" aria-labelledby="page-title">
         <div class="hero-copy">
-          <p class="eyebrow">CodeMirror 5 · MIT</p>
+          <p class="eyebrow">CodeMirror 6 · stable v2</p>
           <h1 id="page-title">Record editing activity.<br>Replay the timeline.</h1>
           <p class="hero-summary">
-            <code>CodeRecord</code> captures editor activity—and application
-            events you add—as a JSON string. <code>CodePlay</code> loads that
-            string for pause, seek, and speed-controlled playback.
+            Version 2 is the default CodeMirror 6 recorder and player. CodeMirror 5
+            stays maintained on version 1, with the same <code>CodeRecord</code>,
+            <code>CodePlay</code>, and portable JSON recording contract.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="./demo/#demo-workbench">
@@ -64,19 +66,30 @@
             </a>
             <a class="text-link" href="#quick-start">Read the quick start</a>
           </div>
-          <div class="home-install" aria-label="Install command">
-            <span aria-hidden="true">$</span>
-            <code>npm install codemirror-record codemirror@5</code>
+          <div class="home-install-stack" aria-label="Install commands by editor version">
+            <div class="home-install">
+              <span>CM6 · default</span>
+              <code>npm install codemirror-record@^2 @codemirror/state@^6 @codemirror/view@^6</code>
+            </div>
+            <div class="home-install">
+              <span>CM5</span>
+              <code>npm install codemirror-record@^1 codemirror@^5</code>
+            </div>
           </div>
+          <p class="home-release-note">
+            Moving an existing application? Follow the
+            <a href="./migration/">CM5 → CM6 migration runbook</a> and keep stored
+            recording strings unchanged.
+          </p>
         </div>
 
         <figure class="home-hero-visual">
           <div class="home-hero-visual-header">
             <span>
               <span class="status-dot" aria-hidden="true"></span>
-              Session trace
+              Cross-version recording seam
             </span>
-            <span>03 operations</span>
+            <span>one contract</span>
           </div>
           <div class="home-hero-stage">
             <div class="home-hero-artwork" aria-hidden="true">
@@ -89,29 +102,29 @@
               >
             </div>
             <div class="home-session-readout">
-              <p>Recorded activity</p>
+              <p>Release tracks</p>
               <ol>
                 <li>
-                  <time datetime="PT0.8S">00:00.8</time>
-                  <span><b>change</b><small>+12 characters</small></span>
+                  <span class="track-version">v1</span>
+                  <span><b>CM5 adapter</b><small>record + play · maintenance</small></span>
                 </li>
                 <li>
-                  <time datetime="PT1.4S">00:01.4</time>
-                  <span><b>cursor</b><small>line 2 · ch 18</small></span>
+                  <span class="track-version">wire</span>
+                  <span><b>JSON contract</b><small>ordered operation stream</small></span>
                 </li>
                 <li>
-                  <time datetime="PT2.1S">00:02.1</time>
-                  <span><b>activity</b><small>run preview</small></span>
+                  <span class="track-version">v2</span>
+                  <span><b>CM6 adapter</b><small>record + play · transaction-native</small></span>
                 </li>
               </ol>
             </div>
           </div>
-          <figcaption aria-label="CodeRecord produces a JSON string for CodePlay">
-            <span>CodeRecord</span>
+          <figcaption aria-label="CodeMirror 5 and 6 share one recording contract">
+            <span>CM5 recorder / player</span>
             <span class="home-flow-line" aria-hidden="true"></span>
-            <span>JSON string</span>
+            <span>shared JSON</span>
             <span class="home-flow-line" aria-hidden="true"></span>
-            <span>CodePlay</span>
+            <span>CM6 recorder / player</span>
           </figcaption>
         </figure>
       </section>
@@ -174,8 +187,8 @@
           <article class="home-feature-card">
             <span class="feature-index">01</span>
             <h3>Editor activity</h3>
-            <p>Capture text changes, selections, and cursor movement from CodeMirror 5.</p>
-            <code>changes · cursorActivity</code>
+            <p>Capture text changes, directed selections, and cursor movement in either editor generation.</p>
+            <code>CM5 events · CM6 transactions</code>
           </article>
           <article class="home-feature-card">
             <span class="feature-index">02</span>
@@ -196,8 +209,8 @@
             <p class="eyebrow">Interactive playground</p>
             <h2 id="demo-callout-title">See the data move</h2>
             <p>
-              Edit code, capture a batch, inspect the JSON, load it, and replay the
-              same sequence in a separate editor.
+              Use the current CM6 workbench to edit code, inspect the recorded JSON,
+              load it, and replay the same sequence in a second editor.
             </p>
           </div>
           <div class="home-demo-actions">
@@ -228,20 +241,22 @@
                 View the package on npm
                 <span aria-hidden="true">→</span>
               </a>
+              <a href="./migration/">
+                Migrate a CodeMirror 5 integration
+                <span aria-hidden="true">→</span>
+              </a>
             </div>
           </div>
 
           <div class="code-sample">
             <div class="code-sample-header">
               <span>quick-start.js</span>
-              <span>CodeMirror 5</span>
+              <span>CodeMirror 6 · v2</span>
             </div>
             <pre tabindex="0"><code>import {CodeRecord, CodePlay} from 'codemirror-record';
 
-playEditor.setValue(recordEditor.getValue());
-
-const recorder = new CodeRecord(recordEditor);
-const player = new CodePlay(playEditor, {
+const recorder = new CodeRecord(recordView);
+const player = new CodePlay(playView, {
   maxDelay: 3000,
   speed: 1,
 });
@@ -260,31 +275,63 @@ function replayPendingOperations() {
         </div>
       </section>
 
-      <section class="home-limits page-shell" id="limits" aria-labelledby="limits-title">
-        <div class="home-limits-card">
-          <div>
-            <p class="eyebrow">Compatibility</p>
-            <h2 id="limits-title">Built for CodeMirror 5</h2>
-            <p>
-              Use the same starting document in the recorder and player.
-              CodeMirror 6 uses a different API and is not supported by this release.
-            </p>
-          </div>
-          <dl class="home-compatibility-list">
-            <div>
-              <dt>Editor</dt>
-              <dd>CodeMirror 5.37+</dd>
-            </div>
-            <div>
-              <dt>Payload</dt>
-              <dd>JSON string</dd>
-            </div>
-            <div>
-              <dt>License</dt>
-              <dd>MIT</dd>
-            </div>
-          </dl>
+      <section class="home-versions page-shell" id="versions" aria-labelledby="versions-title">
+        <div class="home-section-heading">
+          <p class="eyebrow">Choose the editor seam</p>
+          <h2 id="versions-title">Two package majors. One recording contract.</h2>
+          <p>
+            The editor adapters differ because CodeMirror 6 replaced the CM5 event
+            model with transactions. Stored sessions stay on the established wire format.
+          </p>
         </div>
+
+        <div class="version-rail-grid">
+          <article class="version-rail version-rail-current">
+            <header>
+              <span>CodeMirror 6</span>
+              <span class="track-status">Stable default</span>
+            </header>
+            <h3>Package v2</h3>
+            <p>Transaction-native recording and atomic playback for an <code>EditorView</code>.</p>
+            <code class="version-command">codemirror-record@^2</code>
+            <dl>
+              <div><dt>Branch</dt><dd>main</dd></div>
+              <div><dt>npm tags</dt><dd>latest · cm6</dd></div>
+            </dl>
+          </article>
+
+          <div class="wire-seam" role="note" aria-label="Verified bidirectional recording compatibility">
+            <span>Verified interoperability</span>
+            <strong>v1 JSON wire</strong>
+            <p>Every published v1.x release is exercised with operations, selections, timing, and extras in both directions.</p>
+          </div>
+
+          <article class="version-rail version-rail-maintenance">
+            <header>
+              <span>CodeMirror 5</span>
+              <span class="track-status">Maintained</span>
+            </header>
+            <h3>Package v1</h3>
+            <p>The established event-based adapter remains available for existing applications.</p>
+            <code class="version-command">codemirror-record@^1</code>
+            <dl>
+              <div><dt>Branch</dt><dd>v1</dd></div>
+              <div><dt>npm tag</dt><dd>cm5</dd></div>
+            </dl>
+            <a
+              class="version-doc-link"
+              href="https://github.com/Jisuanke/CodeMirror-Record/tree/v1#api"
+            >Read the maintained CM5 API →</a>
+          </article>
+        </div>
+
+        <p class="version-release-note">
+          Existing <code>^1</code> installations do not cross the major-version line.
+          Real CM5 and CM6 recorders and players pass the full two-way package matrix;
+          recorded JSON does not require a schema migration.
+          <a href="./migration/">Read the migration runbook</a> or
+          <a href="https://github.com/Jisuanke/CodeMirror-Record/blob/main/docs/RELEASING.md">inspect the release policy</a>.
+        </p>
       </section>
 
       <section class="home-final-cta" aria-labelledby="final-cta-title">
@@ -309,7 +356,8 @@ function replayPendingOperations() {
     <footer class="site-footer">
       <div class="page-shell">
         <span>CodeMirror Record · MIT License</span>
-        <span>Recording and playback for CodeMirror 5.</span>
+        <span data-author-credit>Haoran Yu &amp; Jisuanke Team</span>
+        <span>One recording contract for CodeMirror 5 and 6.</span>
       </div>
     </footer>
   </body>

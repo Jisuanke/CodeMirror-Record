@@ -1,3 +1,6 @@
+import {javascript} from '@codemirror/lang-javascript';
+import {EditorState, Transaction} from '@codemirror/state';
+import {basicSetup, EditorView} from 'codemirror';
 import {CodeRecord, CodePlay} from '../src';
 
 const initialCode = [
@@ -32,40 +35,43 @@ const elements = {
 
 const flowSteps = Array.from(document.querySelectorAll('[data-flow-step]'));
 
-const recordCodeMirror = CodeMirror.fromTextArea(
-    document.getElementById('editor-record'),
-    {
-      autoCloseBrackets: true,
-      lineNumbers: true,
-      mode: 'javascript',
-    },
-);
+const recordCodeMirror = new EditorView({
+  doc: initialCode,
+  parent: document.getElementById('editor-record'),
+  extensions: [
+    basicSetup,
+    javascript(),
+    EditorState.allowMultipleSelections.of(true),
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged || update.selectionSet) {
+        markRecorderPending();
+      }
+    }),
+  ],
+});
 
-const playCodeMirror = CodeMirror.fromTextArea(
-    document.getElementById('editor-play'),
-    {
-      lineNumbers: true,
-      mode: 'javascript',
-      readOnly: true,
-    },
-);
+const playCodeMirror = new EditorView({
+  doc: initialCode,
+  parent: document.getElementById('editor-play'),
+  extensions: [
+    basicSetup,
+    javascript(),
+    EditorState.readOnly.of(true),
+    EditorView.editable.of(false),
+  ],
+});
 
-recordCodeMirror.setValue(initialCode);
-playCodeMirror.setValue(initialCode);
-recordCodeMirror.getInputField().setAttribute(
+recordCodeMirror.contentDOM.setAttribute(
     'aria-label',
     'Recording editor. Edit this code to record a session.',
 );
-recordCodeMirror.getInputField().setAttribute('id', 'recording-editor-input');
-recordCodeMirror.getInputField().setAttribute('name', 'recording-editor');
-playCodeMirror.getInputField().setAttribute(
+recordCodeMirror.contentDOM.setAttribute('id', 'recording-editor-input');
+playCodeMirror.contentDOM.setAttribute(
     'aria-label',
     'Playback editor. This read-only editor shows the replay.',
 );
-playCodeMirror.getInputField().setAttribute('id', 'playback-editor-input');
-playCodeMirror.getInputField().setAttribute('name', 'playback-editor');
+playCodeMirror.contentDOM.setAttribute('id', 'playback-editor-input');
 
-const codeRecorder = new CodeRecord(recordCodeMirror);
 const codePlayer = new CodePlay(playCodeMirror, {
   maxDelay: 3000,
   speed: 1,
@@ -74,6 +80,7 @@ const codePlayer = new CodePlay(playCodeMirror, {
   },
 });
 
+let codeRecorder = null;
 let sessionPayload = [];
 let loadedPayload = '';
 let hasEnded = false;
@@ -182,6 +189,22 @@ function updateTimeline(currentTime) {
 }
 
 /**
+ * Restore the player editor without adding a reset to its undo history.
+ */
+function resetPlayerDocument() {
+  playCodeMirror.dispatch({
+    changes: {
+      from: 0,
+      to: playCodeMirror.state.doc.length,
+      insert: initialCode,
+    },
+    selection: {anchor: 0},
+    annotations: Transaction.addToHistory.of(false),
+    filter: false,
+  });
+}
+
+/**
  * Reset the player to the shared baseline and load a recording.
  *
  * @param {string} payload Serialized operations.
@@ -190,7 +213,7 @@ function updateTimeline(currentTime) {
 function preparePlayer(payload, announce) {
   pendingSeekTarget = null;
   codePlayer.clear();
-  playCodeMirror.setValue(initialCode);
+  resetPlayerDocument();
   codePlayer.addOperations(payload);
   loadedPayload = payload;
   hasEnded = false;
@@ -252,7 +275,36 @@ function seekPlayer(requestedTime) {
   codePlayer.seek(targetTime);
 }
 
-codeRecorder.listen();
+/**
+ * Start the demo clock only when the visitor interacts with the recorder.
+ *
+ * Constructing CodeRecord on page load would count time spent reading the page
+ * as part of the session. The capture-phase interaction hooks run before
+ * CodeMirror turns the interaction into a transaction.
+ */
+function ensureRecorderStarted() {
+  if (codeRecorder !== null) {
+    return;
+  }
+  codeRecorder = new CodeRecord(recordCodeMirror);
+  codeRecorder.listen();
+}
+
+[
+  'beforeinput',
+  'compositionstart',
+  'cut',
+  'drop',
+  'keydown',
+  'paste',
+  'pointerdown',
+].forEach((eventName) => {
+  recordCodeMirror.contentDOM.addEventListener(
+      eventName,
+      ensureRecorderStarted,
+      {capture: true, once: true},
+  );
+});
 
 /**
  * Mark editor activity as ready for the next capture batch.
@@ -267,25 +319,25 @@ function markRecorderPending() {
   updateFlow(2, 1);
 }
 
-recordCodeMirror.on('changes', markRecorderPending);
-recordCodeMirror.on('cursorActivity', markRecorderPending);
-
 elements.sampleEdit.addEventListener('click', () => {
-  const lastLine = recordCodeMirror.lastLine();
-  const insertionPoint = {
-    line: lastLine,
-    ch: recordCodeMirror.getLine(lastLine).length,
-  };
-  recordCodeMirror.replaceRange(
-      '\n\nconst player = new CodePlay(replayEditor, {speed: 1});',
-      insertionPoint,
-  );
+  ensureRecorderStarted();
+  const insertionPoint = recordCodeMirror.state.doc.length;
+  const sample = '\n\nconst player = new CodePlay(replayEditor, {speed: 1});';
+  recordCodeMirror.dispatch({
+    changes: {from: insertionPoint, insert: sample},
+    selection: {anchor: insertionPoint + sample.length},
+    annotations: Transaction.userEvent.of('input.type'),
+  });
   recordCodeMirror.focus();
   elements.sampleEdit.disabled = true;
   elements.sampleEdit.textContent = 'Sample inserted';
 });
 
 elements.capture.addEventListener('click', () => {
+  if (codeRecorder === null) {
+    elements.capture.disabled = true;
+    return;
+  }
   const batch = JSON.parse(codeRecorder.getRecords());
   if (batch.length === 0) {
     elements.capture.disabled = true;

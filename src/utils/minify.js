@@ -22,10 +22,11 @@ function getInterval(operation) {
  * minifyTime - Remove duplication of identical startTime and endTime
  *
  * @param  {array} timeInterval Time interval of an operation
- * @return {array|number}       Minify to single number if startTime is endTime
+ * @param  {number} combo Number of operations represented by this record
+ * @return {array|number} Minify a single operation's identical timestamps
  */
-function minifyTime(timeInterval) {
-  if (timeInterval[0] === timeInterval[1]) {
+function minifyTime(timeInterval, combo = 1) {
+  if (combo === 1 && timeInterval[0] === timeInterval[1]) {
     return timeInterval[0];
   } else {
     return timeInterval;
@@ -77,7 +78,10 @@ export default function(operations) {
       delete operation.ops[i].to;
     }
 
-    operation.t = minifyTime([operation.startTime, operation.endTime]);
+    operation.t = minifyTime(
+        [operation.startTime, operation.endTime],
+        operation.combo,
+    );
     operation.l = operation.combo;
     operation.o = operation.ops;
 

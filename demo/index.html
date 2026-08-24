@@ -3,27 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Haoran Yu &amp; Jisuanke Team">
     <meta
       name="description"
-      content="Record, serialize, and replay a CodeMirror 5 editing session with CodeMirror Record."
+      content="Record, serialize, and replay a CodeMirror 6 editing session with CodeMirror Record."
     >
-    <title>CodeMirror Record — Interactive workflow</title>
+    <title>CodeMirror Record v2 — CodeMirror 6 interactive workflow</title>
     <link rel="icon" href="data:,">
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/codemirror.min.css"
-      integrity="sha512-yAvYFCgl0jKssk1XXo079Ec7sVXfN3OIotWiUP7zTrHhcRxMgRnEFjYhesnBZSfYPkd3sX7BmVTaWQLXvITMnQ=="
-      crossorigin="anonymous"
-    >
-    <link rel="stylesheet" href="./style.css?v=1.1.6">
+    <link rel="stylesheet" href="./style.css">
   </head>
-  <body>
+  <body class="demo-page">
     <a class="skip-link" href="#demo-workbench">Skip to the interactive demo</a>
 
     <header class="site-header">
       <div class="page-shell header-content">
         <a class="brand" href="../">CodeMirror Record</a>
         <nav aria-label="Page navigation">
+          <a class="nav-home" href="../">Home</a>
+          <a href="../#versions">Versions</a>
+          <a href="../migration/">Migration</a>
           <a href="#workflow">Workflow</a>
           <a href="#integration">Integration</a>
           <a
@@ -38,12 +36,12 @@
     <main id="top">
       <section class="hero page-shell" aria-labelledby="page-title">
         <div class="hero-copy">
-          <p class="eyebrow">CodeMirror 5 · session playback</p>
+          <p class="eyebrow">CodeMirror 6 · v2 stable</p>
           <h1 id="page-title">Record an edit.<br>Replay the timeline.</h1>
           <p class="hero-summary">
-            CodeMirror Record captures text edits, selections, and cursor activity
-            as portable JSON. Load that payload into a player to reproduce the
-            coding session at any speed.
+            Stable v2 captures CM6 transactions, selections, and timing as the
+            established portable JSON contract. Load the payload into a player to
+            reproduce the coding session at any speed.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#demo-workbench">Try the workflow</a>
@@ -55,7 +53,7 @@
           <div class="signal-card-header">
             <span class="status-dot" aria-hidden="true"></span>
             <span>Session pipeline</span>
-            <span class="version">v1.1.6</span>
+            <span class="version">v2.0.0</span>
           </div>
           <ol class="pipeline">
             <li><code>CodeRecord.listen()</code></li>
@@ -83,7 +81,7 @@
               <span class="step-number">01</span>
               <div>
                 <h3>Listen</h3>
-                <p>Attach <code>CodeRecord</code> to an editable CodeMirror instance.</p>
+                <p>Attach <code>CodeRecord</code> to an editable CM6 <code>EditorView</code>.</p>
               </div>
             </li>
             <li class="workflow-step" data-flow-step="2">
@@ -153,7 +151,7 @@
                 <span>session.js</span>
                 <span>Editable</span>
               </div>
-              <textarea id="editor-record"></textarea>
+              <div id="editor-record"></div>
             </div>
             <div class="card-footer">
               <p id="recorder-hint">Make an edit to create the first operation.</p>
@@ -236,7 +234,7 @@ Edit the recorder, then capture.</code></pre>
                 <span>replay.js</span>
                 <span>Read only</span>
               </div>
-              <textarea id="editor-play"></textarea>
+              <div id="editor-play"></div>
             </div>
 
             <div class="player-controls">
@@ -307,6 +305,7 @@ Edit the recorder, then capture.</code></pre>
             <ul class="implementation-notes">
               <li><code>getRecords()</code> returns a JSON string and clears the pending batch.</li>
               <li><code>addOperations()</code> accepts that string and prepares the timeline.</li>
+              <li>Stable v2 requires the same bytes to replay consistently in the maintained CM5 player.</li>
               <li>Subscribe to <code>play</code>, <code>pause</code>, <code>seek</code>, and <code>end</code>.</li>
             </ul>
           </div>
@@ -314,17 +313,17 @@ Edit the recorder, then capture.</code></pre>
           <div class="code-sample">
             <div class="code-sample-header">
               <span>workflow.js</span>
-              <span>CodeMirror 5</span>
+              <span>CodeMirror 6</span>
             </div>
             <pre tabindex="0"><code>import {CodeRecord, CodePlay} from 'codemirror-record';
 
-const recorder = new CodeRecord(editor);
+const recorder = new CodeRecord(recordView);
 recorder.listen();
 
 // Capture and persist this JSON string.
 const records = recorder.getRecords();
 
-const player = new CodePlay(replayEditor, {
+const player = new CodePlay(playView, {
   maxDelay: 3000,
   speed: 1,
 });
@@ -341,29 +340,14 @@ if (JSON.parse(records).length &gt; 0) {
         </div>
       </section>
     </main>
-
     <footer class="site-footer">
       <div class="page-shell">
         <span>CodeMirror Record · MIT License</span>
-        <span>Built for observable, replayable coding experiences.</span>
+        <span data-author-credit>Haoran Yu &amp; Jisuanke Team</span>
+        <span>CodeMirror 6 demo · shared v1 JSON recording contract.</span>
       </div>
     </footer>
 
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/codemirror.min.js"
-      integrity="sha512-2GhuAIxcoXqN+nBSa8DZSpChVQNliC1wHHgTE6BEkISu+0+3ywUEF5RJrmWyD67Kxm6XjJkULfpU8hdzLMuFhA=="
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/mode/javascript/javascript.js"
-      integrity="sha512-VgqsGo4zxSK9KBf4c3RWpFWkRfBEeIUb2p5VqKtDj7sXdTyTyx38jVVJSriVU12pS5hG5J69FDi/LDsQ5Y1Ldw=="
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.21/addon/edit/closebrackets.js"
-      integrity="sha512-33UpQMWsdyx6OY34VXpeFGBvg3Qs5RQJtPM+KzS9f5jPCeWYRHG1imKDZ9tHKeKh0Nsrjif5ApjECfiRvaf7WA=="
-      crossorigin="anonymous"
-    ></script>
-    <script src="./main.js?v=1.1.6"></script>
+    <script src="./main.js"></script>
   </body>
 </html>

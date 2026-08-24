@@ -1,4 +1,19 @@
 /**
+ * Check that every cursor stores exactly one text chunk per transaction.
+ *
+ * The legacy composition extractor indexes `text` by transaction number, so a
+ * multiline insertion cannot share a compressed record with another change.
+ *
+ * @param {object} change Composition change or compressed change group
+ * @return {boolean} Whether the text shape matches the transaction count
+ */
+function hasOneTextChunkPerComposition(change) {
+  return change.ops.every((operation) =>
+    Array.isArray(operation.text) && operation.text.length === change.combo,
+  );
+}
+
+/**
  * isContinueCompose - Whether two compose operations are treated continues
  *
  * @param  {object} firstChange  The first (previous) operation
@@ -6,7 +21,9 @@
  * @return {boolean}             Judge result whether operations are continues
  */
 function isContinueCompose(firstChange, secondChange) {
-  if (firstChange.ops.length !== secondChange.ops.length) {
+  if (!hasOneTextChunkPerComposition(firstChange) ||
+      !hasOneTextChunkPerComposition(secondChange) ||
+      firstChange.ops.length !== secondChange.ops.length) {
     return false;
   } else {
     for (let i = 0; i < secondChange.ops.length; i++) {
@@ -14,6 +31,7 @@ function isContinueCompose(firstChange, secondChange) {
       const secondOp = secondChange.ops[i];
       if (secondOp.from.line !== secondOp.to.line ||
           firstOp.from.line !== firstOp.to.line ||
+          firstOp.from.line !== secondOp.from.line ||
           secondOp.from.ch !== secondOp.to.ch ||
           firstOp.from.ch !== firstOp.to.ch) {
         return false;
