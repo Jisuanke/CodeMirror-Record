@@ -14,7 +14,7 @@
     "test:types": "tsc --noEmit -p test/types/tsconfig.json",
     "test:package": "npm run build && node test/package-smoke.mjs",
     "test:compat": "npm run build && node scripts/test-peer-compatibility.mjs",
-    "test:browser": "npm run build && npm run build:browser-fixture && node test/browser-smoke.mjs",
+    "test:browser": "npm run build && npm run build:browser-fixture && node test/browser-smoke.mjs && node test/browser-cross-generation.mjs",
     "benchmark:compression": "npm run build && node scripts/benchmark-compression.mjs",
     "test:all": "npm run lint && npm test && npm run test:types && npm run test:package && npm run test:compat && npm run benchmark:compression && npm run test:browser",
     "prepublishOnly": "node scripts/require-publish-tag.cjs && npm run test:all && npm run test:coverage"

@@ -2495,14 +2495,37 @@ async function verifyBidirectionalDifferentialTrace(producer) {
   );
 }
 
-async function verifyLiteralRealPeerPayloads() {
-  const legacyOriginRecords =
-    '[{"t":10,"o":[{"o":"k","i":[0,0],"a":"K"}]},' +
-    '{"t":20,"o":[{"o":"m","i":[0,1],"a":"M"}]},' +
-    '{"t":30,"o":[{"o":"n","i":[0,2],"a":"N"}]},' +
-    '{"t":40,"o":[{"i":[0,3],"a":"?"}]}]';
+async function verifyRealLegacyProducerBoundaryPayloads() {
+  const legacyOriginRecords = legacyRuntime.capture(
+      '',
+      ({at, editor}) => {
+        for (const [time, text, index, origin] of [
+          [10, 'K', 0, 'markText'],
+          [20, 'M', 1, '*mouse'],
+          [30, 'N', 2, '*rename'],
+          [40, '?', 3, 'custom-origin'],
+        ]) {
+          at(time, () => editor.replaceRange(
+              text,
+              editor.posFromIndex(index),
+              undefined,
+              origin,
+          ));
+        }
+      },
+  ).records;
+  const expectedLegacyOriginRecords =
+    '[{"t":10,"o":[{"o":"k","i":[0,0],"a":["K"]}]},' +
+    '{"t":20,"o":[{"o":"m","i":[0,1],"a":["M"]}]},' +
+    '{"t":30,"o":[{"o":"n","i":[0,2],"a":["N"]}]},' +
+    '{"t":40,"o":[{"i":[0,3],"a":["?"]}]}]';
   const originMessage =
-    'literal legacy k/m/n/omitted-origin bytes through both real players';
+    'real CM5 recorder k/m/n/omitted-origin bytes through both real players';
+  assert.equal(
+      legacyOriginRecords,
+      expectedLegacyOriginRecords,
+      originMessage,
+  );
   assert.deepEqual(
       parsedRecords(legacyOriginRecords).map((record) => record.o[0].o),
       ['k', 'm', 'n', undefined],
@@ -2519,15 +2542,37 @@ async function verifyLiteralRealPeerPayloads() {
       originMessage,
   );
 
-  const compressedSelectionRecords =
+  const selectionInitialDocument = 'abc\ndef\nghi\njkl';
+  const compressedSelectionRecords = legacyRuntime.capture(
+      selectionInitialDocument,
+      ({at, editor}) => {
+        for (const [time, firstHead, secondHead] of [
+          [10, {line: 0, ch: 1}, {line: 3, ch: 2}],
+          [20, {line: 1, ch: 1}, {line: 2, ch: 2}],
+          [30, {line: 1, ch: 2}, {line: 2, ch: 1}],
+        ]) {
+          at(time, () => editor.setSelections([
+            {anchor: {line: 0, ch: 0}, head: firstHead},
+            {anchor: {line: 3, ch: 3}, head: secondHead},
+          ], 1));
+        }
+      },
+      {allowMultipleSelections: true},
+  ).records;
+  const expectedCompressedSelectionRecords =
     '[{"t":[10,30],"l":3,"o":[' +
     '{"o":"l","i":[0,0],"s":[[0,[1]],[1,[[1,2]]]]},' +
     '{"o":"l","i":[3,3],"s":[[3,[2]],[2,[[2,1]]]]}' +
     ']}]';
   const selectionMessage =
-    'literal compressed multiline multi-cursor selection-s bytes';
+    'real CM5 recorder compressed multiline multi-cursor selection-s bytes';
+  assert.equal(
+      compressedSelectionRecords,
+      expectedCompressedSelectionRecords,
+      selectionMessage,
+  );
   const selectionTraces = await verifySamePayloadAcrossPlayers({
-    initialDocument: 'abc\ndef\nghi\njkl',
+    initialDocument: selectionInitialDocument,
     records: compressedSelectionRecords,
     message: selectionMessage,
   });
@@ -2541,6 +2586,26 @@ async function verifyLiteralRealPeerPayloads() {
         {ranges: [[0, 6], [15, 9]], mainIndex: 1},
       ],
       selectionMessage,
+  );
+}
+
+async function verifyLiteralRealPeerPayloads() {
+  const legacyOriginRecords =
+    '[{"t":10,"o":[{"o":"k","i":[0,0],"a":"K"}]},' +
+    '{"t":20,"o":[{"o":"m","i":[0,1],"a":"M"}]},' +
+    '{"t":30,"o":[{"o":"n","i":[0,2],"a":"N"}]},' +
+    '{"t":40,"o":[{"i":[0,3],"a":"?"}]}]';
+  const originMessage =
+    'producer-inaccessible string text-shape parser boundary through real players';
+  const originTraces = await verifySamePayloadAcrossPlayers({
+    initialDocument: '',
+    records: legacyOriginRecords,
+    message: originMessage,
+  });
+  assert.equal(
+      originTraces.modernNatural.at(-1).document,
+      'KMN?',
+      originMessage,
   );
 }
 
@@ -2753,6 +2818,7 @@ try {
     await verifyPreV1RecorderInModernPlayer();
   } else {
     await verifyCommittedLegacyGolden();
+    await verifyRealLegacyProducerBoundaryPayloads();
     await verifyLiteralRealPeerPayloads();
     await verifyBidirectionalDifferentialTrace(legacyRuntime);
     await verifyBidirectionalDifferentialTrace(modernRuntime);

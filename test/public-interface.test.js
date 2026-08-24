@@ -90,6 +90,14 @@ describe('public package interface', () => {
         'release-artifacts.json',
     ), 'utf8'));
 
+    expect(releaseArtifacts.codeMirror5Artifact).toEqual({
+      version: '5.65.21',
+      integrity:
+        'sha512-6teYk0bA0nR3QP0ihGMoxuKzpl5W80FpnHpBJpgy66NK3cZv5b/' +
+        'd/HY8PnRvfSsCG1MTfr92u2WUl+wT0E40mQ==',
+      provenance: 'npm-registry',
+    });
+
     expect(Object.keys(releaseArtifacts.legacyArtifacts)).toEqual([
       '0.3.1',
       '0.3.2',
@@ -661,12 +669,22 @@ describe('public package interface', () => {
   test('makes the real-Chromium smoke test a release and CI gate', () => {
     expect(packageMetadata.scripts['test:browser']).toBe(
         'npm run build && npm run build:browser-fixture && ' +
-        'node test/browser-smoke.mjs',
+        'node test/browser-smoke.mjs && ' +
+        'node test/browser-cross-generation.mjs',
     );
     expect(readFileSync(
         join(process.cwd(), 'test/browser/fixture.js'),
         'utf8',
     )).toContain("from '../../dist/index.mjs'");
+    const crossGenerationBrowserTest = readFileSync(
+        join(process.cwd(), 'test/browser-cross-generation.mjs'),
+        'utf8',
+    );
+    expect(crossGenerationBrowserTest).toContain('V2_PACKAGE_SPEC');
+    expect(crossGenerationBrowserTest).toContain('V2_EXPECTED_INTEGRITY');
+    expect(crossGenerationBrowserTest).toContain('v1.1.5');
+    expect(crossGenerationBrowserTest).toContain('v1.1.8');
+    expect(crossGenerationBrowserTest).toContain('3 × 3');
     expect(packageMetadata.scripts['test:all']).toContain(
         'npm run test:browser',
     );

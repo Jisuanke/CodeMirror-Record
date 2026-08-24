@@ -619,6 +619,9 @@ test "$V2_HASHED_INTEGRITY" = "$V2_EXPECTED_INTEGRITY"
 V2_PACKAGE_SPEC="$V2_TARBALL" \
 V2_EXPECTED_INTEGRITY="$V2_EXPECTED_INTEGRITY" \
 npm_public run test:compat
+V2_PACKAGE_SPEC="$V2_TARBALL" \
+V2_EXPECTED_INTEGRITY="$V2_EXPECTED_INTEGRITY" \
+npm_public run test:browser
 test -z "$(git status --porcelain)"
 
 if git show-ref --verify --quiet "refs/tags/v$V2_VERSION"; then
@@ -711,6 +714,9 @@ cmp "$V2_TARBALL" "$V2_REGISTRY_TARBALL"
 V2_PACKAGE_SPEC="$PACKAGE_NAME@$V2_VERSION" \
 V2_EXPECTED_INTEGRITY="$V2_EXPECTED_INTEGRITY" \
 npm_public run test:compat
+V2_PACKAGE_SPEC="$PACKAGE_NAME@$V2_VERSION" \
+V2_EXPECTED_INTEGRITY="$V2_EXPECTED_INTEGRITY" \
+npm_public run test:browser
 test -z "$(git status --porcelain)"
 
 test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE_COMMIT"
@@ -1050,14 +1056,24 @@ The method, fixed scenarios, exact result, and decision are documented in
 ## Browser and site gate
 
 `npm run test:browser` builds the production ESM artifact and a dedicated
-fixture, starts an ephemeral loopback server, and drives the pinned Playwright
-Chromium in headless mode. The fixture imports that freshly built artifact,
-creates the two editors, and exposes their public recording/playback state; it
-does not dispatch editing transactions on the test's behalf. The smoke test
-uses Chromium's trusted keyboard, clipboard, native drag/drop, and CDP IME
-paths, captures through `getRecords()`, loads through `addOperations()`, calls
-`play()`, and requires exact document and ordered directed multi-selection
-equality at the end.
+fixture, starts an ephemeral loopback server for the interaction smoke test,
+and drives the pinned Playwright Chromium in headless mode. The fixture imports
+that freshly built artifact, creates the two editors, and exposes their public
+recording/playback state; it does not dispatch editing transactions on the
+smoke test's behalf. The smoke test uses Chromium's trusted keyboard,
+clipboard, native drag/drop, and CDP IME paths, captures through
+`getRecords()`, loads through `addOperations()`, calls `play()`, and requires
+exact document and ordered directed multi-selection equality at the end.
+
+The same command also installs the SRI-pinned CodeMirror 5.65.21 browser
+artifact and the exact npm v1.1.5 and v1.1.8 UMD artifacts into an isolated
+temporary fixture. A controlled-clock public-interface scenario must produce
+the same exact wire string in all three recorders, then that untouched string
+must pass a real-Chromium 3 × 3 producer/player matrix. The matrix compares
+document text, ordered directed selections, primary selection, duration, and
+external activity. When `V2_PACKAGE_SPEC` is set, the browser gate accepts
+only the exact `codemirror-record@2.0.0` registry spec or an absolute retained
+`.tgz`, and requires its independently checked `V2_EXPECTED_INTEGRITY`.
 
 ```sh
 set -euo pipefail
@@ -1080,6 +1096,8 @@ The automated browser gate covers:
 - trusted IME composition start/update and CM6 `input.type.compose` records;
 - every corresponding legacy wire origin and a multi-change input record;
 - capture, load, play, terminal `PAUSE`, and exact replay.
+- exact unchanged-wire playback from v1.1.5, v1.1.8, and v2 recorders through
+  each of the corresponding players in real Chromium.
 
 Before promotion, also serve the built repository and manually verify the
 broader site controls and presentation:
