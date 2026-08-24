@@ -34,6 +34,12 @@ test('refuses to publish the CM5 line under any tag except cm5', () => {
 
 test('links both ways to the default CodeMirror 6 line and migration guide',
     () => {
+      assert.equal(
+          packageMetadata.homepage,
+          'https://codemirror-record.haoranyu.com/v1/',
+      );
+      assert.match(readme, /codemirror-record\.haoranyu\.com\/v1\//);
+      assert.match(readme, /codemirror-record\.haoranyu\.com\/v1\/demo\//);
       assert.match(readme, /tree\/main#readme/);
       assert.match(readme, /blob\/main\/docs\/MIGRATING\.md/);
       assert.match(readme, /codemirror-record\.haoranyu\.com\/migration\//);
