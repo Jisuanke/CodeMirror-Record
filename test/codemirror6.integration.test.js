@@ -496,6 +496,43 @@ describe('CodeMirror 6 player compatibility', () => {
     });
   });
 
+  test('round-trips a forward delete in the legacy wire format', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    const initialDocument = 'abcd';
+    const recordedView = createView(initialDocument);
+    const recorder = new CodeRecord(recordedView);
+
+    recorder.listen();
+    vi.advanceTimersByTime(10);
+    recordedView.dispatch({
+      changes: {from: 1, to: 2},
+      selection: EditorSelection.single(1),
+      annotations: Transaction.userEvent.of('delete.forward'),
+    });
+
+    const records = recorder.getRecords();
+    expect(JSON.parse(records)).toEqual([
+      {
+        t: 10,
+        o: [{o: 'd', i: [[0, 1], [0, 2]]}],
+      },
+    ]);
+
+    const playedView = createView(initialDocument);
+    const player = new CodePlay(playedView, {maxDelay: 0});
+    player.addOperations(records);
+    player.play();
+    vi.runAllTimers();
+
+    expect(recordedView.state.doc.toString()).toBe('acd');
+    expect(playedView.state.doc.toString()).toBe('acd');
+    expect(playedView.state.selection.toJSON()).toEqual({
+      ranges: [{anchor: 1, head: 1}],
+      main: 0,
+    });
+  });
+
   test('plays a legacy text record through the existing public interface', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
