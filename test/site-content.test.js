@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {createHash} = require('node:crypto');
 const {readFileSync} = require('node:fs');
 const test = require('node:test');
 const {join} = require('node:path');
@@ -55,6 +56,58 @@ test('keeps the CM5 demo within v1 while linking to the CM6 demo', () => {
       demo.querySelector('.primary-navigation .nav-home').getAttribute('href'),
       '../',
   );
+});
+
+test('self-hosts the exact locked CodeMirror 5 runtime used by the demo', () => {
+  const browserAssets = [
+    ...demo.querySelectorAll('link[rel="stylesheet"][href], script[src]'),
+  ].map((element) => element.getAttribute('href') || element.getAttribute('src'));
+
+  assert.deepEqual(browserAssets, [
+    './vendor/codemirror/5.65.21/lib/codemirror.css',
+    './style.css?v=1.1.8',
+    './vendor/codemirror/5.65.21/lib/codemirror.js',
+    './vendor/codemirror/5.65.21/mode/javascript/javascript.js',
+    './vendor/codemirror/5.65.21/addon/edit/closebrackets.js',
+    './main.js?v=1.1.8',
+  ]);
+
+  const vendoredFiles = [
+    ['LICENSE', '168a4becc968f5001e2ee2e0291b6e4daabafc1894a11ade1e11d56e96096e07'],
+    ['lib/codemirror.css', 'eb494ea972d2661ef86f7f6ac656dd6786d721e49c9c1b46e1eb967e4b6f9bf3'],
+    ['lib/codemirror.js', 'e98aac5ffa07bae58acd4ff07c4293059f8921c0ae0eba506929d8c6f41c9288'],
+    ['mode/javascript/javascript.js', '1311c73c66308ba6f78512b4c2e770a6900c80c3629683763329668ee6111163'],
+    ['addon/edit/closebrackets.js', '143c3014c29254f3531cc30be6d90205084bcfc36cffa6f9b2a46fd42a40be20'],
+  ];
+
+  const lockedCodeMirror = require('../package-lock.json')
+      .packages['node_modules/codemirror'];
+  assert.deepEqual(
+      {
+        integrity: lockedCodeMirror.integrity,
+        version: lockedCodeMirror.version,
+      },
+      {
+        integrity: 'sha512-6teYk0bA0nR3QP0ihGMoxuKzpl5W80FpnHpBJpgy66NK3cZv5b/d/HY8PnRvfSsCG1MTfr92u2WUl+wT0E40mQ==',
+        version: '5.65.21',
+      },
+  );
+
+  for (const [file, expectedHash] of vendoredFiles) {
+    const vendoredContents = readFileSync(
+        join(root, 'demo/vendor/codemirror/5.65.21', file),
+    );
+    assert.deepEqual(
+        vendoredContents,
+        readFileSync(join(root, 'node_modules/codemirror', file)),
+        `${file} must remain byte-identical to the locked codemirror package`,
+    );
+    assert.equal(
+        createHash('sha256').update(vendoredContents).digest('hex'),
+        expectedHash,
+        `${file} must retain the reviewed CodeMirror 5.65.21 bytes`,
+    );
+  }
 });
 
 test('publishes version-safe install and source links', () => {

@@ -3,7 +3,12 @@ const globals = require('globals');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'demo/main.js'],
+    ignores: [
+      'dist/**',
+      'demo/main.js',
+      'demo/vendor/**',
+      'test/browser/fixture.bundle.js*',
+    ],
   },
   js.configs.recommended,
   {

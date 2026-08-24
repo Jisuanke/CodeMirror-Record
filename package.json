@@ -7,7 +7,7 @@
     "prebuild": "npm run lint",
     "build": "webpack --mode=production",
     "serve": "http-server -o /demo",
-    "test": "npm run build && node --test",
+    "test": "npm run build && node --test test/*.test.js",
     "prepublishOnly": "node scripts/require-publish-tag.cjs && npm test"
   },
   "main": "./dist/main.js",
