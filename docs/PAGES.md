@@ -122,6 +122,22 @@ unchanged. Complete the stable release gate in `RELEASING.md` first; do not
 publish release-candidate wording or expose an install command that npm cannot
 yet satisfy.
 
+Immediately before the one-time source switch, prove that protected `main` has
+not advanced beyond the exact registry-verified package commit and that the
+immutable tag names the same object. This equality is a pre-cutover boundary,
+not a permanent post-release invariant: the approved site PR intentionally
+advances `main`, while `v2.0.0` remains on the package commit.
+
+```sh
+git fetch origin tag v2.0.0
+PAGES_RELEASE_COMMIT=$(git rev-parse 'v2.0.0^{commit}')
+test "$PAGES_RELEASE_COMMIT" = 68a8d680d27606d604aa4585ca7fc65d1fedb944
+test "$(git ls-remote origin 'refs/tags/v2.0.0^{}' | cut -f1)" = \
+  "$PAGES_RELEASE_COMMIT"
+test "$(git ls-remote origin refs/heads/main | cut -f1)" = \
+  "$PAGES_RELEASE_COMMIT"
+```
+
 1. Record the current Pages response, especially `cname`, HTTPS enforcement,
    and source, with `gh api repos/Jisuanke/CodeMirror-Record/pages`.
 2. Confirm the `github-pages` environment permits deployments only from
