@@ -641,7 +641,7 @@
 }
 
 @media (max-width: 620px) {
-  .home-page .site-header nav a:not(.nav-cta) {
+  .home-page .primary-navigation a:not(.nav-cta) {
     display: none;
   }
 

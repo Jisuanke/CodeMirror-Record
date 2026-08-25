@@ -8,6 +8,14 @@
       name="description"
       content="Record, serialize, and replay a CodeMirror 6 editing session with CodeMirror Record."
     >
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CodeMirror Record v2 — CodeMirror 6 demo">
+    <meta
+      property="og:description"
+      content="Record and replay a real CodeMirror 6 session with CodeMirror Record v2."
+    >
+    <meta property="og:url" content="https://codemirror-record.haoranyu.com/demo/">
+    <link rel="canonical" href="https://codemirror-record.haoranyu.com/demo/">
     <title>CodeMirror Record v2 — CodeMirror 6 interactive workflow</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="./style.css">
@@ -18,18 +26,24 @@
     <header class="site-header">
       <div class="page-shell header-content">
         <a class="brand" href="../">CodeMirror Record</a>
-        <nav aria-label="Page navigation">
-          <a class="nav-home" href="../">Home</a>
-          <a href="../#versions">Versions</a>
-          <a href="../migration/">Migration</a>
-          <a href="#workflow">Workflow</a>
-          <a href="#integration">Integration</a>
-          <a
-            href="https://github.com/Jisuanke/CodeMirror-Record"
-            target="_blank"
-            rel="noreferrer"
-          >GitHub</a>
-        </nav>
+        <div class="header-navigation">
+          <nav class="version-switcher" aria-label="Editor version">
+            <a data-version="cm5" href="../v1/demo/">CM5 <span>v1</span></a>
+            <a data-version="cm6" href="./" aria-current="page">CM6 <span>v2</span></a>
+          </nav>
+          <nav class="primary-navigation" aria-label="Page navigation">
+            <a class="nav-home" href="../">Home</a>
+            <a href="../#versions">Versions</a>
+            <a href="../migration/">Migration</a>
+            <a href="#workflow">Workflow</a>
+            <a href="#integration">Integration</a>
+            <a
+              href="https://github.com/Jisuanke/CodeMirror-Record"
+              target="_blank"
+              rel="noreferrer"
+            >GitHub</a>
+          </nav>
+        </div>
       </div>
     </header>
 

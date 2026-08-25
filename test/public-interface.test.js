@@ -168,7 +168,7 @@ describe('public package interface', () => {
           '84d7e90405ed96db3a963bc489fb3e00124848f1',
     );
     expect(releaseRunbook).toContain(
-        'EXPECTED_V1_BRANCH_COMMIT=45f0d71ec072b54f2d6ce0524eac58bf045630eb',
+        'EXPECTED_V1_BRANCH_COMMIT=16bafb5cf2cc065bd8f18bccdca6232c5ad87844',
     );
     expect(releaseRunbook).toContain('V2_BRANCH=main');
     expect(releaseRunbook).toContain(
@@ -223,7 +223,7 @@ describe('public package interface', () => {
     ));
   });
 
-  test('release runbook byte-checks and launches every public page asset', () => {
+  test('release runbook verifies the exact versioned Pages artifact', () => {
     const v1BranchCheck =
       'test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = ' +
       '"$V1_BRANCH_COMMIT"';
@@ -231,13 +231,26 @@ describe('public package interface', () => {
       'test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = ' +
       '"$V1_RELEASE_COMMIT"';
 
-    expect(releaseRunbook).toContain('*.html|*.json|*.js|*.css');
+    expect(releaseRunbook).toContain('--name github-pages');
+    expect(releaseRunbook).toContain("'site-build.json'");
     expect(releaseRunbook).toContain(
-        'done < <(git ls-tree -r --name-only "$MAIN_COMMIT")',
+        'done < <(find "$PAGES_ARTIFACT_DIR" -type f -print0 | sort -z)',
+    );
+    expect(releaseRunbook).toContain(
+        "routes: ['/', '/demo/', '/migration/', '/v1/', '/v1/demo/']",
+    );
+    expect(releaseRunbook).toContain(
+        'gh api "repos/$REPOSITORY/pages" --jq .build_type',
+    );
+    expect(releaseRunbook).not.toContain(
+        'gh api "repos/$REPOSITORY/pages" --jq .source.branch',
     );
     expect(releaseRunbook).toContain("import {chromium} from 'playwright';");
     expect(releaseRunbook).toContain(
         "await page.locator('#sample-edit').click();",
+    );
+    expect(releaseRunbook).toContain(
+        "await page.locator('#load-operations').click();",
     );
     expect(releaseRunbook.split(v1BranchCheck).length - 1)
         .toBeGreaterThanOrEqual(4);
@@ -693,6 +706,43 @@ describe('public package interface', () => {
     );
     expect(ciWorkflow).toMatch(/run: npm run test:all/);
     expect(ciWorkflow).toMatch(/run: npm run test:coverage/);
+  });
+
+  test('deploys versioned Pages only after the complete CI gate', () => {
+    expect(ciWorkflow).toContain('workflow_dispatch:');
+    expect(ciWorkflow).toContain('push:\n    branches: [main]');
+    expect(ciWorkflow).toContain('matrix:\n        node: [20.19.0, 22.13.0, 24]');
+    expect(ciWorkflow).toContain('name: Build and smoke-test versioned Pages');
+    expect(ciWorkflow).toContain('needs: test');
+    expect(ciWorkflow).toContain('ref: ${{ github.sha }}');
+    expect(ciWorkflow).toContain('.github/pages-sources.json');
+    expect(ciWorkflow).toContain(
+        "'+refs/heads/v1:refs/remotes/origin/v1'",
+    );
+    expect(ciWorkflow).toContain('working-directory: sources/main');
+    expect(ciWorkflow).not.toContain('working-directory: sources/v1');
+    expect(ciWorkflow).toContain('uses: actions/checkout@v7');
+    expect(ciWorkflow).toContain('uses: actions/setup-node@v7');
+    expect(ciWorkflow).toContain('uses: actions/configure-pages@v6');
+    expect(ciWorkflow).toContain('pages: read');
+    expect(ciWorkflow).toContain('node scripts/build-versioned-site.mjs');
+    expect(ciWorkflow).toContain('node scripts/site-browser-smoke.mjs');
+    expect(ciWorkflow).toContain('--block-external-assets');
+    expect(ciWorkflow).toContain('uses: actions/upload-artifact@v7');
+    expect(ciWorkflow).toContain('uses: actions/upload-pages-artifact@v5');
+    expect(ciWorkflow).toContain('name: Deploy versioned Pages');
+    expect(ciWorkflow).toContain('needs: [test, pages]');
+    expect(ciWorkflow).toContain('pages: write');
+    expect(ciWorkflow).toContain('id-token: write');
+    expect(ciWorkflow).toContain('Refuse a stale main deployment');
+    expect(ciWorkflow).toContain('CURRENT_MAIN_COMMIT');
+    expect(ciWorkflow).toContain('if test "$CURRENT_MAIN_COMMIT" != "$GITHUB_SHA"; then');
+    expect(ciWorkflow).toContain("printf 'deploy=false\\n' >> \"$GITHUB_OUTPUT\"");
+    expect(ciWorkflow).toContain("printf 'deploy=true\\n' >> \"$GITHUB_OUTPUT\"");
+    expect(ciWorkflow).toContain("steps.freshness.outputs.deploy == 'true'");
+    expect(ciWorkflow).toContain('uses: actions/deploy-pages@v5');
+    expect(ciWorkflow).toContain("github.ref == 'refs/heads/main'");
+    expect(ciWorkflow).toContain('cancel-in-progress: false');
   });
 });
 

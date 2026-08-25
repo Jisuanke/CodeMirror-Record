@@ -18,12 +18,11 @@
     <meta property="og:url" content="https://codemirror-record.haoranyu.com/">
     <meta
       property="og:image"
-      content="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
+      content="https://codemirror-record.haoranyu.com/assets/project-artwork.png"
     >
     <meta property="og:image:alt" content="CodeMirror Record project artwork">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="canonical" href="https://codemirror-record.haoranyu.com/">
-    <link rel="preconnect" href="https://repository-images.githubusercontent.com">
     <link rel="icon" href="data:,">
     <title>CodeMirror Record — Record and replay CodeMirror 6</title>
     <link rel="stylesheet" href="./demo/style.css">
@@ -35,18 +34,24 @@
     <header class="site-header">
       <div class="page-shell header-content">
         <a class="brand" href="./">CodeMirror Record</a>
-        <nav aria-label="Primary navigation">
-          <a href="#versions">Versions</a>
-          <a href="#workflow">How it works</a>
-          <a href="#quick-start">Quick start</a>
-          <a href="./migration/">Migration</a>
-          <a
-            href="https://github.com/Jisuanke/CodeMirror-Record"
-            target="_blank"
-            rel="noreferrer"
-          >GitHub</a>
-          <a class="nav-cta" href="./demo/#demo-workbench">Try the demo</a>
-        </nav>
+        <div class="header-navigation">
+          <nav class="version-switcher" aria-label="Editor version">
+            <a data-version="cm5" href="./v1/">CM5 <span>v1</span></a>
+            <a data-version="cm6" href="./" aria-current="page">CM6 <span>v2</span></a>
+          </nav>
+          <nav class="primary-navigation" aria-label="Primary navigation">
+            <a href="#versions">Versions</a>
+            <a href="#workflow">How it works</a>
+            <a href="#quick-start">Quick start</a>
+            <a href="./migration/">Migration</a>
+            <a
+              href="https://github.com/Jisuanke/CodeMirror-Record"
+              target="_blank"
+              rel="noreferrer"
+            >GitHub</a>
+            <a class="nav-cta" href="./demo/#demo-workbench">Try the demo</a>
+          </nav>
+        </div>
       </div>
     </header>
 
@@ -94,7 +99,7 @@
           <div class="home-hero-stage">
             <div class="home-hero-artwork" aria-hidden="true">
               <img
-                src="https://repository-images.githubusercontent.com/185612280/91c64600-d0e5-11ea-8ed4-7fbaff9271a8"
+                src="./assets/project-artwork.png"
                 alt=""
                 width="1280"
                 height="640"
