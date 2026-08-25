@@ -29,6 +29,13 @@ final branch names and compatibility range. Release checks therefore treat the
 tag commit and the maintenance branch head as separate identities; the tag
 must never be moved.
 
+The immutable `v2.0.0` artifact and tag likewise point to release commit
+`68a8d68`. After npm promotion, protected `main` intentionally advances through
+reviewed site and documentation pull requests. Post-release checks therefore
+use `RELEASE_COMMIT` for package, registry, and tag provenance, and a separate
+`MAIN_COMMIT` for the current branch, CI, Pages artifact, and deployment. Never
+move the release tag forward to a later Pages or documentation commit.
+
 ## npm dist-tags
 
 | Dist-tag | Meaning |
@@ -48,8 +55,9 @@ The CM5 prerequisites were published in order as
 launch publishes `codemirror-record@2.0.0` for CM6. Phase 1 is an idempotent
 audit/recovery gate for those immutable CM5 releases: it verifies v1.1.7 and
 can publish v1.1.8 only if that exact artifact is unexpectedly still absent.
-The repository and site branch cutover is already complete; the later phases
-assert that it has not drifted from the verified release commit.
+The permanent branch-name cutover is complete. The one-time versioned Pages
+cutover occurs only after npm promotion; later phases deliberately distinguish
+its current `main` commit from the earlier immutable release commit.
 
 Run all release phases in the same terminal so the retained artifact paths and
 commit IDs remain exported. Every phase is fail-fast. Do not paste selected
@@ -68,6 +76,8 @@ export V1_PREVIOUS_VERSION=1.1.6
 export V1_PREVIOUS_CM5_VERSION=1.1.7
 export V2_VERSION=2.0.0
 export V2_BRANCH=main
+export EXPECTED_V2_RELEASE_COMMIT=68a8d680d27606d604aa4585ca7fc65d1fedb944
+export EXPECTED_V2_INTEGRITY=sha512-fWo1iRe9p2eyFW2pYc3oivMc6ooCLY2pNWuMfrIrCgYFo10aPnCatnQzl6IIniuGRrTAc/68q74Anbuz4U2rNQ==
 export EXPECTED_V1_RELEASE_COMMIT=ee6cf90fa6533247c780001511496bf557b47f88
 export EXPECTED_V1_PREVIOUS_CM5_RELEASE_COMMIT=84d7e90405ed96db3a963bc489fb3e00124848f1
 export EXPECTED_V1_BRANCH_COMMIT=16bafb5cf2cc065bd8f18bccdca6232c5ad87844
@@ -429,7 +439,7 @@ case "$GITHUB_LATEST_TAG" in
 esac
 ```
 
-### Phase 2: prove the registry CM5 artifact and freeze the v2 candidate
+### Phase 2: prove the registry CM5 artifact and verify the v2 release commit
 
 Switch back to the CM6 `main` branch. First run the exact downloaded v1
 tarball through the forward-compatibility and capability-gated reverse harness.
@@ -506,10 +516,13 @@ and artifact metadata with the migration material, release documentation, and
 tests. Never commit a fixture that claims npm-registry provenance before its
 registry artifact has been downloaded and byte-verified.
 
-At the reviewed clean commit, remove every candidate override in the same
-shell, assert that it is absent, and run both the default registry-backed
-compatibility command and the complete gate. This prevents a prior environment
-assignment from silently substituting a local tarball.
+Land every reviewed corpus or metadata change through a pull request, then
+restart this phase from the resulting protected `main` commit. At that reviewed
+clean commit, remove every candidate override in the same shell, assert that it
+is absent, and run both the default registry-backed compatibility command and
+the complete gate. This prevents a prior environment assignment from silently
+substituting a local tarball. The release procedure verifies the remote commit;
+it never pushes directly to protected `main`.
 
 ```sh
 set -euo pipefail
@@ -540,7 +553,7 @@ test -z "$(git status --porcelain)"
 
 export RELEASE_COMMIT
 RELEASE_COMMIT=$(git rev-parse HEAD)
-git push origin "HEAD:refs/heads/$V2_BRANCH"
+test "$RELEASE_COMMIT" = "${EXPECTED_V2_RELEASE_COMMIT:?}"
 V2_REMOTE_COMMIT=$(git ls-remote origin "refs/heads/$V2_BRANCH" | cut -f1)
 test -n "$V2_REMOTE_COMMIT"
 test "$V2_REMOTE_COMMIT" = "$RELEASE_COMMIT"
@@ -747,33 +760,66 @@ Expected permanent install paths are `codemirror-record@^2` with
 
 ### Phase 5: verify `main` and versioned Pages byte-for-byte
 
-Only the exact tagged and registry-verified commit may remain on `main`. The
-local branch, remote branch, and peeled local tag must all equal
-`RELEASE_COMMIT`; ancestry alone is insufficient.
+At the package-release boundary, Phase 4 proved that local and remote `main`
+and the peeled v2 tag all equalled `RELEASE_COMMIT`. The one-time pre-merge
+assertions in [PAGES.md](./PAGES.md) preserve that exact boundary until the
+approved versioned-site pull request advances protected `main` through its
+squash commit. Complete that cutover before running this phase.
+
+This phase can run in the original release shell or in a fresh shell after the
+terminal-setup block. It reconstructs every immutable identity from a reviewed
+constant, rejects conflicting inherited values, records the current branch as
+`MAIN_COMMIT`, proves `RELEASE_COMMIT` is its ancestor, and binds all CI,
+artifact, and deployment checks to `MAIN_COMMIT`.
 
 ```sh
 set -euo pipefail
+
+: "${EXPECTED_V2_RELEASE_COMMIT:?}"
+: "${EXPECTED_V2_INTEGRITY:?}"
+: "${EXPECTED_V1_RELEASE_COMMIT:?}"
+: "${EXPECTED_V1_BRANCH_COMMIT:?}"
+: "${EXPECTED_V1_INTEGRITY:?}"
+export RELEASE_COMMIT V2_EXPECTED_INTEGRITY
+export V1_RELEASE_COMMIT V1_BRANCH_COMMIT V1_EXPECTED_INTEGRITY
+RELEASE_COMMIT=${RELEASE_COMMIT:-$EXPECTED_V2_RELEASE_COMMIT}
+V2_EXPECTED_INTEGRITY=${V2_EXPECTED_INTEGRITY:-$EXPECTED_V2_INTEGRITY}
+V1_RELEASE_COMMIT=${V1_RELEASE_COMMIT:-$EXPECTED_V1_RELEASE_COMMIT}
+V1_BRANCH_COMMIT=${V1_BRANCH_COMMIT:-$EXPECTED_V1_BRANCH_COMMIT}
+V1_EXPECTED_INTEGRITY=${V1_EXPECTED_INTEGRITY:-$EXPECTED_V1_INTEGRITY}
+test "$RELEASE_COMMIT" = "$EXPECTED_V2_RELEASE_COMMIT"
+test "$V2_EXPECTED_INTEGRITY" = "$EXPECTED_V2_INTEGRITY"
+test "$V1_RELEASE_COMMIT" = "$EXPECTED_V1_RELEASE_COMMIT"
+test "$V1_BRANCH_COMMIT" = "$EXPECTED_V1_BRANCH_COMMIT"
+test "$V1_EXPECTED_INTEGRITY" = "$EXPECTED_V1_INTEGRITY"
 
 test "${PUBLIC_NPM_REGISTRY:?}" = https://registry.npmjs.org/
 test "$(npm_public view "$PACKAGE_NAME@cm5" version)" = "$V1_VERSION"
 test "$(npm_public view "$PACKAGE_NAME@cm6" version)" = "$V2_VERSION"
 test "$(npm_public view "$PACKAGE_NAME@latest" version)" = "$V2_VERSION"
 test "$(npm_public view "$PACKAGE_NAME@$V1_VERSION" dist.integrity)" = "$V1_EXPECTED_INTEGRITY"
+test "$(npm_public view "$PACKAGE_NAME@$V2_VERSION" dist.integrity)" = "$V2_EXPECTED_INTEGRITY"
+git fetch --prune origin --tags
 test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = "$V1_BRANCH_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V1_VERSION^{}" | cut -f1)" = "$V1_RELEASE_COMMIT"
 verify_stable_github_release "v$V1_VERSION"
 
 test "${V2_BRANCH:?}" = main
+test "$(git rev-parse "v$V2_VERSION^{commit}")" = "${RELEASE_COMMIT:?}"
+test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE_COMMIT"
+test "$(gh api "repos/$REPOSITORY/pages" --jq .build_type)" = workflow
+
 git fetch origin "$V2_BRANCH"
 git switch "$V2_BRANCH"
 git pull --ff-only origin "$V2_BRANCH"
-test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 export MAIN_COMMIT
 MAIN_COMMIT=$(git ls-remote origin refs/heads/main | cut -f1)
-test "$MAIN_COMMIT" = "$RELEASE_COMMIT"
-test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+test -n "$MAIN_COMMIT"
+test "$MAIN_COMMIT" != "$RELEASE_COMMIT"
+test "$(git rev-parse HEAD)" = "$MAIN_COMMIT"
 test "$(git rev-parse "v$V2_VERSION^{commit}")" = "$RELEASE_COMMIT"
-test "$(git ls-remote origin "refs/heads/$V2_BRANCH" | cut -f1)" = "$RELEASE_COMMIT"
+test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$MAIN_COMMIT"
+git merge-base --is-ancestor "$RELEASE_COMMIT" "$MAIN_COMMIT"
 test -z "$(git status --porcelain)"
 ```
 
@@ -787,7 +833,9 @@ HTTP response with stale or transformed bytes fails the release.
 ```sh
 set -euo pipefail
 
-test "${MAIN_COMMIT:?}" = "${RELEASE_COMMIT:?}"
+test -n "${MAIN_COMMIT:?}"
+test "$MAIN_COMMIT" != "${RELEASE_COMMIT:?}"
+git merge-base --is-ancestor "$RELEASE_COMMIT" "$MAIN_COMMIT"
 test "$(gh repo view "$REPOSITORY" --json defaultBranchRef --jq .defaultBranchRef.name)" = main
 PAGES_CONFIGURATION=$(gh api "repos/$REPOSITORY/pages")
 test "$(printf '%s' "$PAGES_CONFIGURATION" | jq -r .build_type)" = workflow
@@ -963,10 +1011,12 @@ context names are agreed.
 ```sh
 set -euo pipefail
 
-test "${MAIN_COMMIT:?}" = "${RELEASE_COMMIT:?}"
+test -n "${MAIN_COMMIT:?}"
+test "$MAIN_COMMIT" != "${RELEASE_COMMIT:?}"
+git merge-base --is-ancestor "$RELEASE_COMMIT" "$MAIN_COMMIT"
 test "$(git branch --show-current)" = main
-test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
-test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_COMMIT"
+test "$(git rev-parse HEAD)" = "$MAIN_COMMIT"
+test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$MAIN_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE_COMMIT"
 test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = "$V1_BRANCH_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V1_VERSION^{}" | cut -f1)" = "$V1_RELEASE_COMMIT"
@@ -1032,7 +1082,7 @@ for BRANCH in main v1; do
   test "$(printf '%s' "$PROTECTION" | jq -r .allow_deletions.enabled)" = false
 done
 
-test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_COMMIT"
+test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$MAIN_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE_COMMIT"
 test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = "$V1_BRANCH_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V1_VERSION^{}" | cut -f1)" = "$V1_RELEASE_COMMIT"
@@ -1041,7 +1091,7 @@ verify_stable_github_release "v$V1_VERSION"
 verify_stable_github_release "v$V2_VERSION"
 test "$(gh api "repos/$REPOSITORY/releases/latest" --jq .tag_name)" = "v$V2_VERSION"
 
-test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_COMMIT"
+test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$MAIN_COMMIT"
 test "$(git ls-remote origin refs/heads/v1 | cut -f1)" = "$V1_BRANCH_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V1_VERSION^{}" | cut -f1)" = "$V1_RELEASE_COMMIT"
 test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | cut -f1)" = "$RELEASE_COMMIT"
@@ -1236,13 +1286,17 @@ For a CM5 maintenance release:
 For a CM6 maintenance release:
 
 - prepare a uniquely named, short-lived release branch from protected `main`;
-- make the version-specific runbook pin that branch, its exact reviewed commit,
-  the new version, and both retained-artifact and registry integrities;
+- merge the fully gated release pull request, then rerun the gate and pack once
+  from the exact resulting protected `main` commit;
+- make the version-specific runbook pin that release commit, the new version,
+  and both retained-artifact and registry integrities;
 - repeat the local retained-tarball and registry-exact compatibility guarantees
   against the current exact `cm5` release;
 - move `cm6`, verify it, then move `latest` to the same immutable artifact;
-- fast-forward protected `main` to the exact tagged commit and repeat every
-  Actions Pages provenance, artifact, live-route, and byte comparison;
+- require `main` and the new tag to equal the release commit at the publication
+  boundary, then keep the tag there when later reviewed commits advance `main`;
+- record the post-release `main` commit separately and repeat every Actions
+  Pages provenance, artifact, live-route, and byte comparison against it;
 - assert the existing permanent branch protections; and
 - delete the short-lived remote and local release branch only after all registry,
   GitHub Release, `main`, Pages, and protection checks pass.

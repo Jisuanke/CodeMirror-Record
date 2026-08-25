@@ -34,6 +34,10 @@ const releasePolicy = readFileSync(
     join(process.cwd(), 'docs/RELEASING.md'),
     'utf8',
 );
+const pagesPolicy = readFileSync(
+    join(process.cwd(), 'docs/PAGES.md'),
+    'utf8',
+);
 const homepageStyles = readFileSync(
     join(process.cwd(), 'homepage.css'),
     'utf8',
@@ -594,30 +598,113 @@ describe('public site version guidance', () => {
     );
   });
 
-  test('freezes main before publishing and verifies it after promotion', () => {
+  test('separates the release commit from post-release Pages main', () => {
     const stableLaunch = releasePolicy.slice(
         releasePolicy.indexOf('## Stable 2.0.0 launch'),
         releasePolicy.indexOf('## Compatibility release gate'),
     );
+    const phaseFiveStart = stableLaunch.indexOf(
+        '### Phase 5: verify `main` and versioned Pages byte-for-byte',
+    );
+    const phaseSixStart = stableLaunch.indexOf(
+        '### Phase 6: create the final GitHub release',
+    );
+    const phaseFive = stableLaunch.slice(phaseFiveStart, phaseSixStart);
+    const phaseSix = stableLaunch.slice(phaseSixStart);
     const publishV2 = 'npm_public publish "$V2_TARBALL" --tag cm6';
     const promoteLatest =
       'npm_public dist-tag add "$PACKAGE_NAME@$V2_VERSION" latest';
-    const freezeMain = 'git push origin "HEAD:refs/heads/$V2_BRANCH"';
+    const verifyProtectedMain =
+      'test "$V2_REMOTE_COMMIT" = "$RELEASE_COMMIT"';
     const verifyMain =
       'MAIN_COMMIT=$(git ls-remote origin refs/heads/main | cut -f1)';
 
-    expect(stableLaunch.indexOf(freezeMain)).toBeGreaterThan(-1);
+    expect(stableLaunch.indexOf(verifyProtectedMain)).toBeGreaterThan(-1);
     expect(stableLaunch.indexOf(publishV2)).toBeGreaterThan(-1);
     expect(stableLaunch.indexOf(promoteLatest)).toBeGreaterThan(-1);
     expect(stableLaunch.indexOf(verifyMain)).toBeGreaterThan(-1);
-    expect(stableLaunch.indexOf(freezeMain)).toBeLessThan(
+    expect(stableLaunch.indexOf(verifyProtectedMain)).toBeLessThan(
         stableLaunch.indexOf(publishV2),
+    );
+    expect(stableLaunch).not.toContain(
+        'git push origin "HEAD:refs/heads/$V2_BRANCH"',
     );
     expect(stableLaunch.indexOf(publishV2)).toBeLessThan(
         stableLaunch.indexOf(promoteLatest),
     );
     expect(stableLaunch.indexOf(promoteLatest)).toBeLessThan(
         stableLaunch.indexOf(verifyMain),
+    );
+    expect(releasePolicy).toContain(
+        'EXPECTED_V2_RELEASE_COMMIT=' +
+        '68a8d680d27606d604aa4585ca7fc65d1fedb944',
+    );
+    expect(stableLaunch).toContain(
+        'test "$RELEASE_COMMIT" = "${EXPECTED_V2_RELEASE_COMMIT:?}"',
+    );
+    expect(phaseFive).toContain(
+        'RELEASE_COMMIT=${RELEASE_COMMIT:-$EXPECTED_V2_RELEASE_COMMIT}',
+    );
+    expect(phaseFive).toContain(
+        'test "$RELEASE_COMMIT" = "$EXPECTED_V2_RELEASE_COMMIT"',
+    );
+    expect(phaseFive).toContain(
+        'V2_EXPECTED_INTEGRITY=' +
+        '${V2_EXPECTED_INTEGRITY:-$EXPECTED_V2_INTEGRITY}',
+    );
+    expect(phaseFive).toContain(
+        'git merge-base --is-ancestor "$RELEASE_COMMIT" "$MAIN_COMMIT"',
+    );
+    expect(phaseFive).toContain(
+        'test "$(git rev-parse HEAD)" = "$MAIN_COMMIT"',
+    );
+    expect(phaseFive).toContain(
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = ' +
+        '"$MAIN_COMMIT"',
+    );
+    expect(phaseFive).not.toContain(
+        'test "${MAIN_COMMIT:?}" = "${RELEASE_COMMIT:?}"',
+    );
+    expect(phaseFive).not.toContain(
+        'test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"',
+    );
+    expect(phaseFive).not.toContain(
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = ' +
+        '"$RELEASE_COMMIT"',
+    );
+    expect(phaseFive).not.toContain(
+        'test "$(git ls-remote origin "refs/heads/$V2_BRANCH" | ' +
+        'cut -f1)" = "$RELEASE_COMMIT"',
+    );
+    expect(phaseSix).toContain(
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = ' +
+        '"$MAIN_COMMIT"',
+    );
+    expect(phaseSix).toContain(
+        'test "$(git ls-remote origin "refs/tags/v$V2_VERSION^{}" | ' +
+        'cut -f1)" = "$RELEASE_COMMIT"',
+    );
+    expect(phaseSix).not.toContain(
+        'test "${MAIN_COMMIT:?}" = "${RELEASE_COMMIT:?}"',
+    );
+    expect(phaseSix).not.toContain(
+        'test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"',
+    );
+    expect(phaseSix).not.toContain(
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = ' +
+        '"$RELEASE_COMMIT"',
+    );
+    expect(phaseSix).not.toContain(
+        'test "$(git ls-remote origin "refs/heads/$V2_BRANCH" | ' +
+        'cut -f1)" = "$RELEASE_COMMIT"',
+    );
+    expect(pagesPolicy).toContain(
+        'test "$PAGES_RELEASE_COMMIT" = ' +
+        '68a8d680d27606d604aa4585ca7fc65d1fedb944',
+    );
+    expect(pagesPolicy).toContain(
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = \\\n' +
+        '  "$PAGES_RELEASE_COMMIT"',
     );
     expect(stableLaunch).toContain('cmp "$V2_TARBALL" "$V2_REGISTRY_TARBALL"');
     expect(stableLaunch).toContain('V2_PACKAGE_SPEC="$PACKAGE_NAME@$V2_VERSION"');
