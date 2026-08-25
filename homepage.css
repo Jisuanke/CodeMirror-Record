@@ -52,10 +52,6 @@
   letter-spacing: 0.08em;
 }
 
-.home-install:last-child > span {
-  color: var(--art-accent);
-}
-
 .home-install code {
   min-width: 0;
   color: var(--text-soft);

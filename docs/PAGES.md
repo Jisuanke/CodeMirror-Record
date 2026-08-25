@@ -18,8 +18,9 @@ does not define a second Pages source.
 | `/v1/` | CodeMirror 5 homepage | the pinned `v1` revision |
 | `/v1/demo/` | CodeMirror 5 demo | the pinned `v1` revision |
 
-Every homepage and demo exposes links to both generations. Demo headers also
-link back to the homepage for their generation.
+Every homepage and demo keeps its counterpart-generation link in a contextual
+version notice inside the hero, outside the header. Demo headers link back to
+the homepage for their generation.
 
 ## Source pin and generated provenance
 
@@ -149,8 +150,9 @@ test "$(git ls-remote origin refs/heads/main | cut -f1)" = \
 5. Confirm the Pages API now reports `build_type` as `workflow`, the custom
    domain and HTTPS-enforcement value are unchanged, and `site-build.json`
    names the exact deployed main and pinned v1 commits.
-6. Fetch all five public routes over the custom HTTPS origin. Follow both
-   generation switchers and run the capture/load/play flow in both demos.
+6. Fetch all five public routes over the custom HTTPS origin. Follow the
+   contextual version links in both directions and run the capture/load/play
+   flow in both demos.
 
 With GitHub CLI, record and verify the unchanged settings around step 3:
 

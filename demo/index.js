@@ -1,6 +1,13 @@
 import {javascript} from '@codemirror/lang-javascript';
+import {
+  HighlightStyle,
+  syntaxHighlighting,
+  syntaxTree,
+} from '@codemirror/language';
 import {EditorState, Transaction} from '@codemirror/state';
-import {basicSetup, EditorView} from 'codemirror';
+import {Decoration, EditorView, ViewPlugin} from '@codemirror/view';
+import {tags} from '@lezer/highlight';
+import {basicSetup} from 'codemirror';
 import {CodeRecord, CodePlay} from '../src';
 
 const initialCode = [
@@ -10,6 +17,175 @@ const initialCode = [
   '',
   "greet('developer');",
 ].join('\n');
+
+const javascriptFunctionNodes = new Set([
+  'ArrowFunction',
+  'FunctionDeclaration',
+  'FunctionExpression',
+  'MethodDeclaration',
+]);
+
+function childNodes(node) {
+  const children = [];
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    children.push(child);
+  }
+  return children;
+}
+
+function cm5LocalVariableDecorations(state) {
+  const marks = [];
+  const documentText = state.doc;
+  const nodeText = (node) => documentText.sliceString(node.from, node.to);
+
+  const analyzeFunction = (functionNode, inheritedNames = new Set()) => {
+    const definitions = new Set();
+    const references = [];
+    const nestedFunctions = [];
+
+    const collect = (node) => {
+      for (const child of childNodes(node)) {
+        if (child !== functionNode && javascriptFunctionNodes.has(child.name)) {
+          if (child.name === 'FunctionDeclaration') {
+            const definition = child.getChild('VariableDefinition');
+            if (definition) definitions.add(nodeText(definition));
+          }
+          nestedFunctions.push(child);
+          continue;
+        }
+        if (child.name === 'VariableDefinition') {
+          definitions.add(nodeText(child));
+        } else if (child.name === 'VariableName') {
+          references.push(child);
+        }
+        collect(child);
+      }
+    };
+
+    collect(functionNode);
+    const localNames = new Set([...inheritedNames, ...definitions]);
+    for (const reference of references) {
+      if (localNames.has(nodeText(reference))) {
+        marks.push(Decoration.mark({class: 'cm5-local-variable'}).range(
+            reference.from,
+            reference.to,
+        ));
+      }
+    }
+    for (const nestedFunction of nestedFunctions) {
+      analyzeFunction(nestedFunction, localNames);
+    }
+  };
+
+  const findFunctions = (node) => {
+    for (const child of childNodes(node)) {
+      if (javascriptFunctionNodes.has(child.name)) {
+        analyzeFunction(child);
+      } else {
+        findFunctions(child);
+      }
+    }
+  };
+
+  findFunctions(syntaxTree(state).topNode);
+  marks.sort((first, second) => first.from - second.from);
+  return Decoration.set(marks, true);
+}
+
+const cm5LocalVariableHighlighter = ViewPlugin.fromClass(class {
+  constructor(view) {
+    this.decorations = cm5LocalVariableDecorations(view.state);
+  }
+
+  update(update) {
+    if (update.docChanged) {
+      this.decorations = cm5LocalVariableDecorations(update.state);
+    }
+  }
+}, {
+  decorations: (value) => value.decorations,
+});
+
+const cm5EditorTheme = EditorView.theme({
+  '&': {
+    backgroundColor: 'var(--page-raised)',
+    color: 'var(--editor-text)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '13px',
+    lineHeight: '1.65',
+  },
+  '.cm-activeLine, .cm-activeLineGutter': {
+    backgroundColor: 'transparent',
+  },
+  '.cm-content': {
+    caretColor: 'var(--accent)',
+    fontFamily: 'var(--font-mono)',
+  },
+  '.cm-gutters': {
+    backgroundColor: 'var(--editor-gutter)',
+    borderRight: '1px solid var(--border)',
+    color: 'var(--editor-line-number)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '13px',
+    lineHeight: '1.65',
+  },
+  '.cm-line': {
+    paddingLeft: '4px',
+    paddingRight: '4px',
+  },
+  '.cm5-local-variable, .cm5-local-variable > span': {
+    color: 'var(--blue)',
+  },
+  '.cm-lineNumbers .cm-gutterElement': {
+    color: 'var(--editor-line-number)',
+  },
+  '.cm-scroller': {
+    fontFamily: 'var(--font-mono)',
+    lineHeight: '1.65',
+  },
+  '&.cm-focused .cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--accent)',
+    borderLeftWidth: '1px',
+  },
+  [
+    '&.cm-focused > .cm-scroller > .cm-selectionLayer ' +
+      '.cm-selectionBackground, ' +
+      '& > .cm-scroller > .cm-selectionLayer .cm-selectionBackground'
+  ]: {
+    backgroundColor: 'var(--editor-selection)',
+  },
+}, {dark: true});
+
+const cm5HighlightStyle = HighlightStyle.define([
+  {tag: tags.comment, color: 'var(--editor-line-number)'},
+  {tag: [tags.keyword, tags.atom], color: 'var(--editor-keyword)'},
+  {tag: tags.variableName, color: 'var(--editor-text)'},
+  {
+    tag: [
+      tags.definition(tags.variableName),
+      tags.function(tags.definition(tags.variableName)),
+    ],
+    color: 'var(--blue)',
+  },
+  {tag: tags.number, color: 'var(--editor-number)'},
+  {tag: [tags.string, tags.character], color: 'var(--editor-string)'},
+  {tag: tags.operator, color: 'var(--text)'},
+  {
+    tag: [
+      tags.propertyName,
+      tags.definition(tags.propertyName),
+      tags.function(tags.propertyName),
+      tags.function(tags.definition(tags.propertyName)),
+    ],
+    color: 'var(--text)',
+  },
+]);
+
+const cm5VisualExtensions = [
+  cm5EditorTheme,
+  syntaxHighlighting(cm5HighlightStyle),
+  cm5LocalVariableHighlighter,
+];
 
 const elements = {
   capture: document.getElementById('capture-records'),
@@ -41,6 +217,7 @@ const recordCodeMirror = new EditorView({
   extensions: [
     basicSetup,
     javascript(),
+    ...cm5VisualExtensions,
     EditorState.allowMultipleSelections.of(true),
     EditorView.updateListener.of((update) => {
       if (update.docChanged || update.selectionSet) {
@@ -56,6 +233,7 @@ const playCodeMirror = new EditorView({
   extensions: [
     basicSetup,
     javascript(),
+    ...cm5VisualExtensions,
     EditorState.readOnly.of(true),
     EditorView.editable.of(false),
   ],
