@@ -168,7 +168,7 @@ describe('public package interface', () => {
           '84d7e90405ed96db3a963bc489fb3e00124848f1',
     );
     expect(releaseRunbook).toContain(
-        'EXPECTED_V1_BRANCH_COMMIT=16bafb5cf2cc065bd8f18bccdca6232c5ad87844',
+        'EXPECTED_V1_BRANCH_COMMIT=149c86f954d0798642101bc1000e770a57e1ee18',
     );
     expect(releaseRunbook).toContain('V2_BRANCH=main');
     expect(releaseRunbook).toContain(

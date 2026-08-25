@@ -24,7 +24,7 @@ const productionManifest = JSON.parse(readFileSync(
     'utf8',
 ));
 const expectedV1Commit =
-  '16bafb5cf2cc065bd8f18bccdca6232c5ad87844';
+  '149c86f954d0798642101bc1000e770a57e1ee18';
 
 const mainStaticFiles = [
   'README.md',

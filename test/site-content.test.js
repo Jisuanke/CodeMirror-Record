@@ -61,34 +61,55 @@ const deployedMigrationMarkdown =
 const homepageDocument = new JSDOM(homepage).window.document;
 const demoDocument = new JSDOM(demo).window.document;
 
-function editorVersionLinks(document) {
-  return [...document.querySelectorAll(
-      'nav[aria-label="Editor version"] a',
-  )].map((link) => ({
-    current: link.getAttribute('aria-current'),
-    href: link.getAttribute('href'),
-    text: link.textContent.replace(/\s+/g, ' ').trim(),
-  }));
+function expectVersionNotice(document, {copy, href}) {
+  expect(document.querySelector('.site-header .version-switcher')).toBeNull();
+  const versionNotice = document.querySelector('.version-notice');
+  expect(versionNotice).not.toBeNull();
+  expect(versionNotice.closest('.site-header')).toBeNull();
+  expect(versionNotice.textContent.replace(/\s+/g, ' ').trim()).toBe(copy);
+  expect(versionNotice.querySelector('a').getAttribute('href')).toBe(href);
 }
 
 describe('public site version guidance', () => {
-  test('links the CM6 homepage and demo directly to their CM5 equivalents',
+  test('keeps CM5 guidance outside the CM6 homepage header', () => {
+    expectVersionNotice(homepageDocument, {
+      copy: 'Using CodeMirror 5.x? ' +
+        'Try CodeMirror Record version 1 instead.',
+      href: './v1/',
+    });
+    expect(
+        homepageDocument.querySelector('.site-header a[href="#versions"]'),
+    ).toBeNull();
+    expect(homepageDocument.querySelectorAll(
+        '.home-install-stack .home-install',
+    )).toHaveLength(2);
+  });
+
+  test('keeps CM5 guidance outside the CM6 demo header', () => {
+    expectVersionNotice(demoDocument, {
+      copy: 'Using CodeMirror 5.x? Try the version 1 demo instead.',
+      href: '../v1/demo/',
+    });
+    expect(
+        demoDocument.querySelector('.site-header a[href="../#versions"]') ===
+          null,
+    ).toBe(true);
+    expect(
+        demoDocument.querySelector('.primary-navigation .nav-home')
+            .getAttribute('href'),
+    ).toBe('../');
+    expect(
+        demoDocument.querySelector('link[rel="canonical"]').href,
+    ).toBe('https://codemirror-record.haoranyu.com/demo/');
+  });
+
+  test('documents quiet, contextual version guidance as the route contract',
       () => {
-        expect(editorVersionLinks(homepageDocument)).toEqual([
-          {current: null, href: './v1/', text: 'CM5 v1'},
-          {current: 'page', href: './', text: 'CM6 v2'},
-        ]);
-        expect(editorVersionLinks(demoDocument)).toEqual([
-          {current: null, href: '../v1/demo/', text: 'CM5 v1'},
-          {current: 'page', href: './', text: 'CM6 v2'},
-        ]);
-        expect(
-            demoDocument.querySelector('.primary-navigation .nav-home')
-                .getAttribute('href'),
-        ).toBe('../');
-        expect(
-            demoDocument.querySelector('link[rel="canonical"]').href,
-        ).toBe('https://codemirror-record.haoranyu.com/demo/');
+        expect(pagesPolicy.replace(/\s+/g, ' ')).toContain(
+            'Every homepage and demo keeps its counterpart-generation link in ' +
+            'a contextual version notice inside the hero, outside the header.',
+        );
+        expect(pagesPolicy).not.toContain('generation switchers');
       });
 
   test('uses one author credit across every public page', () => {
