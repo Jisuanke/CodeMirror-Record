@@ -18,8 +18,6 @@
   --blue-ink: #082f49;
   --warning: #facc15;
   --danger: #fda4af;
-  --cm5: #f1a2b5;
-  --cm6: #4ade80;
   --radius-small: 8px;
   --radius-medium: 14px;
   --radius-large: 22px;
@@ -145,18 +143,6 @@ input:focus-visible,
   gap: 8px;
 }
 
-.site-header .version-switcher {
-  flex: none;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  background: var(--page-raised);
-  box-shadow:
-    inset 2px 0 0 rgb(241 162 181 / 78%),
-    inset -2px 0 0 rgb(74 222 128 / 78%);
-  gap: 2px;
-}
-
 .site-header nav a {
   min-height: 44px;
   padding: 10px 12px;
@@ -172,53 +158,6 @@ input:focus-visible,
   color: var(--text);
 }
 
-.site-header .version-switcher a {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  padding: 6px 9px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  gap: 5px;
-}
-
-.version-switcher a::before {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--border-strong);
-  content: "";
-}
-
-.version-switcher a[data-version="cm5"]::before {
-  background: var(--cm5);
-}
-
-.version-switcher a[data-version="cm6"]::before {
-  background: var(--cm6);
-}
-
-.version-switcher a span {
-  color: var(--muted);
-  font-size: 9px;
-  text-transform: uppercase;
-}
-
-.site-header .version-switcher a[aria-current="page"] {
-  background: var(--surface-bright);
-  color: var(--text);
-}
-
-.site-header .version-switcher a[data-version="cm5"][aria-current="page"] {
-  box-shadow: inset 0 -2px 0 var(--cm5);
-}
-
-.site-header .version-switcher a[data-version="cm6"][aria-current="page"] {
-  box-shadow: inset 0 -2px 0 var(--cm6);
-}
-
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
@@ -230,6 +169,24 @@ input:focus-visible,
 
 .hero-copy {
   max-width: 720px;
+}
+
+.version-notice {
+  max-width: 42rem;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.version-notice a {
+  color: var(--text-soft);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.version-notice a:hover {
+  color: var(--text);
 }
 
 .eyebrow,
@@ -1126,7 +1083,6 @@ input[type="range"]:disabled {
 
   .header-navigation {
     width: 100%;
-    justify-content: space-between;
   }
 
   .hero {

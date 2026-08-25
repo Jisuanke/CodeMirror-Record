@@ -14,16 +14,6 @@ const demo = new JSDOM(demoHtml).window.document;
 
 const expectedAuthor = 'Haoran Yu & Jisuanke Team';
 
-function versionLinks(document) {
-  return [...document.querySelectorAll(
-      'nav[aria-label="Editor version"] a',
-  )].map((link) => ({
-    current: link.getAttribute('aria-current'),
-    href: link.getAttribute('href'),
-    text: link.textContent.replace(/\s+/g, ' ').trim(),
-  }));
-}
-
 test('publishes the CM5 homepage at its versioned canonical URL', () => {
   assert.equal(
       homepage.querySelector('link[rel="canonical"]').href,
@@ -33,13 +23,21 @@ test('publishes the CM5 homepage at its versioned canonical URL', () => {
       homepage.querySelector('meta[property="og:url"]').content,
       'https://codemirror-record.haoranyu.com/v1/',
   );
-  assert.deepEqual(versionLinks(homepage), [
-    {current: 'page', href: './', text: 'CM5 v1'},
-    {current: null, href: '../', text: 'CM6 v2'},
-  ]);
+  assert.equal(
+      homepage.querySelector('.site-header .version-switcher'),
+      null,
+  );
+  const versionNotice = homepage.querySelector('.version-notice');
+  assert.ok(versionNotice);
+  assert.equal(versionNotice.closest('.site-header'), null);
+  assert.equal(
+      versionNotice.textContent.replace(/\s+/g, ' ').trim(),
+      'Upgraded to CodeMirror 6.x? Use CodeMirror Record version 2 instead.',
+  );
+  assert.equal(versionNotice.querySelector('a').getAttribute('href'), '../');
 });
 
-test('keeps the CM5 demo within v1 while linking to the CM6 demo', () => {
+test('keeps the CM5 demo within v1 with quiet CM6 guidance', () => {
   assert.equal(
       demo.querySelector('link[rel="canonical"]').href,
       'https://codemirror-record.haoranyu.com/v1/demo/',
@@ -48,10 +46,18 @@ test('keeps the CM5 demo within v1 while linking to the CM6 demo', () => {
       demo.querySelector('meta[property="og:url"]').content,
       'https://codemirror-record.haoranyu.com/v1/demo/',
   );
-  assert.deepEqual(versionLinks(demo), [
-    {current: 'page', href: './', text: 'CM5 v1'},
-    {current: null, href: '../../demo/', text: 'CM6 v2'},
-  ]);
+  assert.equal(demo.querySelector('.site-header .version-switcher'), null);
+  const versionNotice = demo.querySelector('.version-notice');
+  assert.ok(versionNotice);
+  assert.equal(versionNotice.closest('.site-header'), null);
+  assert.equal(
+      versionNotice.textContent.replace(/\s+/g, ' ').trim(),
+      'Upgraded to CodeMirror 6.x? Try the version 2 demo instead.',
+  );
+  assert.equal(
+      versionNotice.querySelector('a').getAttribute('href'),
+      '../../demo/',
+  );
   assert.equal(
       demo.querySelector('.primary-navigation .nav-home').getAttribute('href'),
       '../',
